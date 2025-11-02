@@ -1,13 +1,73 @@
 # Lazy_Bird Configuration File
 # Copy to ~/.config/lazy_birtd/config.yml and customize
 
+# ============================================================================
+# PROJECT CONFIGURATION (New in v2.2 - Multi-Framework Support)
+# ============================================================================
+
+# Project information
+project:
+  # Project type - determines which framework preset to use
+  # Options: godot, python, rust, nodejs, django, flask, fastapi,
+  #          react, vue, angular, unity, unreal, bevy, or custom
+  type: godot
+
+  # Project name (optional, for display purposes)
+  name: "My Game Project"
+
+  # Project path - where your project files are located
+  # For Godot: where project.godot file is
+  # For Python: where requirements.txt or setup.py is
+  # For Rust: where Cargo.toml is
+  # For Node.js: where package.json is
+  path: /home/yourusername/my-project
+
+# ============================================================================
+# FRAMEWORK COMMANDS (Framework-Agnostic)
+# ============================================================================
+
+# Test command - runs your tests
+# Examples by framework:
+#   Godot:   "godot --headless -s addons/gdUnit4/bin/GdUnitCmdTool.gd --test-suite all"
+#   Python:  "pytest tests/ -v"
+#   Rust:    "cargo test --all"
+#   Node.js: "npm test"
+#   Django:  "python manage.py test"
+test_command: "godot --headless -s addons/gdUnit4/bin/GdUnitCmdTool.gd --test-suite all"
+
+# Build command - compiles/builds your project (optional, use null if not needed)
+# Examples by framework:
+#   Godot:   null (no build needed)
+#   Python:  null (no build needed)
+#   Rust:    "cargo build --release"
+#   Node.js: "npm run build"
+build_command: null
+
+# Lint command - checks code style/quality (optional)
+# Examples:
+#   Python:  "flake8 ."
+#   Rust:    "cargo clippy"
+#   Node.js: "npm run lint"
+lint_command: null
+
+# Format command - auto-formats code (optional)
+# Examples:
+#   Python:  "black ."
+#   Rust:    "cargo fmt"
+#   Node.js: "npm run format"
+format_command: null
+
+# ============================================================================
+# GIT CONFIGURATION
+# ============================================================================
+
 # Git Platform (github or gitlab)
 git_platform: github
 
 # Repository URL or path
 # GitHub: https://github.com/owner/repo or owner/repo
 # GitLab: https://gitlab.com/owner/repo or owner/repo
-repository: https://github.com/yourusername/your-godot-game
+repository: https://github.com/yourusername/your-project
 
 # GitLab only: Project ID (optional, will be auto-detected if not provided)
 # project_id: 12345678
@@ -15,8 +75,12 @@ repository: https://github.com/yourusername/your-godot-game
 # Issue polling interval in seconds (default: 60)
 poll_interval_seconds: 60
 
-# Godot project path (where your project.godot file is)
-godot_project_path: /home/yourusername/my-godot-game
+# ============================================================================
+# BACKWARD COMPATIBILITY (Legacy Godot Config)
+# ============================================================================
+# For backward compatibility with older configs, you can still use:
+# godot_project_path: /home/yourusername/my-godot-game
+# If both project.path and godot_project_path exist, project.path takes precedence
 
 # Phase configuration (1-6)
 # Phase 1: Single agent, sequential processing
@@ -67,3 +131,113 @@ retry:
 #   enabled: false
 #   interface: wg0
 #   subnet: 10.0.0.0/24
+
+# ============================================================================
+# FRAMEWORK-SPECIFIC CONFIGURATION EXAMPLES
+# ============================================================================
+# Below are example configurations for different frameworks.
+# Copy the relevant section and customize for your project.
+
+# ---------------------------------------------------------------------------
+# Example 1: Godot Game Engine (Default)
+# ---------------------------------------------------------------------------
+# project:
+#   type: godot
+#   name: "My Platformer Game"
+#   path: /home/user/my-godot-game
+#
+# test_command: "godot --headless -s addons/gdUnit4/bin/GdUnitCmdTool.gd --test-suite all"
+# build_command: null
+# lint_command: null
+# format_command: null
+
+# ---------------------------------------------------------------------------
+# Example 2: Python with pytest
+# ---------------------------------------------------------------------------
+# project:
+#   type: python
+#   name: "My Python App"
+#   path: /home/user/my-python-app
+#
+# test_command: "pytest tests/ -v --cov"
+# build_command: null
+# lint_command: "flake8 ."
+# format_command: "black ."
+
+# ---------------------------------------------------------------------------
+# Example 3: Django Web Framework
+# ---------------------------------------------------------------------------
+# project:
+#   type: django
+#   name: "My Web App"
+#   path: /home/user/my-webapp
+#
+# test_command: "python manage.py test"
+# build_command: null
+# lint_command: "flake8 ."
+# format_command: "black ."
+
+# ---------------------------------------------------------------------------
+# Example 4: Rust Project
+# ---------------------------------------------------------------------------
+# project:
+#   type: rust
+#   name: "My Rust CLI Tool"
+#   path: /home/user/my-rust-cli
+#
+# test_command: "cargo test --all"
+# build_command: "cargo build --release"
+# lint_command: "cargo clippy"
+# format_command: "cargo fmt"
+
+# ---------------------------------------------------------------------------
+# Example 5: Node.js with Jest
+# ---------------------------------------------------------------------------
+# project:
+#   type: nodejs
+#   name: "My Node.js API"
+#   path: /home/user/my-nodejs-api
+#
+# test_command: "npm test"
+# build_command: "npm run build"
+# lint_command: "npm run lint"
+# format_command: "npm run format"
+
+# ---------------------------------------------------------------------------
+# Example 6: React Frontend
+# ---------------------------------------------------------------------------
+# project:
+#   type: react
+#   name: "My React Dashboard"
+#   path: /home/user/my-react-app
+#
+# test_command: "npm test -- --watchAll=false"
+# build_command: "npm run build"
+# lint_command: "npm run lint"
+# format_command: "npm run format"
+
+# ---------------------------------------------------------------------------
+# Example 7: Unity Game Engine
+# ---------------------------------------------------------------------------
+# project:
+#   type: unity
+#   name: "My Unity Game"
+#   path: /home/user/my-unity-game
+#
+# test_command: "unity-editor -runTests -testPlatform EditMode -testResults test-results.xml"
+# build_command: "unity-editor -quit -batchmode -buildTarget StandaloneLinux64"
+# lint_command: null
+# format_command: null
+
+# ---------------------------------------------------------------------------
+# Example 8: Custom Configuration
+# ---------------------------------------------------------------------------
+# project:
+#   type: custom
+#   name: "My Custom Project"
+#   path: /home/user/my-project
+#
+# test_command: "make test"
+# build_command: "make build"
+# lint_command: "make lint"
+# format_command: null
