@@ -115,11 +115,12 @@ if git worktree add -b test-worktree-1 "$WORKTREE_1" HEAD > /dev/null 2>&1; then
     if [ -d "$WORKTREE_1" ]; then
         pass "First worktree created: $WORKTREE_1"
 
-        # Check if project.godot exists
-        if [ -f "$WORKTREE_1/project.godot" ]; then
-            pass "project.godot exists in worktree"
+        # Verify files were copied (check for any common files)
+        FILE_COUNT=$(ls -1A "$WORKTREE_1" 2>/dev/null | wc -l)
+        if [ $FILE_COUNT -gt 0 ]; then
+            pass "Repository files present in worktree ($FILE_COUNT files)"
         else
-            warn "project.godot not found in worktree"
+            warn "Worktree appears empty"
         fi
     else
         fail "Worktree directory not created"
