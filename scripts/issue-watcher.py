@@ -320,7 +320,7 @@ class IssueWatcher:
             raise
 
     def update_issue_labels(self, issue: Dict):
-        """Remove 'ready' label and add 'processing' label"""
+        """Remove 'ready' label and add 'in-queue' label"""
         try:
             if self.platform == 'github':
                 self.update_github_labels(issue)
@@ -330,27 +330,41 @@ class IssueWatcher:
             logger.error(f"Failed to update labels for issue #{issue['id']}: {e}")
 
     def update_github_labels(self, issue: Dict):
-        """Update GitHub issue labels"""
+        """Update GitHub issue labels using gh CLI"""
+        import subprocess
+
         repo_parts = self.repository.rstrip('/').split('/')
         owner = repo_parts[-2]
         repo = repo_parts[-1]
+        repo_name = f"{owner}/{repo}"
 
-        headers = {
-            'Authorization': f'token {self.token}',
-            'Accept': 'application/vnd.github.v3+json'
-        }
+        try:
+            # Remove 'ready' label using gh CLI
+            result = subprocess.run(
+                ['gh', 'issue', 'edit', str(issue['id']), '--repo', repo_name, '--remove-label', 'ready'],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            if result.returncode != 0:
+                logger.warning(f"Failed to remove 'ready' label: {result.stderr}")
 
-        # Remove 'ready' label
-        url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue['id']}/labels/ready"
-        response = requests.delete(url, headers=headers, timeout=30)
-        if response.status_code not in [200, 204, 404]:
-            logger.warning(f"Failed to remove 'ready' label: {response.status_code}")
+            # Add 'in-queue' label using gh CLI
+            result = subprocess.run(
+                ['gh', 'issue', 'edit', str(issue['id']), '--repo', repo_name, '--add-label', 'in-queue'],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            if result.returncode != 0:
+                logger.warning(f"Failed to add 'in-queue' label: {result.stderr}")
+            else:
+                logger.info(f"✅ Labels updated: ready → in-queue")
 
-        # Add 'processing' label
-        url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue['id']}/labels"
-        response = requests.post(url, headers=headers, json={'labels': ['processing']}, timeout=30)
-        if response.status_code not in [200, 201]:
-            logger.warning(f"Failed to add 'processing' label: {response.status_code}")
+        except subprocess.TimeoutExpired:
+            logger.error("Timeout updating labels via gh CLI")
+        except Exception as e:
+            logger.error(f"Error updating labels: {e}")
 
     def update_gitlab_labels(self, issue: Dict):
         """Update GitLab issue labels"""
