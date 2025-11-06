@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # Godot Test Server
+  godot-server:
+    build:
+      context: ./claude-agent
+      dockerfile: Dockerfile
+    image: lazy-bird/godot-server:latest
+    container_name: godot-server
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:5000:5000"  # Bind to localhost only for security
+
+    volumes:
+      # Mount scripts directory
+      - ../scripts:/scripts:ro
+      # Mount artifacts directory
+      - /var/lib/lazy_birtd/tests:/var/lib/lazy_birtd/tests
+
+    command: python3 /scripts/godot-server.py --host 0.0.0.0 --port 5000
+
+    environment:
+      - PYTHONUNBUFFERED=1
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Claude Agent (template - spawned per task)
+  # This is a template service definition
+  # Actual agents are spawned dynamically by agent-runner.sh
+  claude-agent:
+    build:
+      context: ./claude-agent
+      dockerfile: Dockerfile
+    image: lazy-bird/claude-agent:latest
+    container_name: claude-agent-template
+    profiles:
+      - template  # Not started by default
+
+    volumes:
+      # Mount git worktree (specific per agent)
+      - /tmp/agents:/tmp/agents
+      # Mount configuration
+      - ~/.config/lazy_birtd:/home/agent/.config/lazy_birtd:ro
+
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GIT_TERMINAL_PROMPT=0
+
+    # Resource limits (per agent)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          memory: 2G
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+    # Network mode (can communicate with godot-server)
+    network_mode: bridge
+
+    # User (non-root)
+    user: "1000:1000"
+
+    # Read-only root filesystem (where possible)
+    read_only: false  # Set to true if project allows
+
+    # Temporary filesystem for /tmp
+    tmpfs:
+      - /tmp:size=1G,mode=1777
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  default:
+    name: lazy-bird-network
+    driver: bridge
+
+volumes:
+  test-artifacts:
+    name: lazy-bird-test-artifacts
+    driver: local

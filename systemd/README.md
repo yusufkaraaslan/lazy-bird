@@ -8,6 +8,10 @@ This directory contains systemd service files for running Lazy_Bird components a
 
 Monitors GitHub/GitLab for issues labeled "ready" and queues them for processing.
 
+### godot-server.service
+
+Runs the HTTP API server that coordinates Godot test execution between multiple agents.
+
 ## Installation
 
 ### User Service (Recommended for Development)

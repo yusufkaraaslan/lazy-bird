@@ -1,0 +1,39 @@
+[Unit]
+Description=Lazy_Birtd Godot Test Server
+Documentation=https://github.com/yusyus/lazy-bird
+After=network.target
+
+[Service]
+Type=simple
+User=%u
+Group=%u
+WorkingDirectory=%h
+
+# Command to run (adjust paths as needed)
+ExecStart=/usr/bin/python3 %h/Git/lazy-bird/scripts/godot-server.py --host 127.0.0.1 --port 5000
+
+# Restart policy
+Restart=on-failure
+RestartSec=10s
+
+# Resource limits
+MemoryLimit=2G
+CPUQuota=200%
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/lazy_birtd
+
+# Environment
+Environment="PYTHONUNBUFFERED=1"
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=godot-server
+
+[Install]
+WantedBy=default.target
