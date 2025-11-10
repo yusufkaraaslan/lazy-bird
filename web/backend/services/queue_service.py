@@ -4,6 +4,7 @@ Handles reading task queue files
 """
 import json
 import os
+import re
 from pathlib import Path
 from typing import List, Dict, Optional, Any
 from datetime import datetime
@@ -15,12 +16,13 @@ logger = logging.getLogger(__name__)
 class QueueService:
     """Service for managing task queue"""
 
-    def __init__(self, queue_dir: Optional[str] = None):
+    def __init__(self, queue_dir: Optional[str] = None, log_dir: Optional[str] = None):
         """
         Initialize queue service
 
         Args:
             queue_dir: Path to queue directory (default: ~/.config/lazy_birtd/queue/)
+            log_dir: Path to log directory (default: ~/.config/lazy_birtd/logs/)
         """
         if queue_dir:
             self.queue_dir = Path(queue_dir)
@@ -44,6 +46,122 @@ class QueueService:
 
         # Create directory if it doesn't exist
         self.queue_dir.mkdir(parents=True, exist_ok=True)
+
+        # Set up log directory
+        if log_dir:
+            self.log_dir = Path(log_dir)
+        else:
+            self.log_dir = Path.home() / '.config' / 'lazy_birtd' / 'logs'
+
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+
+    def _get_task_status(self, project_id: str, issue_id: int) -> Dict[str, Any]:
+        """
+        Get task status by checking log files
+
+        Args:
+            project_id: Project ID
+            issue_id: Issue ID
+
+        Returns:
+            Dictionary with status info
+        """
+        log_file = self.log_dir / f"agent-{project_id}-task-{issue_id}.log"
+
+        # Default status
+        status_info = {
+            'status': 'queued',
+            'log_file': None,
+            'log_excerpt': None,
+            'completed_at': None,
+            'failed': False,
+            'success': False
+        }
+
+        if log_file.exists():
+            status_info['log_file'] = str(log_file)
+
+            try:
+                # Read last 100 lines of log
+                with open(log_file, 'r') as f:
+                    lines = f.readlines()
+                    last_lines = lines[-100:] if len(lines) > 100 else lines
+                    log_content = ''.join(last_lines)
+
+                    status_info['log_excerpt'] = log_content
+
+                    # Check for success/failure patterns
+                    if '[SUCCESS]' in log_content and 'PR created' in log_content:
+                        status_info['status'] = 'completed'
+                        status_info['success'] = True
+                    elif '[ERROR]' in log_content or 'Tests failed' in log_content:
+                        status_info['status'] = 'failed'
+                        status_info['failed'] = True
+                    elif '[INFO]' in log_content and 'Running Claude Code' in log_content:
+                        status_info['status'] = 'in-progress'
+                    elif 'No changes detected' in log_content:
+                        status_info['status'] = 'completed-no-changes'
+                        status_info['success'] = True
+
+                    # Get modification time
+                    stat = log_file.stat()
+                    status_info['completed_at'] = datetime.fromtimestamp(stat.st_mtime).isoformat()
+
+            except Exception as e:
+                logger.error(f"Error reading log file {log_file}: {e}")
+
+        return status_info
+
+    def get_all_tasks_with_status(self, include_completed: bool = False) -> List[Dict[str, Any]]:
+        """
+        Get all tasks (queued, in-progress, completed) with their status
+
+        Args:
+            include_completed: If True, include completed/failed tasks from logs (default: False)
+
+        Returns:
+            List of task dictionaries with status info
+        """
+        tasks = []
+
+        # Get queued tasks
+        queued_tasks = self.get_queued_tasks()
+        for task in queued_tasks:
+            project_id = task.get('project_id', 'unknown')
+            issue_id = task.get('issue_id', 0)
+            status_info = self._get_task_status(project_id, issue_id)
+            task.update(status_info)
+            tasks.append(task)
+
+        # Also check for completed tasks in logs (no queue file) - only if requested
+        if include_completed and self.log_dir.exists():
+            for log_file in self.log_dir.glob('agent-*-task-*.log'):
+                # Parse filename: agent-{project_id}-task-{issue_id}.log
+                match = re.match(r'agent-(.+?)-task-(\d+)\.log', log_file.name)
+                if match:
+                    project_id, issue_id = match.groups()
+                    issue_id = int(issue_id)
+
+                    # Check if this task is already in queued tasks
+                    if any(t.get('issue_id') == issue_id and t.get('project_id') == project_id for t in queued_tasks):
+                        continue  # Already included
+
+                    # This is a completed/failed task
+                    status_info = self._get_task_status(project_id, issue_id)
+
+                    # Try to read basic info from log
+                    task_data = {
+                        'issue_id': issue_id,
+                        'project_id': project_id,
+                        'title': f'Task #{issue_id}',  # Placeholder
+                        'complexity': 'unknown',
+                        '_file': None,
+                        '_from_log': True
+                    }
+                    task_data.update(status_info)
+                    tasks.append(task_data)
+
+        return tasks
 
     def get_queued_tasks(self) -> List[Dict[str, Any]]:
         """

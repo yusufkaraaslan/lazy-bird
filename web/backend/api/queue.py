@@ -15,22 +15,33 @@ queue_service = QueueService()
 @queue_bp.route('', methods=['GET'])
 def list_tasks():
     """
-    List all queued tasks
+    List all tasks with status
 
     Query params:
         project_id: Filter by project ID (optional)
+        status: Filter by status (queued, in-progress, completed, failed)
+        include_completed: Include completed tasks from logs (default: false)
 
     Returns:
-        200: List of tasks
+        200: List of tasks with status info
         500: Server error
     """
     try:
-        tasks = queue_service.get_queued_tasks()
+        # Check if we should include completed tasks
+        include_completed = request.args.get('include_completed', 'false').lower() == 'true'
+
+        # Get all tasks with status
+        tasks = queue_service.get_all_tasks_with_status(include_completed=include_completed)
 
         # Filter by project if specified
         project_id = request.args.get('project_id')
         if project_id:
             tasks = [t for t in tasks if t.get('project_id') == project_id]
+
+        # Filter by status if specified
+        status = request.args.get('status')
+        if status:
+            tasks = [t for t in tasks if t.get('status') == status]
 
         return jsonify(tasks), 200
 
