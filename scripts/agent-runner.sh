@@ -258,7 +258,8 @@ initialize_godot_worktree() {
     # This scans all scripts and registers global classes, which is required for gdUnit4
     log_info "[$PROJECT_ID] Running 'godot --editor --quit --headless' to scan scripts..."
 
-    if timeout 45 godot --editor --quit --headless > "$LOG_DIR/godot-init.log" 2>&1; then
+    local godot_log="/tmp/godot-init-$PROJECT_ID-$ISSUE_ID.log"
+    if timeout 45 godot --editor --quit --headless > "$godot_log" 2>&1; then
         log_success "[$PROJECT_ID] Godot project initialized successfully"
 
         # Verify .godot directory was created
@@ -276,7 +277,7 @@ initialize_godot_worktree() {
         fi
     else
         log_warning "[$PROJECT_ID] Godot initialization had issues (tests may fail)"
-        cat "$LOG_DIR/godot-init.log" || true
+        cat "$godot_log" || true
     fi
 
     return 0
