@@ -64,88 +64,90 @@ export function DashboardPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Dashboard</h1>
-        <p className="text-gray-600 dark:text-gray-400">System status and service management</p>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto p-6 lg:p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Dashboard</h1>
+          <p className="text-gray-600 dark:text-gray-400">System status and service management</p>
+        </div>
 
-      {/* System Resources */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">System Resources</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* CPU */}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">CPU Usage</div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {systemStatus?.resources.cpu_percent.toFixed(1)}%
+        {/* System Resources */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">System Resources</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* CPU */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+              <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">CPU Usage</div>
+              <div className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                {systemStatus?.resources.cpu_percent.toFixed(1)}%
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                <div
+                  className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${systemStatus?.resources.cpu_percent}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all"
-                style={{ width: `${systemStatus?.resources.cpu_percent}%` }}
-              />
-            </div>
-          </div>
 
-          {/* Memory */}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Memory Usage</div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {systemStatus?.resources.memory_percent.toFixed(1)}%
+            {/* Memory */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+              <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Memory Usage</div>
+              <div className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                {systemStatus?.resources.memory_percent.toFixed(1)}%
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                {systemStatus?.resources.memory_used_gb.toFixed(1)} GB / {systemStatus?.resources.memory_total_gb.toFixed(1)} GB
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                <div
+                  className="bg-green-600 h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${systemStatus?.resources.memory_percent}%` }}
+                />
+              </div>
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              {systemStatus?.resources.memory_used_gb.toFixed(1)} GB / {systemStatus?.resources.memory_total_gb.toFixed(1)} GB
-            </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div
-                className="bg-green-600 h-2 rounded-full transition-all"
-                style={{ width: `${systemStatus?.resources.memory_percent}%` }}
-              />
-            </div>
-          </div>
 
-          {/* Disk */}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Disk Usage</div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {systemStatus?.resources.disk_percent.toFixed(1)}%
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              {systemStatus?.resources.disk_free_gb.toFixed(1)} GB free / {systemStatus?.resources.disk_total_gb.toFixed(1)} GB total
-            </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div
-                className="bg-purple-600 h-2 rounded-full transition-all"
-                style={{ width: `${systemStatus?.resources.disk_percent}%` }}
-              />
+            {/* Disk */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+              <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Disk Usage</div>
+              <div className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                {systemStatus?.resources.disk_percent.toFixed(1)}%
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                {systemStatus?.resources.disk_free_gb.toFixed(1)} GB free / {systemStatus?.resources.disk_total_gb.toFixed(1)} GB total
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                <div
+                  className="bg-purple-600 h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${systemStatus?.resources.disk_percent}%` }}
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Services */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Services</h2>
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Service
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Uptime
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        {/* Services */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Services</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-900/50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Service
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Uptime
+                  </th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700/50">
               {systemStatus && Object.entries(systemStatus.services).map(([name, service]) => (
                 <tr key={name}>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -201,47 +203,48 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Configuration & Queue Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Config */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Configuration</h3>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Phase:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{systemStatus?.config.phase}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Projects:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{systemStatus?.config.projects_count}</span>
+        {/* Configuration & Queue Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Config */}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Configuration</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Phase:</span>
+                <span className="font-semibold text-lg text-gray-900 dark:text-white">{systemStatus?.config.phase}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-t border-gray-100 dark:border-gray-700">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Projects:</span>
+                <span className="font-semibold text-lg text-gray-900 dark:text-white">{systemStatus?.config.projects_count}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Queue Stats */}
-        {queueStats && (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Queue Statistics</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Total Tasks:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{queueStats.total_tasks}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Simple:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{queueStats.by_complexity.simple}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Medium:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{queueStats.by_complexity.medium}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Complex:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{queueStats.by_complexity.complex}</span>
+          {/* Queue Stats */}
+          {queueStats && (
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Queue Statistics</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Total Tasks:</span>
+                  <span className="font-semibold text-lg text-gray-900 dark:text-white">{queueStats.total_tasks}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-t border-gray-100 dark:border-gray-700">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Simple:</span>
+                  <span className="font-semibold text-lg text-green-600 dark:text-green-400">{queueStats.by_complexity.simple}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-t border-gray-100 dark:border-gray-700">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Medium:</span>
+                  <span className="font-semibold text-lg text-yellow-600 dark:text-yellow-400">{queueStats.by_complexity.medium}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-t border-gray-100 dark:border-gray-700">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Complex:</span>
+                  <span className="font-semibold text-lg text-red-600 dark:text-red-400">{queueStats.by_complexity.complex}</span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

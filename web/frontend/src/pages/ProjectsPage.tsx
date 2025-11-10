@@ -56,20 +56,21 @@ export function ProjectsPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Projects</h1>
-          <p className="text-gray-600 dark:text-gray-400">Manage your development projects</p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto p-6 lg:p-8">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Projects</h1>
+            <p className="text-gray-600 dark:text-gray-400">Manage your development projects</p>
+          </div>
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
+          >
+            <Plus size={20} />
+            <span>Add Project</span>
+          </button>
         </div>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus size={20} />
-          <span>Add Project</span>
-        </button>
-      </div>
 
       {/* Add/Edit Form */}
       {(showAddForm || editingProject) && (
@@ -95,25 +96,25 @@ export function ProjectsPage() {
         />
       )}
 
-      {/* Projects List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {projects && projects.length === 0 && (
-          <div className="col-span-2 text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">No projects configured yet</p>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Add Your First Project
-            </button>
-          </div>
-        )}
+        {/* Projects List */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {projects && projects.length === 0 && (
+            <div className="col-span-2 text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+              <p className="text-gray-600 dark:text-gray-400 mb-6 text-lg">No projects configured yet</p>
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
+              >
+                Add Your First Project
+              </button>
+            </div>
+          )}
 
-        {projects?.map((project) => (
-          <div
-            key={project.id}
-            className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700"
-          >
+          {projects?.map((project) => (
+            <div
+              key={project.id}
+              className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
+            >
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -185,9 +186,10 @@ export function ProjectsPage() {
                   </div>
                 </div>
               )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -65,33 +65,34 @@ export function QueuePage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Task Queue</h1>
-        <p className="text-gray-600 dark:text-gray-400">View and manage queued tasks</p>
-      </div>
-
-      {/* Stats Summary */}
-      {stats && (
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Tasks</div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total_tasks}</div>
-          </div>
-          <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
-            <div className="text-sm text-green-700 dark:text-green-300 mb-1">Simple</div>
-            <div className="text-2xl font-bold text-green-900 dark:text-green-100">{stats.by_complexity.simple}</div>
-          </div>
-          <div className="bg-yellow-50 dark:bg-yellow-900 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700">
-            <div className="text-sm text-yellow-700 dark:text-yellow-300 mb-1">Medium</div>
-            <div className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{stats.by_complexity.medium}</div>
-          </div>
-          <div className="bg-red-50 dark:bg-red-900 p-4 rounded-lg border border-red-200 dark:border-red-700">
-            <div className="text-sm text-red-700 dark:text-red-300 mb-1">Complex</div>
-            <div className="text-2xl font-bold text-red-900 dark:text-red-100">{stats.by_complexity.complex}</div>
-          </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto p-6 lg:p-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Task Queue</h1>
+          <p className="text-gray-600 dark:text-gray-400">View and manage queued tasks</p>
         </div>
-      )}
+
+        {/* Stats Summary */}
+        {stats && (
+          <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Total Tasks</div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">{stats.total_tasks}</div>
+            </div>
+            <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-xl border border-green-200 dark:border-green-700/50 shadow-sm">
+              <div className="text-sm font-medium text-green-700 dark:text-green-300 mb-2">Simple</div>
+              <div className="text-3xl font-bold text-green-900 dark:text-green-100">{stats.by_complexity.simple}</div>
+            </div>
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-xl border border-yellow-200 dark:border-yellow-700/50 shadow-sm">
+              <div className="text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-2">Medium</div>
+              <div className="text-3xl font-bold text-yellow-900 dark:text-yellow-100">{stats.by_complexity.medium}</div>
+            </div>
+            <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-xl border border-red-200 dark:border-red-700/50 shadow-sm">
+              <div className="text-sm font-medium text-red-700 dark:text-red-300 mb-2">Complex</div>
+              <div className="text-3xl font-bold text-red-900 dark:text-red-100">{stats.by_complexity.complex}</div>
+            </div>
+          </div>
+        )}
 
       {/* Filter */}
       {stats && Object.keys(stats.by_project).length > 0 && (
@@ -114,41 +115,41 @@ export function QueuePage() {
         </div>
       )}
 
-      {/* Tasks List */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-        {tasks && tasks.length === 0 ? (
-          <div className="text-center py-12">
-            <Clock size={48} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">No tasks in queue</p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-              Tasks will appear here when added to the queue
-            </p>
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Issue
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Project
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Complexity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Queued At
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        {/* Tasks List */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+          {tasks && tasks.length === 0 ? (
+            <div className="text-center py-16">
+              <Clock size={56} className="mx-auto text-gray-400 mb-4" />
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-2">No tasks in queue</p>
+              <p className="text-sm text-gray-500 dark:text-gray-500">
+                Tasks will appear here when added to the queue
+              </p>
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-900/50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Issue
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Title
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Project
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Complexity
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Queued At
+                  </th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700/50">
               {tasks?.map((task) => (
                 <tr key={task.issue_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -214,18 +215,19 @@ export function QueuePage() {
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Task Details Modal */}
+        {selectedTask && (
+          <TaskDetailsModal
+            task={selectedTask}
+            onClose={() => setSelectedTask(null)}
+          />
         )}
       </div>
-
-      {/* Task Details Modal */}
-      {selectedTask && (
-        <TaskDetailsModal
-          task={selectedTask}
-          onClose={() => setSelectedTask(null)}
-        />
-      )}
     </div>
   );
 }
