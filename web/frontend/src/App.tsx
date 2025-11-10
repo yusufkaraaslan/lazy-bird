@@ -6,6 +6,7 @@ import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { QueuePage } from './pages/QueuePage';
+import { ServicesPage } from './pages/ServicesPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
           <Route index element={<DashboardPage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="queue" element={<QueuePage />} />
+          <Route path="services" element={<ServicesPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>

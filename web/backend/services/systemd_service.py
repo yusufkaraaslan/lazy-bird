@@ -4,7 +4,9 @@ Handles checking and controlling systemd services
 """
 import subprocess
 import logging
-from typing import Dict, Optional
+import os
+from pathlib import Path
+from typing import Dict, Optional, List
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -24,6 +26,12 @@ class SystemdService:
         self.systemctl_args = ['systemctl']
         if user_mode:
             self.systemctl_args.append('--user')
+            self.service_dir = Path.home() / '.config' / 'systemd' / 'user'
+        else:
+            self.service_dir = Path('/etc/systemd/system')
+
+        # Ensure service directory exists
+        self.service_dir.mkdir(parents=True, exist_ok=True)
 
     def get_service_status(self, service_name: str) -> Dict[str, any]:
         """
@@ -153,3 +161,187 @@ class SystemdService:
             statuses[service] = self.get_service_status(service)
 
         return statuses
+
+    def list_services(self) -> List[Dict[str, any]]:
+        """
+        List all service files in the systemd directory
+
+        Returns:
+            List of dictionaries with service information
+        """
+        services = []
+        try:
+            for service_file in self.service_dir.glob('*.service'):
+                service_name = service_file.stem
+
+                # Get enabled status
+                is_enabled_cmd = self.systemctl_args + ['is-enabled', service_name]
+                result = subprocess.run(is_enabled_cmd, capture_output=True, text=True)
+                enabled = result.stdout.strip() == 'enabled'
+
+                services.append({
+                    'name': service_name,
+                    'filename': service_file.name,
+                    'path': str(service_file),
+                    'enabled': enabled
+                })
+
+            return services
+        except Exception as e:
+            logger.error(f"Error listing services: {e}")
+            return []
+
+    def get_service_file(self, service_name: str) -> Optional[str]:
+        """
+        Read service file content
+
+        Args:
+            service_name: Name of the service (without .service extension)
+
+        Returns:
+            Service file content as string, or None if not found
+        """
+        try:
+            service_file = self.service_dir / f"{service_name}.service"
+            if service_file.exists():
+                return service_file.read_text()
+            return None
+        except Exception as e:
+            logger.error(f"Error reading service file {service_name}: {e}")
+            return None
+
+    def create_service(self, service_name: str, content: str) -> bool:
+        """
+        Create a new service file
+
+        Args:
+            service_name: Name of the service (without .service extension)
+            content: Service file content
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            service_file = self.service_dir / f"{service_name}.service"
+
+            # Don't overwrite existing service
+            if service_file.exists():
+                logger.error(f"Service {service_name} already exists")
+                return False
+
+            service_file.write_text(content)
+            service_file.chmod(0o644)
+
+            # Reload systemd daemon
+            reload_cmd = self.systemctl_args + ['daemon-reload']
+            subprocess.run(reload_cmd, check=True)
+
+            logger.info(f"Created service {service_name}")
+            return True
+        except Exception as e:
+            logger.error(f"Error creating service {service_name}: {e}")
+            return False
+
+    def update_service(self, service_name: str, content: str) -> bool:
+        """
+        Update an existing service file
+
+        Args:
+            service_name: Name of the service (without .service extension)
+            content: New service file content
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            service_file = self.service_dir / f"{service_name}.service"
+
+            # Service must exist
+            if not service_file.exists():
+                logger.error(f"Service {service_name} does not exist")
+                return False
+
+            service_file.write_text(content)
+            service_file.chmod(0o644)
+
+            # Reload systemd daemon
+            reload_cmd = self.systemctl_args + ['daemon-reload']
+            subprocess.run(reload_cmd, check=True)
+
+            logger.info(f"Updated service {service_name}")
+            return True
+        except Exception as e:
+            logger.error(f"Error updating service {service_name}: {e}")
+            return False
+
+    def delete_service(self, service_name: str) -> bool:
+        """
+        Delete a service file
+
+        Args:
+            service_name: Name of the service (without .service extension)
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            service_file = self.service_dir / f"{service_name}.service"
+
+            if not service_file.exists():
+                logger.error(f"Service {service_name} does not exist")
+                return False
+
+            # Stop service if running
+            self.stop_service(service_name)
+
+            # Disable if enabled
+            self.disable_service(service_name)
+
+            # Delete file
+            service_file.unlink()
+
+            # Reload systemd daemon
+            reload_cmd = self.systemctl_args + ['daemon-reload']
+            subprocess.run(reload_cmd, check=True)
+
+            logger.info(f"Deleted service {service_name}")
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting service {service_name}: {e}")
+            return False
+
+    def enable_service(self, service_name: str) -> bool:
+        """
+        Enable a service to start on boot
+
+        Args:
+            service_name: Name of the service
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            cmd = self.systemctl_args + ['enable', service_name]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            return result.returncode == 0
+        except Exception as e:
+            logger.error(f"Error enabling service {service_name}: {e}")
+            return False
+
+    def disable_service(self, service_name: str) -> bool:
+        """
+        Disable a service from starting on boot
+
+        Args:
+            service_name: Name of the service
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            cmd = self.systemctl_args + ['disable', service_name]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            return result.returncode == 0
+        except Exception as e:
+            logger.error(f"Error disabling service {service_name}: {e}")
+            return False
