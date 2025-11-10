@@ -137,7 +137,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=${process.env.USER || 'user'}
+User=your-username
 WorkingDirectory=/path/to/working/directory
 ExecStart=/usr/bin/python3 /path/to/script.py
 Restart=on-failure
