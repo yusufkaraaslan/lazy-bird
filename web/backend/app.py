@@ -49,10 +49,12 @@ try:
     from api.projects import projects_bp
     from api.system import system_bp
     from api.queue import queue_bp
+    from api.settings import settings_bp
 
     app.register_blueprint(projects_bp)
     app.register_blueprint(system_bp)
     app.register_blueprint(queue_bp)
+    app.register_blueprint(settings_bp)
 
     logger.info("API blueprints registered successfully")
 

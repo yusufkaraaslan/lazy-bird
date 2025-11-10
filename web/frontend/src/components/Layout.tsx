@@ -2,7 +2,7 @@
  * Main layout component with sidebar
  */
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Home, FolderKanban, ListTodo } from 'lucide-react';
+import { Home, FolderKanban, ListTodo, Settings } from 'lucide-react';
 
 export function Layout() {
   const location = useLocation();
@@ -55,6 +55,18 @@ export function Layout() {
           >
             <ListTodo size={20} />
             <span>Queue</span>
+          </Link>
+
+          <Link
+            to="/settings"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isActive('/settings')
+                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Settings size={20} />
+            <span>Settings</span>
           </Link>
         </nav>
       </aside>
