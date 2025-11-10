@@ -3,13 +3,17 @@
  */
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { settingsApi } from '../lib/api';
-import { AlertCircle, CheckCircle, Key, RefreshCw, Shield } from 'lucide-react';
+import { settingsApi, systemApi } from '../lib/api';
+import { AlertCircle, CheckCircle, Key, RefreshCw, Shield, Play, Square, RotateCw, Power, ServerCog } from 'lucide-react';
+import { useSystemStatus, useServiceControl } from '../hooks/useSystem';
 
 export function SettingsPage() {
   const [token, setToken] = useState('');
   const [showToken, setShowToken] = useState(false);
   const queryClient = useQueryClient();
+
+  const { data: systemStatus } = useSystemStatus();
+  const serviceControl = useServiceControl();
 
   const { data: tokenStatus, isLoading } = useQuery({
     queryKey: ['settings', 'token'],
@@ -207,6 +211,111 @@ export function SettingsPage() {
                 {updateToken.isPending ? 'Updating...' : 'Update Token'}
               </button>
             </form>
+          </div>
+        </div>
+
+        {/* Service Management Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm mb-6">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3 mb-2">
+              <ServerCog size={24} className="text-blue-600 dark:text-blue-400" />
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Service Management</h2>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Control systemd services (issue-watcher, agent-runner, etc.)
+            </p>
+          </div>
+
+          <div className="p-6">
+            {systemStatus?.services && Object.entries(systemStatus.services).length > 0 ? (
+              <div className="space-y-4">
+                {Object.entries(systemStatus.services).map(([name, service]: [string, any]) => (
+                  <div key={name} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="font-medium text-gray-900 dark:text-white">{name}</span>
+                        {service.status === 'running' ? (
+                          <span className="px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full flex items-center gap-1">
+                            <CheckCircle size={12} />
+                            Running
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full flex items-center gap-1">
+                            <AlertCircle size={12} />
+                            Stopped
+                          </span>
+                        )}
+                      </div>
+                      {service.status === 'running' && service.uptime_seconds !== undefined && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          Uptime: {Math.floor(service.uptime_seconds / 3600)}h {Math.floor((service.uptime_seconds % 3600) / 60)}m
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {service.status !== 'running' && (
+                        <button
+                          onClick={() => serviceControl.mutateAsync({ service: name, action: 'start' })}
+                          disabled={serviceControl.isPending}
+                          className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          title="Start service"
+                        >
+                          <Play size={16} />
+                          Start
+                        </button>
+                      )}
+                      {service.status === 'running' && (
+                        <>
+                          <button
+                            onClick={() => serviceControl.mutateAsync({ service: name, action: 'stop' })}
+                            disabled={serviceControl.isPending}
+                            className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            title="Stop service"
+                          >
+                            <Square size={16} />
+                            Stop
+                          </button>
+                          <button
+                            onClick={() => serviceControl.mutateAsync({ service: name, action: 'restart' })}
+                            disabled={serviceControl.isPending}
+                            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            title="Restart service"
+                          >
+                            <RotateCw size={16} />
+                            Restart
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <Power size={48} className="mx-auto mb-4 opacity-50" />
+                <p>No systemd services configured</p>
+                <p className="text-sm mt-2">Services will appear here once installed</p>
+              </div>
+            )}
+
+            {serviceControl.isError && (
+              <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/50 rounded-lg">
+                <div className="flex items-center gap-2 text-red-800 dark:text-red-200 text-sm">
+                  <AlertCircle size={16} />
+                  <span>{(serviceControl.error as any)?.response?.data?.error || 'Service control failed'}</span>
+                </div>
+              </div>
+            )}
+
+            {serviceControl.isSuccess && (
+              <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/50 rounded-lg">
+                <div className="flex items-center gap-2 text-green-800 dark:text-green-200 text-sm">
+                  <CheckCircle size={16} />
+                  <span>Service command executed successfully</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
