@@ -4,11 +4,19 @@ Modern web-based dashboard for managing Lazy_Bird automation system.
 
 ## Features
 
-- **Project Management**: Add, edit, remove, and configure multiple projects
-- **System Status**: Monitor services, resource usage, and system health
-- **Task Queue**: View queued tasks, their status, and cancel if needed
+### ✅ Implemented (Phase 0)
+- **Dashboard**: System overview with status cards and quick stats
+- **Project Management**: Full CRUD with route-based forms (`/projects/add`, `/projects/:id/edit`)
+- **Service Management**: systemd service control with dedicated form pages
+- **Settings**: GitHub token configuration and service controls
+- **Task Queue**: View queued tasks with detailed information
+- **Modern UI**: Clean, responsive design with dark mode support
+- **Route-based Navigation**: Bookmarkable URLs, browser back button support
+
+### 🚧 Coming Soon
 - **Live Logs**: Watch Claude Code execution in real-time (Phase 2)
 - **GitHub Board**: Kanban-style issue management (Phase 3)
+- **Real-time Updates**: WebSocket/SSE for live data (Phase 2)
 
 ## Technology Stack
 
@@ -153,15 +161,72 @@ web/
 │       └── queue_service.py      # Queue reader
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx
+│   │   ├── App.tsx               # Main app with routes
+│   │   ├── main.tsx              # Entry point
 │   │   ├── pages/                # Route pages
+│   │   │   ├── DashboardPage.tsx
+│   │   │   ├── ProjectsPage.tsx  # Projects list
+│   │   │   ├── ProjectFormPage.tsx  # Add/edit project (route-based)
+│   │   │   ├── ServicesPage.tsx  # Services list
+│   │   │   ├── ServiceFormPage.tsx  # Add/edit service (route-based)
+│   │   │   ├── QueuePage.tsx
+│   │   │   └── SettingsPage.tsx
 │   │   ├── components/           # React components
+│   │   │   ├── Layout.tsx        # Sidebar navigation
+│   │   │   └── ProjectForm.tsx   # Project form component
 │   │   ├── hooks/                # Custom React hooks
-│   │   └── lib/                  # Utilities & API client
+│   │   │   ├── useProjects.ts
+│   │   │   └── useSystem.ts
+│   │   ├── lib/                  # Utilities & API client
+│   │   │   └── api.ts
+│   │   └── types/
+│   │       └── api.ts            # TypeScript types
 │   ├── package.json
 │   └── vite.config.ts
 └── README.md                     # This file
 ```
+
+## Frontend Architecture
+
+### Route-Based Navigation
+
+The UI uses **React Router** with dedicated pages for forms (instead of modals):
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Dashboard - System overview |
+| `/projects` | Projects list |
+| `/projects/add` | Add new project (full page form) |
+| `/projects/:id/edit` | Edit existing project |
+| `/services` | Services list |
+| `/services/add` | Create new service (full page form) |
+| `/services/:name/edit` | Edit existing service |
+| `/queue` | Task queue viewer |
+| `/settings` | System settings & GitHub token |
+
+**Benefits:**
+- ✅ Bookmarkable URLs
+- ✅ Browser back/forward buttons work
+- ✅ More space for complex forms
+- ✅ Better mobile experience
+- ✅ Clear navigation state
+
+### State Management
+
+- **TanStack Query (React Query)** - Server state management
+  - Automatic caching
+  - Background refetching
+  - Optimistic updates
+  - Mutation handling
+- **React Router** - Navigation state
+- **React useState** - Local UI state
+
+### Component Structure
+
+- **Pages** - Full page views, handle routing
+- **Components** - Reusable UI components (forms, cards, etc.)
+- **Hooks** - Custom hooks for API calls and business logic
+- **Types** - TypeScript interfaces for type safety
 
 ## Configuration
 
@@ -255,26 +320,38 @@ lsof -ti:3000 | xargs kill -9
 
 ## Phase Roadmap
 
-### Phase 0 (Current - Week 1)
-- ✅ Backend API (system, projects, queue)
-- ✅ Frontend skeleton
-- ⏳ Dashboard page
-- ⏳ Projects page
+### Phase 0 (✅ Complete)
+- ✅ Backend API (system, projects, services, queue)
+- ✅ Frontend with React + TypeScript + Vite
+- ✅ Dashboard page with system status
+- ✅ Projects page with CRUD operations
+- ✅ Services page with systemd control
+- ✅ Settings page (GitHub token, service management)
+- ✅ Queue page (task viewer)
+- ✅ Route-based navigation (no modals)
+- ✅ Modern UI with Tailwind CSS and dark mode
+- ✅ TanStack Query for data management
+- ✅ Full TypeScript type safety
 
-### Phase 1 (Week 2)
-- Full project CRUD UI
-- Service control buttons
-- Log viewer
+### Phase 1 (Next - Week 2)
+- Task log viewer (view task execution logs)
+- Task cancellation (cancel running tasks)
+- Enhanced error handling and user feedback
+- Loading states and skeleton screens
+- Toast notifications
 
 ### Phase 2 (Week 3-4)
-- Live Claude Code logs (SSE)
-- Task queue with real-time updates
-- Cancel running tasks
+- Live Claude Code logs (Server-Sent Events)
+- Real-time task status updates
+- WebSocket for live data
+- Task progress indicators
+- Agent execution viewer
 
 ### Phase 3 (Week 5-6)
-- GitHub Kanban board
-- Issue editor with markdown
-- Claude-assisted planning
+- GitHub Kanban board integration
+- Issue editor with markdown preview
+- Claude-assisted task planning
+- Issue templates management
 
 ## Contributing
 
