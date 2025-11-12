@@ -4,6 +4,9 @@
 
 set -euo pipefail
 
+# Ensure user local bin is in PATH for godot and other tools
+export PATH="$HOME/.local/bin:$PATH"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -231,6 +234,53 @@ create_worktree() {
         log_error "[$PROJECT_ID] Failed to create worktree"
         exit 3
     fi
+}
+
+# Initialize Godot project in worktree (gdUnit4 requires .godot directory)
+initialize_godot_worktree() {
+    # Only run for Godot projects
+    if [ "$PROJECT_TYPE" != "godot" ]; then
+        log_info "[$PROJECT_ID] Not a Godot project, skipping initialization"
+        return 0
+    fi
+
+    log_info "[$PROJECT_ID] Initializing Godot project in worktree..."
+
+    cd "$WORKTREE_PATH" || exit 3
+
+    # Check if godot command is available
+    if ! command -v godot &> /dev/null; then
+        log_warning "[$PROJECT_ID] godot command not found, skipping initialization"
+        return 0
+    fi
+
+    # Always run godot --editor --quit to initialize the project properly
+    # This scans all scripts and registers global classes, which is required for gdUnit4
+    log_info "[$PROJECT_ID] Running 'godot --editor --quit --headless' to scan scripts..."
+
+    local godot_log="/tmp/godot-init-$$.log"
+    if timeout 45 godot --editor --quit --headless > "$godot_log" 2>&1; then
+        log_success "[$PROJECT_ID] Godot project initialized successfully"
+
+        # Verify .godot directory was created
+        if [ -d ".godot" ]; then
+            log_success "[$PROJECT_ID] .godot directory created"
+
+            # Verify critical files exist
+            if [ -f ".godot/global_script_class_cache.cfg" ]; then
+                log_success "[$PROJECT_ID] Plugin class cache generated"
+            else
+                log_warning "[$PROJECT_ID] Plugin class cache not found (tests may fail)"
+            fi
+        else
+            log_warning "[$PROJECT_ID] .godot directory not created (tests may fail)"
+        fi
+    else
+        log_warning "[$PROJECT_ID] Godot initialization had issues (tests may fail)"
+        cat "$godot_log" || true
+    fi
+
+    return 0
 }
 
 # Run Claude Code
@@ -612,6 +662,9 @@ main() {
 
     log_info "Step 4/11: Creating worktree..."
     create_worktree
+
+    log_info "Step 4.5/11: Initializing Godot worktree..."
+    initialize_godot_worktree
 
     # Execute task
     log_info "Step 5/11: Running Claude Code..."
