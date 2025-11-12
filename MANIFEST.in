@@ -1,0 +1,43 @@
+# Include all important files in the package distribution
+
+# Documentation
+include README.md
+include LICENSE
+include CLAUDE.md
+include CONTRIBUTING.md
+include CODE_OF_CONDUCT.md
+include SETUP_PROJECT.md
+include PHASE0_UI_SUMMARY.md
+
+# Configuration
+recursive-include config *.yml *.yaml *.json
+recursive-include systemd *.service
+
+# Scripts
+include wizard.sh
+include create-issues.sh
+recursive-include scripts *.sh *.py
+
+# Docker
+recursive-include docker *
+
+# Templates
+recursive-include .github *
+recursive-include .gitlab *
+
+# Web frontend build (if exists)
+recursive-include web/frontend/dist *
+
+# Tests
+recursive-include tests *.sh *.py
+
+# Exclude unnecessary files
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+global-exclude *.swp
+global-exclude *.swo
+prune .git
+prune node_modules
+prune .venv
+prune venv

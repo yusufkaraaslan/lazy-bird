@@ -1,0 +1,144 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lazy-bird"
+version = "0.1.0"
+description = "Automate development projects with Claude Code - works with 15+ frameworks"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Yusuf Karaaslan", email = "yusuf@example.com"}
+]
+keywords = ["automation", "claude", "ai", "development", "devops", "ci-cd", "godot", "unity", "django", "react"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Testing",
+    "Topic :: System :: Monitoring",
+]
+
+dependencies = [
+    "Flask>=3.0.0",
+    "Flask-CORS>=4.0.0",
+    "psutil>=5.9.6",
+    "PyYAML>=6.0.1",
+    "requests>=2.31.0",
+    "python-dateutil>=2.8.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+web = [
+    # All web dependencies are already in main dependencies
+    # Frontend (Node.js) is managed separately via npm
+]
+
+all = [
+    "lazy-bird[dev,web]",
+]
+
+[project.urls]
+Homepage = "https://github.com/yusufkaraaslan/lazy-bird"
+Documentation = "https://github.com/yusufkaraaslan/lazy-bird/blob/main/CLAUDE.md"
+Repository = "https://github.com/yusufkaraaslan/lazy-bird"
+Issues = "https://github.com/yusufkaraaslan/lazy-bird/issues"
+Changelog = "https://github.com/yusufkaraaslan/lazy-bird/releases"
+
+[project.scripts]
+lazy-bird = "lazy_bird.cli:main"
+lazy-bird-server = "lazy_bird.web.backend.app:main"
+lazy-bird-godot = "lazy_bird.scripts.godot_server:main"
+lazy-bird-watcher = "lazy_bird.scripts.issue_watcher:main"
+lazy-bird-project = "lazy_bird.scripts.project_manager:main"
+
+[tool.setuptools]
+packages = [
+    "lazy_bird",
+    "lazy_bird.web",
+    "lazy_bird.web.backend",
+    "lazy_bird.web.backend.api",
+    "lazy_bird.web.backend.models",
+    "lazy_bird.web.backend.services",
+    "lazy_bird.scripts",
+]
+
+[tool.setuptools.package-data]
+lazy_bird = [
+    "config/*.yml",
+    "config/*.yaml",
+    "systemd/*.service",
+    "docker/*",
+    ".github/**/*",
+    ".gitlab/**/*",
+    "web/frontend/dist/**/*",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | node_modules
+)/
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=lazy_bird",
+]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_untyped_calls = false

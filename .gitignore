@@ -163,3 +163,4 @@ worktrees/
 
 # Temporary Godot installations
 /tmp/gdUnit4-temp/
+web/frontend/.vite/
