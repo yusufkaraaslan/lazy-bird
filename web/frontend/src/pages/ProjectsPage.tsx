@@ -1,21 +1,15 @@
 /**
  * Projects page - Manage all projects
  */
-import { useState } from 'react';
-import { useProjects, useCreateProject, useUpdateProject, useDeleteProject, useToggleProject } from '../hooks/useProjects';
+import { useNavigate } from 'react-router-dom';
+import { useProjects, useDeleteProject, useToggleProject } from '../hooks/useProjects';
 import { Plus, Edit2, Trash2, Power, AlertCircle } from 'lucide-react';
-import type { Project } from '../types/api';
-import { ProjectForm } from '../components/ProjectForm';
 
 export function ProjectsPage() {
+  const navigate = useNavigate();
   const { data: projects, isLoading, error } = useProjects();
-  const createProject = useCreateProject();
-  const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const toggleProject = useToggleProject();
-
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   if (isLoading) {
     return (
@@ -57,8 +51,7 @@ export function ProjectsPage() {
   };
 
   return (
-    <>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto p-6 lg:p-8">
           <div className="mb-8 flex items-center justify-between">
             <div>
@@ -66,7 +59,7 @@ export function ProjectsPage() {
               <p className="text-gray-600 dark:text-gray-400">Manage your development projects</p>
             </div>
             <button
-              onClick={() => setShowAddForm(true)}
+              onClick={() => navigate('/projects/add')}
               className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
             >
               <Plus size={20} />
@@ -80,7 +73,7 @@ export function ProjectsPage() {
             <div className="col-span-2 text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
               <p className="text-gray-600 dark:text-gray-400 mb-6 text-lg">No projects configured yet</p>
               <button
-                onClick={() => setShowAddForm(true)}
+                onClick={() => navigate('/projects/add')}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
               >
                 Add Your First Project
@@ -125,7 +118,7 @@ export function ProjectsPage() {
                   <Power size={18} />
                 </button>
                 <button
-                  onClick={() => setEditingProject(project)}
+                  onClick={() => navigate(`/projects/${project.id}/edit`)}
                   className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900 rounded"
                   title="Edit"
                 >
@@ -170,30 +163,5 @@ export function ProjectsPage() {
         </div>
       </div>
     </div>
-
-    {/* Add/Edit Form Modal - Rendered outside main container */}
-    {(showAddForm || editingProject) && (
-      <ProjectForm
-        project={editingProject}
-        onClose={() => {
-          setShowAddForm(false);
-          setEditingProject(null);
-        }}
-        onSave={async (data) => {
-          try {
-            if (editingProject) {
-              await updateProject.mutateAsync({ id: editingProject.id, data });
-            } else {
-              await createProject.mutateAsync(data);
-            }
-            setShowAddForm(false);
-            setEditingProject(null);
-          } catch (err) {
-            console.error('Save failed:', err);
-          }
-        }}
-      />
-    )}
-    </>
   );
 }

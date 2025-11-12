@@ -1,9 +1,7 @@
 /**
- * Project form modal for adding/editing projects
+ * Project form component for adding/editing projects
  */
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
 import type { Project, ProjectCreate } from '../types/api';
 
 interface ProjectFormProps {
@@ -66,43 +64,8 @@ export function ProjectForm({ project, onClose, onSave }: ProjectFormProps) {
     }));
   };
 
-  return createPortal(
-    <div
-      className="fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center p-4"
-      style={{
-        zIndex: 9999,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-      }}
-      onClick={onClose}
-    >
-      <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full overflow-y-auto"
-        style={{ maxWidth: '600px', maxHeight: '90vh' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="p-6 pb-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {project ? 'Edit Project' : 'New Project'}
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {project ? 'Update project configuration' : 'Add a new project to Lazy_Bird'}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
-            >
-              <X size={20} />
-            </button>
-          </div>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
+  return (
+    <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
             <div className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 p-4 rounded-lg">
               {error}
@@ -274,9 +237,6 @@ export function ProjectForm({ project, onClose, onSave }: ProjectFormProps) {
               {isSaving ? 'Saving...' : project ? 'Save Changes' : 'Create Project'}
             </button>
           </div>
-        </form>
-      </div>
-    </div>,
-    document.body
+    </form>
   );
 }
