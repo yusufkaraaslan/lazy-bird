@@ -16,6 +16,19 @@ export interface Project {
   enabled: boolean;
 }
 
+export interface ProjectCreate {
+  name: string;
+  type: string;
+  path: string;
+  repository: string;
+  git_platform: 'github' | 'gitlab';
+  test_command?: string;
+  build_command?: string;
+  lint_command?: string;
+  format_command?: string;
+  enabled: boolean;
+}
+
 export interface ServiceStatus {
   name: string;
   status: 'running' | 'stopped' | 'error' | 'unknown';
