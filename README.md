@@ -22,8 +22,11 @@
 
 **Works with: Godot, Unity, Python, Rust, Node.js, Django, React, and more!**
 
+[![PyPI version](https://badge.fury.io/py/lazy-bird.svg)](https://pypi.org/project/lazy-bird/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/lazy-bird.svg)](https://pypi.org/project/lazy-bird/)
+[![Downloads](https://static.pepy.tech/badge/lazy-bird/month)](https://pepy.tech/project/lazy-bird)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Multi-Framework](https://img.shields.io/badge/Frameworks-15+-blue.svg)](#-supported-frameworks)
+[![Multi-Framework](https://img.shields.io/badge/Frameworks-18-blue.svg)](#-supported-frameworks)
 [![Claude](https://img.shields.io/badge/Claude-Code-purple.svg)](https://claude.ai/code)
 [![Status](https://img.shields.io/badge/Status-Phase%201.1%20Complete-brightgreen.svg)]()
 
@@ -88,16 +91,19 @@ Lazy_Bird works with **any project type** through framework presets. During setu
 ## 🚀 Quick Start
 
 ```bash
-# 1. One-command installation
-curl -L https://raw.githubusercontent.com/yusyus/lazy-bird/main/wizard.sh | bash
+# 1. Install via pip (recommended)
+pip install lazy-bird
 
-# 2. Create your first automated task
+# 2. Run setup wizard
+lazy-bird setup
+
+# 3. Create your first automated task
 gh issue create --template task \
   --title "[Task]: Add player health system" \
   --label "ready"
 
-# 3. Monitor progress
-./wizard.sh --status
+# 4. Monitor progress
+lazy-bird status
 ```
 
 **That's it!** The system will pick up your issue, implement the feature, run tests, and create a PR—all automatically.
@@ -105,11 +111,13 @@ gh issue create --template task \
 ## ✨ Features
 
 - 🤖 **Autonomous Development** - Claude Code works while you're away
-- 🎯 **Multi-Framework Support** - Works with 15+ frameworks out-of-the-box
+- 🎯 **Multi-Framework Support** - Works with 18 frameworks out-of-the-box
 - 🗂️ **Multi-Project Management** - Monitor 2-20+ projects from a single server
+- 🖥️ **Web Dashboard** - React + TypeScript UI for monitoring and management (Phase 0 complete!)
+- 📦 **Easy Installation** - Available via pip/UV, ready in 5 minutes
 - 🧪 **Automated Testing** - Runs framework tests, retries on failure
 - 🌿 **Safe Git Workflow** - Isolated worktrees, automatic PRs
-- 📊 **Progress Monitoring** - Check status from phone via notifications
+- 📊 **Progress Monitoring** - Real-time system stats, task queue viewer
 - 🔐 **Security First** - Secret management, containerized execution
 - 📈 **Progressive Scaling** - Start simple (1 agent), scale to multiple
 
@@ -130,19 +138,28 @@ Go to work              Creates PRs if passing     Back to work        Plan tomo
 - 15-minute wizard setup, 8GB RAM
 - Perfect for solo developers
 
-**Phase 1.1: Multi-Project** (✅ Current)
+**Phase 0: Web UI** (✅ Complete!)
+- React + TypeScript dashboard
+- System monitoring (CPU, RAM, disk)
+- Project management (add/edit/remove)
+- Service control (start/stop/restart)
+- Task queue viewer with logs
+- Dark mode support
+
+**Phase 1.1: Multi-Project** (✅ Complete!)
 - Single server manages 2-20+ projects simultaneously
-- Add/remove/edit projects via CLI or wizard
+- Add/remove/edit projects via CLI or Web UI
 - Per-project configuration (test/build/lint commands)
 - Sequential processing across all projects
 - 8-10GB RAM recommended
+- 26/26 tests passed
 
-**Phase 2: Multi-Agent** (Scale up)
+**Phase 2: Multi-Agent** (Planned)
 - 2-3 agents working in parallel
-- Godot Server coordinates test execution
+- Test Server coordinates execution
 - 16GB RAM recommended
 
-**Phase 3+:** Remote access, CI/CD, enterprise features
+**Phase 3+:** Remote access (VPN), CI/CD, enterprise features
 
 ## 💻 Requirements
 
@@ -161,26 +178,41 @@ Go to work              Creates PRs if passing     Back to work        Plan tomo
 
 ## Installation
 
-### One-Command Install
+### Quick Install (Recommended)
+
+```bash
+# Option 1: Install via pip (easiest)
+pip install lazy-bird
+
+# Then run setup wizard
+lazy-bird setup
+```
+
+### Alternative: One-Command Script
 
 ```bash
 curl -L https://raw.githubusercontent.com/yusyus/lazy_birtd/main/wizard.sh | bash
 ```
 
-### Manual Install
+### Manual Install from Source
 
 ```bash
-git clone https://github.com/yusyus/lazy_birtd.git
-cd lazy_birtd
+# Clone repository
+git clone https://github.com/yusufkaraaslan/lazy-bird.git
+cd lazy-bird
 
+# Option A: Install as package
+pip install -e .
+lazy-bird setup
+
+# Option B: Run wizard directly
 # Run Phase 0 validation (required)
-# For Godot projects (default)
-./tests/phase0/validate-all.sh /path/to/your/project
+./tests/phase0/validate-all.sh /path/to/your/project --type <framework>
 
-# For other frameworks, specify --type
+# Examples:
+./tests/phase0/validate-all.sh /path/to/your/project --type godot
 ./tests/phase0/validate-all.sh /path/to/your/project --type python
 ./tests/phase0/validate-all.sh /path/to/your/project --type rust
-./tests/phase0/validate-all.sh /path/to/your/project --type nodejs
 
 # If validation passes, run wizard
 ./wizard.sh

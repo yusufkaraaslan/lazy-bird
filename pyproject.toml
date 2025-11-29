@@ -5,18 +5,17 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "lazy-bird"
 version = "0.1.0"
-description = "Automate development projects with Claude Code - works with 15+ frameworks"
+description = "Automate development projects with Claude Code - works with 18 frameworks"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
-    {name = "Yusuf Karaaslan", email = "yusuf@example.com"}
+    {name = "Yusuf Karaaslan", email = "lazy-bird@proton.me"}
 ]
 keywords = ["automation", "claude", "ai", "development", "devops", "ci-cd", "godot", "unity", "django", "react"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
@@ -65,31 +64,18 @@ Changelog = "https://github.com/yusufkaraaslan/lazy-bird/releases"
 
 [project.scripts]
 lazy-bird = "lazy_bird.cli:main"
-lazy-bird-server = "lazy_bird.web.backend.app:main"
-lazy-bird-godot = "lazy_bird.scripts.godot_server:main"
-lazy-bird-watcher = "lazy_bird.scripts.issue_watcher:main"
-lazy-bird-project = "lazy_bird.scripts.project_manager:main"
 
 [tool.setuptools]
-packages = [
-    "lazy_bird",
-    "lazy_bird.web",
-    "lazy_bird.web.backend",
-    "lazy_bird.web.backend.api",
-    "lazy_bird.web.backend.models",
-    "lazy_bird.web.backend.services",
-    "lazy_bird.scripts",
-]
+packages = ["lazy_bird"]
+package-dir = {"" = "."}
+include-package-data = true
 
 [tool.setuptools.package-data]
-lazy_bird = [
+"*" = [
+    "scripts/*.py",
+    "scripts/*.sh",
     "config/*.yml",
     "config/*.yaml",
-    "systemd/*.service",
-    "docker/*",
-    ".github/**/*",
-    ".gitlab/**/*",
-    "web/frontend/dist/**/*",
 ]
 
 [tool.black]
