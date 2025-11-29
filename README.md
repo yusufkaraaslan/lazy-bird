@@ -28,6 +28,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Multi-Framework](https://img.shields.io/badge/Frameworks-18-blue.svg)](#-supported-frameworks)
 [![Claude](https://img.shields.io/badge/Claude-Code-purple.svg)](https://claude.ai/code)
+
+[![Tests](https://github.com/yusufkaraaslan/lazy-bird/actions/workflows/test.yml/badge.svg)](https://github.com/yusufkaraaslan/lazy-bird/actions/workflows/test.yml)
+[![Code Quality](https://github.com/yusufkaraaslan/lazy-bird/actions/workflows/lint.yml/badge.svg)](https://github.com/yusufkaraaslan/lazy-bird/actions/workflows/lint.yml)
+[![codecov](https://codecov.io/gh/yusufkaraaslan/lazy-bird/branch/main/graph/badge.svg)](https://codecov.io/gh/yusufkaraaslan/lazy-bird)
 [![Status](https://img.shields.io/badge/Status-Phase%201.1%20Complete-brightgreen.svg)]()
 
 [Quick Start](#-quick-start) • [Features](#-features) • [Installation](#-installation) • [Docs](CLAUDE.md) • [Architecture](Docs/Design/)

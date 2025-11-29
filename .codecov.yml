@@ -1,0 +1,32 @@
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+  status:
+    project:
+      default:
+        target: 70%
+        threshold: 2%
+        if_ci_failed: error
+
+    patch:
+      default:
+        target: 70%
+        threshold: 2%
+
+comment:
+  layout: "header, diff, flags, files, footer"
+  behavior: default
+  require_changes: no
+  require_base: no
+  require_head: yes
+
+ignore:
+  - "tests/"
+  - "**/__pycache__"
+  - "**/*.pyc"
+  - "setup.py"
