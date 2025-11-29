@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Automate development projects with Claude Code - works with 18 frameworks"
 readme = "README.md"
 requires-python = ">=3.8"
-license = "MIT"
+license = {text = "MIT"}
 authors = [
     {name = "Yusuf Karaaslan", email = "lazy-bird@proton.me"}
 ]
