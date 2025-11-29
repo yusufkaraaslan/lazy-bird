@@ -532,14 +532,45 @@ gh issue create --template task --title "Test" --label "ready"
 - Confirm git worktrees work
 - Check API access
 
-### Phase 1+: Per-Task
+### Python/Lazy_Bird Testing (Current)
+
+**Test Framework:** pytest with coverage tracking
+
+**Running Tests:**
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=lazy_bird --cov-report=term
+
+# Run specific test markers
+pytest -m unit          # Unit tests only
+pytest -m integration   # Integration tests only
+pytest -m "not slow"    # Skip slow tests
+```
+
+**Coverage Requirements:**
+- **Minimum:** 10% (enforced in CI)
+- **Target:** 70%+ for production-ready code
+- **New code:** Aim for 80%+ coverage
+
+**CI/CD Automation:**
+- GitHub Actions runs tests on every push/PR
+- Tests across Python 3.8, 3.9, 3.10, 3.11, 3.12
+- Coverage uploaded to Codecov
+- Code quality checks (black, flake8, mypy, bandit)
+
+**See:** `CONTRIBUTING.md` for detailed testing guide
+
+### Phase 1+: Per-Task (Godot Projects)
 - Each task generates tests via Claude
 - Tests run through Godot Server
 - Retry up to 3 times on failure
 - Only create PR if tests pass
 - Log all test results
 
-### Test Framework: gdUnit4
+### Test Framework: gdUnit4 (Godot Projects)
 
 **Installation:**
 ```bash
@@ -594,7 +625,25 @@ Issue: https://github.com/user/repo/issues/42
 
 ## Documentation Structure
 
-All design documents in `Docs/Design/`:
+### Primary Documentation
+
+**Root Directory:**
+- `README.md` - Main project documentation
+- `CLAUDE.md` - This file - Developer/Claude Code guidance
+- `CONTRIBUTING.md` - **Comprehensive contributor guide with testing & CI/CD**
+- `CODE_OF_CONDUCT.md` - Community guidelines
+- `CHANGELOG.md` - Version history
+
+**CI/CD Documentation:**
+- `.github/CI-CD-SETUP.md` - Complete CI/CD setup guide
+- `.github/workflows/test.yml` - Automated testing workflow
+- `.github/workflows/lint.yml` - Code quality checks
+- `.github/workflows/publish.yml` - PyPI publishing automation
+- `.codecov.yml` - Coverage configuration
+- `pytest.ini` - Pytest configuration
+- `pyproject.toml` - Python package config & dev tools
+
+### Design Documents (`Docs/Design/`)
 
 **New Architecture Specs (IMPORTANT):**
 - `wizard-complete-spec.md` - Full wizard specification
@@ -636,27 +685,38 @@ gh issue create --template task --title "Add health system" --label "ready"
 ./wizard.sh --status
 ```
 
-### For Developers Contributing to Lazy_Birtd
+### For Developers Contributing to Lazy_Bird
 
 ```bash
-# Read this first
+# 1. Read contributor guide first (has testing & CI/CD info)
+cat CONTRIBUTING.md
+
+# 2. Read developer guide
 cat CLAUDE.md
 
-# Review architecture
+# 3. Review architecture
 ls -la Docs/Design/
 
-# Understand correct Claude commands
+# 4. Understand correct Claude commands
 cat Docs/Design/claude-cli-reference.md
 
-# Check security requirements
+# 5. Check security requirements
 cat Docs/Design/security-baseline.md
 
-# Run Phase 0 tests
-./tests/phase0/validate-all.sh ./test-project
+# 6. Set up development environment
+pip install -e ".[dev]"
 
-# Make changes
-# Test changes
-# Submit PR
+# 7. Run tests to verify setup
+pytest
+
+# 8. Make your changes
+
+# 9. Run pre-push checks (from CONTRIBUTING.md)
+pytest --cov=lazy_bird --cov-fail-under=10
+black --check --diff lazy_bird/ tests/
+flake8 lazy_bird/ tests/
+
+# 10. Submit PR
 ```
 
 ## Troubleshooting
@@ -764,10 +824,11 @@ MIT License - See LICENSE file
 
 ## Support & Contributing
 
+- **Contributing Guide:** See `CONTRIBUTING.md` for complete guide (testing, CI/CD, pre-push checklist)
 - **Documentation:** All specs in `Docs/Design/`
 - **Issues:** GitHub Issues for bug reports
 - **Discussions:** GitHub Discussions for questions
-- **Contributing:** Read CLAUDE.md, run Phase 0, submit PRs
+- **Pull Requests:** Follow `CONTRIBUTING.md` pre-push checklist before submitting
 
 ## Important Reminders
 
@@ -780,7 +841,8 @@ MIT License - See LICENSE file
 
 ---
 
-**Last Updated:** 2025-11-07
-**Version:** 2.2 (Phase 1.1 Complete - Multi-Project Support)
+**Last Updated:** 2025-11-29
+**Version:** 2.3 (CI/CD Pipeline Operational)
 **Status:** Phase 1.1 implemented and tested - Production ready!
-**Project Status:** Fully initialized - Multi-project support active
+**CI/CD Status:** ✅ Automated testing, code quality checks, and coverage tracking operational
+**Project Status:** Fully initialized - Multi-project support active with comprehensive test suite
