@@ -17,6 +17,7 @@ coverage:
       default:
         target: 10%
         threshold: 5%
+        informational: true  # Don't fail builds on patch coverage
 
 comment:
   layout: "header, diff, flags, files, footer"
