@@ -11,6 +11,8 @@ Thank you for your interest in contributing to Lazy_Bird! This document provides
 - [Coding Standards](#coding-standards)
 - [Adding Framework Presets](#adding-framework-presets)
 - [Testing](#testing)
+- [CI/CD Pipeline](#cicd-pipeline)
+- [Pre-push Checklist](#pre-push-checklist)
 - [Documentation](#documentation)
 
 ## Code of Conduct
@@ -107,12 +109,13 @@ git push origin feature/your-feature-name
 
 ### Before Submitting
 
-1. **Test your changes** thoroughly
-2. **Update documentation** if needed
-3. **Follow coding standards** (see below)
-4. **Ensure tests pass** (if applicable)
-5. **Update CHANGELOG** (if significant change)
-6. **Rebase on latest main** if needed
+1. **Run the [Pre-push Checklist](#pre-push-checklist)** - Verify all checks pass locally
+2. **Test your changes** thoroughly
+3. **Update documentation** if needed
+4. **Follow coding standards** (see below)
+5. **Ensure tests pass** and coverage meets minimum 10%
+6. **Update CHANGELOG** (if significant change)
+7. **Rebase on latest main** if needed
 
 ### PR Requirements
 
@@ -280,6 +283,124 @@ Create a PR with:
 
 ## Testing
 
+### Running Tests Locally
+
+Lazy_Bird uses pytest for automated testing. All tests must pass before submitting a PR.
+
+```bash
+# Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+
+# Run specific test directory
+pytest tests/unit/
+
+# Run specific test file
+pytest tests/unit/test_init.py
+
+# Run tests matching a pattern
+pytest -k "test_version"
+```
+
+### Running Tests with Coverage
+
+We aim for 70%+ code coverage. Currently, CI requires minimum 10% coverage.
+
+```bash
+# Run tests with coverage report
+pytest --cov=lazy_bird --cov-report=term
+
+# Generate detailed HTML coverage report
+pytest --cov=lazy_bird --cov-report=html
+# Open htmlcov/index.html in your browser
+
+# Check if coverage meets threshold
+pytest --cov=lazy_bird --cov-fail-under=10
+
+# Generate coverage XML for CI
+pytest --cov=lazy_bird --cov-report=xml
+```
+
+### Test Markers
+
+Tests are organized with markers for selective execution:
+
+```bash
+# Run only unit tests (fast, isolated)
+pytest -m unit
+
+# Run only integration tests (slower, may require services)
+pytest -m integration
+
+# Run slow tests
+pytest -m slow
+
+# Run script tests
+pytest -m scripts
+
+# Skip slow tests
+pytest -m "not slow"
+```
+
+See `pytest.ini` for marker definitions.
+
+### Writing Tests
+
+Tests use fixtures defined in `tests/conftest.py`. Example:
+
+```python
+"""tests/unit/test_example.py"""
+import lazy_bird
+
+class TestExample:
+    """Test suite for example functionality."""
+
+    def test_basic_function(self, temp_dir):
+        """Test basic functionality using temp directory fixture."""
+        # temp_dir is provided by conftest.py
+        test_file = temp_dir / "test.txt"
+        test_file.write_text("test content")
+
+        assert test_file.exists()
+        assert test_file.read_text() == "test content"
+
+    def test_with_config(self, mock_config):
+        """Test using mock configuration fixture."""
+        # mock_config provides a complete configuration
+        assert mock_config['project_type'] == 'python'
+        assert 'project_path' in mock_config
+```
+
+### Test File Organization
+
+```
+tests/
+├── conftest.py           # Shared fixtures and configuration
+├── unit/                 # Unit tests (fast, isolated)
+│   ├── test_init.py     # Package metadata tests
+│   └── test_*.py        # Add your unit tests here
+├── integration/          # Integration tests (slower)
+│   └── test_*.py        # Add integration tests here
+└── fixtures/             # Test data and mock files
+```
+
+### Coverage Requirements
+
+- **Current minimum:** 10% (enforced in CI)
+- **Target:** 70%+ coverage
+- **New code:** Aim for 80%+ coverage on new features
+- **Critical paths:** 100% coverage on core functionality
+
+Coverage is tracked via Codecov and reported on every PR.
+
+### Example Test Files
+
+Reference these for writing your own tests:
+- [`tests/unit/test_init.py`](tests/unit/test_init.py) - Package metadata tests
+- [`tests/conftest.py`](tests/conftest.py) - Shared fixtures
+
 ### Manual Testing
 
 ```bash
@@ -293,13 +414,213 @@ Create a PR with:
 # 4. Check PR creation
 ```
 
-### Automated Testing
+## CI/CD Pipeline
 
-If adding test scripts:
-- Place in `tests/` directory
-- Follow existing test patterns
-- Include positive and negative test cases
-- Test error handling
+Lazy_Bird uses GitHub Actions for continuous integration and deployment. All PRs and commits to `main` trigger automated checks.
+
+### Workflows
+
+#### Tests Workflow (`.github/workflows/test.yml`)
+
+Runs on every push and PR to `main` or `develop` branches.
+
+**What it does:**
+- Tests across Python versions: 3.8, 3.9, 3.10, 3.11, 3.12
+- Runs on Ubuntu Latest
+- Installs dependencies from `pyproject.toml`
+- Executes pytest with coverage
+- Uploads coverage to Codecov (Python 3.11 only)
+- Enforces 10% minimum coverage threshold
+
+**Viewing results:**
+```bash
+# View recent workflow runs
+gh run list --limit 5
+
+# View specific run details
+gh run view <run-id>
+
+# Download run logs
+gh run download <run-id>
+```
+
+#### Code Quality Workflow (`.github/workflows/lint.yml`)
+
+Runs code quality checks on every push and PR.
+
+**Checks performed:**
+1. **Black** - Code formatting (PEP 8 compliance)
+2. **Flake8** - Linting and style guide enforcement
+3. **Mypy** - Static type checking (informational)
+4. **Bandit** - Security vulnerability scanning
+
+**All checks must pass** for the PR to be mergeable.
+
+#### Publish Workflow (`.github/workflows/publish.yml`)
+
+Automatically publishes to PyPI when a GitHub Release is created.
+
+**Steps:**
+1. Builds distribution packages (`sdist` and `wheel`)
+2. Publishes to PyPI (on release)
+3. Uploads artifacts to GitHub Release
+4. Manual dispatch option for TestPyPI
+
+### Codecov Integration
+
+Code coverage is tracked and reported on every commit.
+
+**Features:**
+- **Project coverage:** Must maintain 10% minimum
+- **Patch coverage:** Informational (won't block builds)
+- **Coverage badge:** Shows current coverage in README
+- **PR comments:** Codecov bot comments on PRs with coverage changes
+
+**Viewing coverage:**
+- Badge in README: Shows overall project coverage
+- Codecov dashboard: https://codecov.io/gh/yusufkaraaslan/lazy-bird
+- PR comments: Detailed coverage diff for changes
+
+### Viewing CI Results
+
+**On GitHub:**
+1. Go to your PR or commit
+2. Scroll to bottom to see status checks
+3. Click "Details" on any check to view logs
+
+**Via CLI:**
+```bash
+# List recent runs
+gh run list
+
+# Watch a running workflow
+gh run watch
+
+# View run details
+gh run view <run-id> --log
+```
+
+### When CI Fails
+
+#### Test Failures
+```bash
+# Run the same tests locally
+pytest --cov=lazy_bird --cov-report=term
+
+# Run specific failing test
+pytest tests/unit/test_init.py::TestPackageMetadata::test_version_exists -v
+
+# Check coverage threshold
+pytest --cov=lazy_bird --cov-fail-under=10
+```
+
+#### Black Formatting Failures
+```bash
+# Check what would change
+black --check --diff lazy_bird/ tests/
+
+# Auto-fix formatting
+black lazy_bird/ tests/
+
+# Commit fixes
+git add -A
+git commit -m "Fix code formatting with black"
+```
+
+#### Flake8 Linting Failures
+```bash
+# Run flake8 locally
+flake8 lazy_bird/ tests/
+
+# View only critical errors
+flake8 lazy_bird/ tests/ --select=E9,F63,F7,F82
+```
+
+#### Mypy Type Checking Issues
+```bash
+# Run mypy locally
+mypy lazy_bird/ --ignore-missing-imports
+
+# Note: Mypy failures are informational and won't block PRs
+```
+
+### CI Configuration Files
+
+- `.github/workflows/test.yml` - Test automation
+- `.github/workflows/lint.yml` - Code quality checks
+- `.github/workflows/publish.yml` - PyPI publishing
+- `.codecov.yml` - Coverage configuration
+- `pytest.ini` - Pytest configuration
+- `pyproject.toml` - Project dependencies and tool configs
+
+## Pre-push Checklist
+
+Before pushing your changes, run these checks locally to avoid CI failures:
+
+```bash
+# 1. Run all tests
+pytest
+
+# 2. Check code formatting
+black --check --diff lazy_bird/ tests/
+
+# 3. Run linter
+flake8 lazy_bird/ tests/
+
+# 4. Check types (optional but recommended)
+mypy lazy_bird/ --ignore-missing-imports
+
+# 5. Verify coverage threshold
+pytest --cov=lazy_bird --cov-fail-under=10
+
+# 6. Run security scan (optional)
+bandit -r lazy_bird/
+```
+
+### Quick Fix Commands
+
+If checks fail, fix them quickly:
+
+```bash
+# Auto-fix formatting
+black lazy_bird/ tests/
+
+# Run tests with verbose output to identify failures
+pytest -v
+
+# Generate coverage report to see what's missing
+pytest --cov=lazy_bird --cov-report=html
+open htmlcov/index.html
+```
+
+### Recommended: Pre-commit Hook
+
+Create `.git/hooks/pre-commit` to run checks automatically:
+
+```bash
+#!/bin/bash
+# Run tests and formatting before commit
+
+echo "Running pre-commit checks..."
+
+# Format code
+black lazy_bird/ tests/
+
+# Run tests
+pytest --cov=lazy_bird --cov-fail-under=10
+
+if [ $? -ne 0 ]; then
+    echo "❌ Tests failed. Commit aborted."
+    exit 1
+fi
+
+echo "✅ All checks passed!"
+```
+
+Make it executable:
+```bash
+chmod +x .git/hooks/pre-commit
+```
 
 ## Documentation
 
