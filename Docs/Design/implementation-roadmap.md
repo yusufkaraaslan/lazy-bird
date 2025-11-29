@@ -14,13 +14,22 @@ This roadmap reflects the **corrected architecture**:
 
 ### One Command Setup
 ```bash
-# Run the wizard - it handles everything including Phase 0
+# Option 1: Install via pip/UV (easiest - v0.1.0+)
+pip install lazy-bird
+# or
+uv pip install lazy-bird
+
+# Then run setup
+lazy-bird setup
+
+# Option 2: Run the wizard from source
 curl -L https://raw.githubusercontent.com/yusyus/lazy_birtd/main/wizard.sh | bash
 
-# Or if you prefer to review first
-wget https://raw.githubusercontent.com/yusyus/lazy_birtd/main/wizard.sh
+# Option 3: Clone and review first
+git clone https://github.com/yusufkaraaslan/lazy-bird.git
+cd lazy-bird
 cat wizard.sh  # Review the script
-bash wizard.sh
+./wizard.sh
 ```
 
 ### What the Wizard Does For You
@@ -263,7 +272,7 @@ journalctl --user -u issue-watcher -f
 
 ## 🗂️ Phase 1.1: Multi-Project Support (30 min with wizard, 1 hour manual)
 
-**✅ CURRENT PHASE - Fully Implemented and Tested**
+**✅ COMPLETE - Production Ready! (Tested: 26/26 tests passed)**
 
 ### Why Phase 1.1?
 After using Phase 1 for a week, you might want to automate multiple projects:

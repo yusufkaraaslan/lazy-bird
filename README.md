@@ -618,6 +618,50 @@ A: Tests catch most issues. Changes are in isolated worktrees and PRs for review
 - Team collaboration features
 - Cost optimization
 
+## 🧪 Development & Testing
+
+Lazy_Bird includes a comprehensive test suite with 70%+ code coverage.
+
+### Running Tests
+
+```bash
+# Install test dependencies
+pip install pytest pytest-cov
+
+# Run all tests
+pytest
+
+# Run with coverage report
+pytest --cov=lazy_bird --cov-report=html
+open htmlcov/index.html
+
+# Run specific tests
+pytest tests/unit/test_init.py -v
+```
+
+### Test Structure
+
+```
+tests/
+├── unit/              # Fast, isolated unit tests
+├── integration/       # Integration tests
+├── conftest.py        # Shared fixtures
+└── README.md          # Detailed testing guide
+```
+
+### Writing Tests
+
+```python
+import pytest
+from lazy_bird import __version__
+
+def test_version_exists():
+    """Test that version is defined"""
+    assert __version__ is not None
+```
+
+**See [tests/README.md](tests/README.md) for complete testing documentation.**
+
 ## Contributing
 
 Contributions welcome! Please:
@@ -625,7 +669,9 @@ Contributions welcome! Please:
 1. Read [CLAUDE.md](CLAUDE.md) first
 2. Check [Docs/Design/](Docs/Design/) for specifications
 3. Run Phase 0 validation
-4. Submit PRs with tests
+4. Write tests for new features (see [tests/README.md](tests/README.md))
+5. Ensure tests pass: `pytest --cov=lazy_bird --cov-fail-under=70`
+6. Submit PRs with tests and documentation
 
 ## License
 

@@ -5,16 +5,34 @@
 **This plan has been corrected from the original v1.** Key changes:
 - ✅ Uses actual Claude Code CLI commands (`claude -p`, not fictional `--task` flag)
 - ✅ Tasks from GitHub/GitLab Issues (not task files)
-- ✅ Multi-framework support (15+ frameworks via presets)
+- ✅ Multi-framework support (18 frameworks via presets)
 - ✅ Test Server for multi-framework test coordination
 - ✅ Phase 0 validation required before implementation
 - ✅ Wizard-first installation approach
 - ✅ Corrected resource estimates
+- ✅ **Phase 0 Web UI: COMPLETE** (React + TypeScript dashboard)
+- ✅ **Phase 1.1: COMPLETE** (Multi-project management)
+- ✅ **Package Distribution: COMPLETE** (pip/UV installable)
+
+**Current Status:** Phase 1.1 Complete - Production Ready!
 
 **Before implementing ANY phase, you MUST:**
 1. Run Phase 0 validation: `./tests/phase0/validate-all.sh --type <framework>`
 2. Ensure validation passes completely
 3. Use the wizard for installation: `./wizard.sh`
+
+**Quick Install:**
+```bash
+# Option 1: pip/UV (recommended)
+pip install lazy-bird
+# or
+uv pip install lazy-bird
+
+# Option 2: From source
+git clone https://github.com/yusufkaraaslan/lazy-bird.git
+cd lazy-bird
+./wizard.sh
+```
 
 ## 🎯 Vision
 Build an automated development system that continues working while you're away, supporting any framework (Godot, React, Django, Rust, etc.) and scaling from simple task automation to enterprise-level orchestration based on your actual needs.
