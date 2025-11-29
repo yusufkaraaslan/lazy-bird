@@ -33,7 +33,9 @@ def print_banner():
 
     Version: {version}
     Automate ANY development project while you sleep 🦜💤
-    """.format(version=__version__)
+    """.format(
+        version=__version__
+    )
     print(banner)
 
 
@@ -112,83 +114,44 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         prog="lazy-bird",
         description="Automate development projects with Claude Code",
-        epilog="For more information, visit: https://github.com/yusufkaraaslan/lazy-bird"
+        epilog="For more information, visit: https://github.com/yusufkaraaslan/lazy-bird",
     )
 
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"lazy-bird {__version__}"
-    )
+    parser.add_argument("--version", action="version", version=f"lazy-bird {__version__}")
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Setup wizard
-    wizard_parser = subparsers.add_parser(
-        "setup",
-        help="Run the setup wizard"
-    )
-    wizard_parser.add_argument(
-        "wizard_args",
-        nargs="*",
-        help="Arguments to pass to the wizard"
-    )
+    wizard_parser = subparsers.add_parser("setup", help="Run the setup wizard")
+    wizard_parser.add_argument("wizard_args", nargs="*", help="Arguments to pass to the wizard")
 
     # Web server
-    server_parser = subparsers.add_parser(
-        "server",
-        help="Start the web backend server"
+    server_parser = subparsers.add_parser("server", help="Start the web backend server")
+    server_parser.add_argument(
+        "--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)"
     )
     server_parser.add_argument(
-        "--host",
-        default="127.0.0.1",
-        help="Host to bind to (default: 127.0.0.1)"
-    )
-    server_parser.add_argument(
-        "--port",
-        type=int,
-        default=5000,
-        help="Port to bind to (default: 5000)"
+        "--port", type=int, default=5000, help="Port to bind to (default: 5000)"
     )
 
     # Godot server
-    godot_parser = subparsers.add_parser(
-        "godot",
-        help="Run the Godot test server"
-    )
-    godot_parser.add_argument(
-        "godot_args",
-        nargs="*",
-        help="Arguments to pass to Godot server"
-    )
+    godot_parser = subparsers.add_parser("godot", help="Run the Godot test server")
+    godot_parser.add_argument("godot_args", nargs="*", help="Arguments to pass to Godot server")
 
     # Issue watcher
-    watcher_parser = subparsers.add_parser(
-        "watch",
-        help="Run the issue watcher"
-    )
+    watcher_parser = subparsers.add_parser("watch", help="Run the issue watcher")
     watcher_parser.add_argument(
-        "watcher_args",
-        nargs="*",
-        help="Arguments to pass to issue watcher"
+        "watcher_args", nargs="*", help="Arguments to pass to issue watcher"
     )
 
     # Project manager
-    project_parser = subparsers.add_parser(
-        "project",
-        help="Manage projects"
-    )
+    project_parser = subparsers.add_parser("project", help="Manage projects")
     project_parser.add_argument(
-        "project_args",
-        nargs="*",
-        help="Arguments to pass to project manager"
+        "project_args", nargs="*", help="Arguments to pass to project manager"
     )
 
     # Status command
-    status_parser = subparsers.add_parser(
-        "status",
-        help="Show system status"
-    )
+    status_parser = subparsers.add_parser("status", help="Show system status")
 
     # Parse arguments
     args = parser.parse_args(argv)

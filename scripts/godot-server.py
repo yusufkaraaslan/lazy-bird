@@ -53,18 +53,18 @@ except ImportError:
 
 # Configuration
 # Default artifacts directory (can be overridden by env var or command line)
-DEFAULT_ARTIFACTS_DIR = os.environ.get('LAZY_BIRD_ARTIFACTS_DIR',
-                                        str(Path.home() / '.local/share/lazy_birtd/tests'))
+DEFAULT_ARTIFACTS_DIR = os.environ.get(
+    "LAZY_BIRD_ARTIFACTS_DIR", str(Path.home() / ".local/share/lazy_birtd/tests")
+)
 MAX_QUEUE_SIZE = 50
 DEFAULT_TIMEOUT = 300  # 5 minutes
 JOB_RETENTION_DAYS = 7
 
 # Logging setup
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger('godot-server')
+logger = logging.getLogger("godot-server")
 
 # Flask app
 app = Flask(__name__)
@@ -72,6 +72,7 @@ app = Flask(__name__)
 
 class JobStatus(Enum):
     """Job lifecycle states"""
+
     QUEUED = "queued"
     RUNNING = "running"
     COMPLETE = "complete"
@@ -82,14 +83,16 @@ class JobStatus(Enum):
 
 class Priority(Enum):
     """Job priority levels"""
-    HIGH = 1    # Retry attempts, critical fixes
+
+    HIGH = 1  # Retry attempts, critical fixes
     NORMAL = 2  # Regular tasks
-    LOW = 3     # Non-blocking refactors
+    LOW = 3  # Non-blocking refactors
 
 
 @dataclass
 class TestJob:
     """Test job specification"""
+
     job_id: str
     project_path: str
     test_suite: str = "all"
@@ -122,6 +125,7 @@ class TestJob:
 @dataclass
 class TestSummary:
     """Test execution summary"""
+
     total: int = 0
     passed: int = 0
     failed: int = 0
@@ -192,8 +196,7 @@ class JobQueue:
     def get_queue_position(self, job_id: str) -> int:
         """Get position in queue (1-indexed)"""
         with self.lock:
-            queued_jobs = [j for j in self.jobs.values()
-                          if j.status == JobStatus.QUEUED]
+            queued_jobs = [j for j in self.jobs.values() if j.status == JobStatus.QUEUED]
             queued_jobs.sort(key=lambda j: j.submitted_at)
 
             for i, job in enumerate(queued_jobs, 1):
@@ -204,15 +207,17 @@ class JobQueue:
     def get_queue_depth(self) -> int:
         """Get number of queued jobs"""
         with self.lock:
-            return sum(1 for j in self.jobs.values()
-                      if j.status == JobStatus.QUEUED)
+            return sum(1 for j in self.jobs.values() if j.status == JobStatus.QUEUED)
 
     def cleanup_old_jobs(self, days: int = JOB_RETENTION_DAYS):
         """Remove jobs older than specified days"""
         cutoff = datetime.now() - timedelta(days=days)
         with self.lock:
-            old_jobs = [jid for jid, job in self.jobs.items()
-                       if job.completed_at and job.completed_at < cutoff]
+            old_jobs = [
+                jid
+                for jid, job in self.jobs.items()
+                if job.completed_at and job.completed_at < cutoff
+            ]
             for jid in old_jobs:
                 del self.jobs[jid]
                 logger.info(f"Cleaned up old job {jid}")
@@ -262,7 +267,7 @@ class TestExecutor:
                 capture_output=True,
                 text=True,
                 timeout=job.timeout_seconds,
-                cwd=job.project_path
+                cwd=job.project_path,
             )
 
             job.output = result.stdout + result.stderr
@@ -278,8 +283,10 @@ class TestExecutor:
             job.status = JobStatus.COMPLETE
             job.completed_at = datetime.now()
 
-            logger.info(f"Job {job.job_id} completed: {job.result} "
-                       f"({job.tests_passed}/{job.tests_run} passed)")
+            logger.info(
+                f"Job {job.job_id} completed: {job.result} "
+                f"({job.tests_passed}/{job.tests_run} passed)"
+            )
 
         except subprocess.TimeoutExpired:
             job.status = JobStatus.TIMEOUT
@@ -301,10 +308,12 @@ class TestExecutor:
         if job.framework == "gdUnit4":
             cmd = [
                 "godot",
-                "--path", job.project_path,
+                "--path",
+                job.project_path,
                 "--headless",
-                "-s", "res://addons/gdUnit4/bin/GdUnitCmdTool.gd",
-                "--ignoreHeadlessMode"
+                "-s",
+                "res://addons/gdUnit4/bin/GdUnitCmdTool.gd",
+                "--ignoreHeadlessMode",
             ]
 
             # Add test suite specification
@@ -321,10 +330,12 @@ class TestExecutor:
         elif job.framework == "GUT":
             cmd = [
                 "godot",
-                "--path", job.project_path,
+                "--path",
+                job.project_path,
                 "--headless",
-                "-s", "res://addons/gut/gut_cmdln.gd",
-                "-gdir=res://test"
+                "-s",
+                "res://addons/gut/gut_cmdln.gd",
+                "-gdir=res://test",
             ]
 
             if job.test_suite and job.test_suite != "all":
@@ -360,10 +371,12 @@ class TestExecutor:
             root = tree.getroot()
 
             # Extract summary
-            testsuite = root.find('testsuite')
+            testsuite = root.find("testsuite")
             if testsuite is not None:
-                job.tests_run = int(testsuite.get('tests', 0))
-                job.tests_failed = int(testsuite.get('failures', 0)) + int(testsuite.get('errors', 0))
+                job.tests_run = int(testsuite.get("tests", 0))
+                job.tests_failed = int(testsuite.get("failures", 0)) + int(
+                    testsuite.get("errors", 0)
+                )
                 job.tests_passed = job.tests_run - job.tests_failed
 
                 job.result = "passed" if job.tests_failed == 0 else "failed"
@@ -377,8 +390,7 @@ class TestExecutor:
         # GUT output format: "Tests run: X  Passing: Y  Failing: Z"
         import re
 
-        match = re.search(r'Tests run:\s*(\d+)\s+Passing:\s*(\d+)\s+Failing:\s*(\d+)',
-                         job.output)
+        match = re.search(r"Tests run:\s*(\d+)\s+Passing:\s*(\d+)\s+Failing:\s*(\d+)", job.output)
 
         if match:
             job.tests_run = int(match.group(1))
@@ -394,9 +406,9 @@ class TestExecutor:
 
         # Try to find test counts in output
         patterns = [
-            r'(\d+)\s+tests.*(\d+)\s+passed.*(\d+)\s+failed',
-            r'Tests:\s*(\d+),\s*Passed:\s*(\d+),\s*Failed:\s*(\d+)',
-            r'PASSED.*=\s*(\d+)',
+            r"(\d+)\s+tests.*(\d+)\s+passed.*(\d+)\s+failed",
+            r"Tests:\s*(\d+),\s*Passed:\s*(\d+),\s*Failed:\s*(\d+)",
+            r"PASSED.*=\s*(\d+)",
         ]
 
         for pattern in patterns:
@@ -452,6 +464,7 @@ def worker_thread():
                 if job.callback_url:
                     try:
                         import requests
+
                         requests.post(job.callback_url, json=asdict(job), timeout=5)
                     except Exception as e:
                         logger.error(f"Failed to send callback: {e}")
@@ -463,140 +476,142 @@ def worker_thread():
 
 # API Endpoints
 
-@app.route('/test/submit', methods=['POST'])
+
+@app.route("/test/submit", methods=["POST"])
 def submit_test():
     """Submit a new test job"""
     try:
         data = request.json
 
         # Validate required fields
-        if not data.get('project_path'):
-            return jsonify({'error': 'project_path is required'}), 400
+        if not data.get("project_path"):
+            return jsonify({"error": "project_path is required"}), 400
 
         # Create job
         job = TestJob(
             job_id=str(uuid.uuid4()),
-            project_path=data['project_path'],
-            test_suite=data.get('test_suite', 'all'),
-            framework=data.get('framework', 'gdUnit4'),
-            timeout_seconds=data.get('timeout_seconds', DEFAULT_TIMEOUT),
-            agent_id=data.get('agent_id'),
-            task_id=data.get('task_id'),
-            callback_url=data.get('callback_url'),
-            priority=Priority[data.get('priority', 'NORMAL')]
+            project_path=data["project_path"],
+            test_suite=data.get("test_suite", "all"),
+            framework=data.get("framework", "gdUnit4"),
+            timeout_seconds=data.get("timeout_seconds", DEFAULT_TIMEOUT),
+            agent_id=data.get("agent_id"),
+            task_id=data.get("task_id"),
+            callback_url=data.get("callback_url"),
+            priority=Priority[data.get("priority", "NORMAL")],
         )
 
         # Submit to queue
         if not job_queue.submit(job):
-            return jsonify({'error': 'Queue is full'}), 503
+            return jsonify({"error": "Queue is full"}), 503
 
         # Return response
         position = job_queue.get_queue_position(job.job_id)
         estimated_wait = position * 120  # Rough estimate: 2 min per job
 
-        return jsonify({
-            'job_id': job.job_id,
-            'status': job.status.value,
-            'queue_position': position,
-            'estimated_wait_seconds': estimated_wait
-        }), 202
+        return (
+            jsonify(
+                {
+                    "job_id": job.job_id,
+                    "status": job.status.value,
+                    "queue_position": position,
+                    "estimated_wait_seconds": estimated_wait,
+                }
+            ),
+            202,
+        )
 
     except Exception as e:
         logger.error(f"Submit error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route('/test/status/<job_id>', methods=['GET'])
+@app.route("/test/status/<job_id>", methods=["GET"])
 def get_status(job_id: str):
     """Get job status"""
     job = job_queue.get_job(job_id)
 
     if not job:
-        return jsonify({'error': 'Job not found'}), 404
+        return jsonify({"error": "Job not found"}), 404
 
     response = {
-        'job_id': job.job_id,
-        'status': job.status.value,
-        'submitted_at': job.submitted_at.isoformat() if job.submitted_at else None,
+        "job_id": job.job_id,
+        "status": job.status.value,
+        "submitted_at": job.submitted_at.isoformat() if job.submitted_at else None,
     }
 
     if job.status == JobStatus.QUEUED:
-        response['queue_position'] = job_queue.get_queue_position(job_id)
+        response["queue_position"] = job_queue.get_queue_position(job_id)
 
     elif job.status == JobStatus.RUNNING:
-        response['started_at'] = job.started_at.isoformat() if job.started_at else None
+        response["started_at"] = job.started_at.isoformat() if job.started_at else None
         if job.started_at:
             elapsed = (datetime.now() - job.started_at).total_seconds()
-            response['elapsed_seconds'] = int(elapsed)
-        response['timeout_seconds'] = job.timeout_seconds
+            response["elapsed_seconds"] = int(elapsed)
+        response["timeout_seconds"] = job.timeout_seconds
 
     elif job.status in [JobStatus.COMPLETE, JobStatus.FAILED, JobStatus.TIMEOUT]:
-        response.update({
-            'result': job.result,
-            'started_at': job.started_at.isoformat() if job.started_at else None,
-            'completed_at': job.completed_at.isoformat() if job.completed_at else None,
-            'tests_run': job.tests_run,
-            'tests_passed': job.tests_passed,
-            'tests_failed': job.tests_failed,
-        })
+        response.update(
+            {
+                "result": job.result,
+                "started_at": job.started_at.isoformat() if job.started_at else None,
+                "completed_at": job.completed_at.isoformat() if job.completed_at else None,
+                "tests_run": job.tests_run,
+                "tests_passed": job.tests_passed,
+                "tests_failed": job.tests_failed,
+            }
+        )
 
         if job.started_at and job.completed_at:
             duration = (job.completed_at - job.started_at).total_seconds()
-            response['duration_seconds'] = int(duration)
+            response["duration_seconds"] = int(duration)
 
         if job.log_path:
-            response['artifacts'] = {
-                'log': job.log_path,
-                'junit': job.junit_path
-            }
+            response["artifacts"] = {"log": job.log_path, "junit": job.junit_path}
 
         if job.error_message:
-            response['error_message'] = job.error_message
+            response["error_message"] = job.error_message
 
     return jsonify(response)
 
 
-@app.route('/test/results/<job_id>', methods=['GET'])
+@app.route("/test/results/<job_id>", methods=["GET"])
 def get_results(job_id: str):
     """Get detailed test results"""
     job = job_queue.get_job(job_id)
 
     if not job:
-        return jsonify({'error': 'Job not found'}), 404
+        return jsonify({"error": "Job not found"}), 404
 
     if job.status not in [JobStatus.COMPLETE, JobStatus.FAILED]:
-        return jsonify({'error': 'Job not complete'}), 400
+        return jsonify({"error": "Job not complete"}), 400
 
-    return jsonify({
-        'job_id': job.job_id,
-        'result': job.result,
-        'summary': {
-            'total': job.tests_run,
-            'passed': job.tests_passed,
-            'failed': job.tests_failed,
-        },
-        'output': job.output,
-        'artifacts': {
-            'log': job.log_path,
-            'junit': job.junit_path
+    return jsonify(
+        {
+            "job_id": job.job_id,
+            "result": job.result,
+            "summary": {
+                "total": job.tests_run,
+                "passed": job.tests_passed,
+                "failed": job.tests_failed,
+            },
+            "output": job.output,
+            "artifacts": {"log": job.log_path, "junit": job.junit_path},
         }
-    })
+    )
 
 
-@app.route('/test/cancel/<job_id>', methods=['DELETE'])
+@app.route("/test/cancel/<job_id>", methods=["DELETE"])
 def cancel_test(job_id: str):
     """Cancel a queued or running test"""
     if job_queue.cancel_job(job_id):
-        return jsonify({
-            'job_id': job_id,
-            'status': 'cancelled',
-            'cancelled_at': datetime.now().isoformat()
-        })
+        return jsonify(
+            {"job_id": job_id, "status": "cancelled", "cancelled_at": datetime.now().isoformat()}
+        )
     else:
-        return jsonify({'error': 'Cannot cancel job (not found or already running)'}), 400
+        return jsonify({"error": "Cannot cancel job (not found or already running)"}), 400
 
 
-@app.route('/health', methods=['GET'])
+@app.route("/health", methods=["GET"])
 def health():
     """Health check endpoint"""
     uptime = (datetime.now() - server_start_time).total_seconds()
@@ -604,37 +619,38 @@ def health():
     # Get Godot version
     godot_version = "unknown"
     try:
-        result = subprocess.run(['godot', '--version'],
-                              capture_output=True, text=True, timeout=5)
+        result = subprocess.run(["godot", "--version"], capture_output=True, text=True, timeout=5)
         if result.returncode == 0:
             godot_version = result.stdout.strip()
     except:
         pass
 
-    return jsonify({
-        'status': 'healthy',
-        'godot_version': godot_version,
-        'uptime_seconds': int(uptime),
-        'queue_depth': job_queue.get_queue_depth(),
-        'active_job': job_queue.active_job.job_id if job_queue.active_job else None,
-        'total_jobs_processed': total_jobs_processed,
-    })
+    return jsonify(
+        {
+            "status": "healthy",
+            "godot_version": godot_version,
+            "uptime_seconds": int(uptime),
+            "queue_depth": job_queue.get_queue_depth(),
+            "active_job": job_queue.active_job.job_id if job_queue.active_job else None,
+            "total_jobs_processed": total_jobs_processed,
+        }
+    )
 
 
-@app.route('/queue', methods=['GET'])
+@app.route("/queue", methods=["GET"])
 def view_queue():
     """View current queue"""
     active = None
     if job_queue.active_job:
         job = job_queue.active_job
         active = {
-            'job_id': job.job_id,
-            'agent_id': job.agent_id,
-            'task_id': job.task_id,
-            'started_at': job.started_at.isoformat() if job.started_at else None,
+            "job_id": job.job_id,
+            "agent_id": job.agent_id,
+            "task_id": job.task_id,
+            "started_at": job.started_at.isoformat() if job.started_at else None,
         }
         if job.started_at:
-            active['elapsed_seconds'] = int((datetime.now() - job.started_at).total_seconds())
+            active["elapsed_seconds"] = int((datetime.now() - job.started_at).total_seconds())
 
     queued_jobs = []
     with job_queue.lock:
@@ -642,35 +658,34 @@ def view_queue():
         queued.sort(key=lambda j: j.submitted_at)
 
         for i, job in enumerate(queued, 1):
-            queued_jobs.append({
-                'job_id': job.job_id,
-                'agent_id': job.agent_id,
-                'task_id': job.task_id,
-                'position': i,
-                'submitted_at': job.submitted_at.isoformat() if job.submitted_at else None,
-            })
+            queued_jobs.append(
+                {
+                    "job_id": job.job_id,
+                    "agent_id": job.agent_id,
+                    "task_id": job.task_id,
+                    "position": i,
+                    "submitted_at": job.submitted_at.isoformat() if job.submitted_at else None,
+                }
+            )
 
-    return jsonify({
-        'active': active,
-        'queued': queued_jobs,
-        'total_queued': len(queued_jobs)
-    })
+    return jsonify({"active": active, "queued": queued_jobs, "total_queued": len(queued_jobs)})
 
 
 def main():
     """Main entry point"""
     import argparse
+
     global executor
 
-    parser = argparse.ArgumentParser(description='Godot Test Coordination Server')
-    parser.add_argument('--host', default='127.0.0.1',
-                       help='Host to bind to (default: 127.0.0.1)')
-    parser.add_argument('--port', type=int, default=5000,
-                       help='Port to listen on (default: 5000)')
-    parser.add_argument('--artifacts-dir', default=DEFAULT_ARTIFACTS_DIR,
-                       help=f'Directory for test artifacts (default: {DEFAULT_ARTIFACTS_DIR})')
-    parser.add_argument('--debug', action='store_true',
-                       help='Enable debug mode')
+    parser = argparse.ArgumentParser(description="Godot Test Coordination Server")
+    parser.add_argument("--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=5000, help="Port to listen on (default: 5000)")
+    parser.add_argument(
+        "--artifacts-dir",
+        default=DEFAULT_ARTIFACTS_DIR,
+        help=f"Directory for test artifacts (default: {DEFAULT_ARTIFACTS_DIR})",
+    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 
     args = parser.parse_args()
 
@@ -689,5 +704,5 @@ def main():
     app.run(host=args.host, port=args.port, debug=args.debug, threaded=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
