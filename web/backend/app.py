@@ -50,11 +50,17 @@ try:
     from api.system import system_bp
     from api.queue import queue_bp
     from api.settings import settings_bp
+    from api.issues import issues_bp
+    from api.agents import agents_bp
+    from api.analytics import analytics_bp
 
     app.register_blueprint(projects_bp)
     app.register_blueprint(system_bp)
     app.register_blueprint(queue_bp)
     app.register_blueprint(settings_bp)
+    app.register_blueprint(issues_bp)
+    app.register_blueprint(agents_bp)
+    app.register_blueprint(analytics_bp)
 
     logger.info("API blueprints registered successfully")
 
@@ -74,7 +80,11 @@ def index():
         'endpoints': {
             'projects': '/api/projects',
             'system': '/api/system',
-            'queue': '/api/queue'
+            'queue': '/api/queue',
+            'settings': '/api/settings',
+            'issues': '/api/issues',
+            'agents': '/api/agents',
+            'analytics': '/api/analytics'
         }
     })
 
