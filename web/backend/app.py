@@ -20,8 +20,10 @@ import os
 import sys
 import logging
 import argparse
+import atexit
 from flask import Flask, jsonify
 from flask_cors import CORS
+from flask_socketio import SocketIO
 
 # Logging setup
 logging.basicConfig(
@@ -32,6 +34,7 @@ logger = logging.getLogger('lazy-bird-api')
 
 # Create Flask app
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # Enable CORS for frontend development
 # In production, restrict to specific origins
@@ -42,6 +45,17 @@ CORS(app, resources={
         "allow_headers": ["Content-Type"]
     }
 })
+
+# Initialize SocketIO with CORS support
+socketio = SocketIO(
+    app,
+    cors_allowed_origins=["http://localhost:3000", "http://localhost:5173"],
+    async_mode='threading',
+    logger=False,
+    engineio_logger=False,
+    ping_timeout=60,
+    ping_interval=25
+)
 
 
 # Import and register blueprints
@@ -70,6 +84,34 @@ except ImportError as e:
     sys.exit(1)
 
 
+# Initialize WebSocket components
+try:
+    from services.websocket_manager import WebSocketManager
+    from services.log_streaming import LogStreamer
+    from api import websocket
+
+    # Create instances
+    ws_manager = WebSocketManager(socketio)
+    log_streamer = LogStreamer(ws_manager)
+
+    # Initialize WebSocket handlers
+    websocket.init_websocket_handlers(ws_manager, log_streamer)
+    websocket.register_handlers(socketio)
+
+    # Cleanup on shutdown
+    @atexit.register
+    def cleanup():
+        logger.info("Shutting down WebSocket services...")
+        log_streamer.stop_all()
+
+    logger.info("WebSocket server initialized successfully")
+
+except ImportError as e:
+    logger.error(f"Error initializing WebSocket: {e}")
+    logger.error("Make sure Flask-SocketIO is installed")
+    sys.exit(1)
+
+
 @app.route('/')
 def index():
     """Root endpoint"""
@@ -85,6 +127,11 @@ def index():
             'issues': '/api/issues',
             'agents': '/api/agents',
             'analytics': '/api/analytics'
+        },
+        'websocket': {
+            'enabled': True,
+            'url': '/socket.io',
+            'channels': ['projects', 'issues', 'agents', 'system']
         }
     })
 
@@ -127,16 +174,21 @@ def main():
     """Main entry point"""
     args = parse_args()
 
-    logger.info(f"Starting Lazy_Bird Web API Server")
+    logger.info(f"Starting Lazy_Bird Web API Server with WebSocket support")
     logger.info(f"Host: {args.host}")
     logger.info(f"Port: {args.port}")
     logger.info(f"Debug: {args.debug}")
+    logger.info(f"WebSocket: ws://{args.host}:{args.port}/socket.io")
 
     try:
-        app.run(
+        socketio.run(
+            app,
             host=args.host,
             port=args.port,
-            debug=args.debug
+            debug=args.debug,
+            use_reloader=False,  # Disable reloader to prevent double initialization
+            log_output=args.debug,
+            allow_unsafe_werkzeug=True  # Allow in development (use production WSGI in prod)
         )
     except KeyboardInterrupt:
         logger.info("Shutting down gracefully...")

@@ -1,5 +1,8 @@
 Flask==3.0.0
 Flask-CORS==4.0.0
+Flask-SocketIO==5.3.6
+python-socketio==5.11.1
+python-engineio==4.9.0
 psutil==5.9.6
 PyYAML==6.0.1
 requests==2.31.0
