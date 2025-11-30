@@ -26,6 +26,15 @@ export interface BlockProps {
   onConfigChange?: (config: Record<string, any>) => void;
 }
 
+// Import blocks
+import { Activity, FolderOpen, ListTodo, Bot, Clock, DollarSign } from 'lucide-react';
+import { SystemStatusBlock } from '../components/blocks/SystemStatusBlock';
+import { ActiveProjectsBlock } from '../components/blocks/ActiveProjectsBlock';
+import { QueueOverviewBlock } from '../components/blocks/QueueOverviewBlock';
+import { AgentStatusBlock } from '../components/blocks/AgentStatusBlock';
+import { RecentActivityBlock } from '../components/blocks/RecentActivityBlock';
+import { CostTrackerBlock } from '../components/blocks/CostTrackerBlock';
+
 /**
  * Block Registry
  *
@@ -36,17 +45,60 @@ export interface BlockProps {
  * 4. It will automatically appear in the "Add Block" dropdown!
  */
 export const BLOCK_REGISTRY: Record<string, BlockDefinition> = {
-  // Dashboard blocks will be added as they're implemented
-  // Example:
-  // 'system-status': {
-  //   id: 'system-status',
-  //   name: 'System Status',
-  //   description: 'Shows queue depth, active agents, system health',
-  //   icon: Activity,
-  //   component: SystemStatusBlock,
-  //   availableIn: ['dashboard'],
-  //   requiresView: 'overall',
-  // },
+  'system-status': {
+    id: 'system-status',
+    name: 'System Status',
+    description: 'Queue depth, active agents, system health, and uptime',
+    icon: Activity,
+    component: SystemStatusBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'overall',
+  },
+  'active-projects': {
+    id: 'active-projects',
+    name: 'Active Projects',
+    description: 'List of enabled projects with status and issue counts',
+    icon: FolderOpen,
+    component: ActiveProjectsBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'overall',
+  },
+  'queue-overview': {
+    id: 'queue-overview',
+    name: 'Queue Overview',
+    description: 'All tasks across projects with status breakdown',
+    icon: ListTodo,
+    component: QueueOverviewBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'overall',
+  },
+  'agent-status': {
+    id: 'agent-status',
+    name: 'Agent Status',
+    description: 'List of agents with current tasks and resource usage',
+    icon: Bot,
+    component: AgentStatusBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'overall',
+  },
+  'recent-activity': {
+    id: 'recent-activity',
+    name: 'Recent Activity',
+    description: 'Timeline of recent events across all projects',
+    icon: Clock,
+    component: RecentActivityBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'overall',
+  },
+  'cost-tracker': {
+    id: 'cost-tracker',
+    name: 'Cost Tracker',
+    description: 'Spending metrics and budget progress',
+    icon: DollarSign,
+    component: CostTrackerBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'overall',
+  },
 };
 
 /**

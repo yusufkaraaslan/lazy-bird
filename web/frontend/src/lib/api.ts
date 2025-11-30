@@ -54,3 +54,40 @@ export const settingsApi = {
   updateToken: (token: string) => api.put('/api/settings/token', { token }),
   testToken: () => api.post('/api/settings/token/test'),
 };
+
+// Issues API
+export const issuesApi = {
+  list: (params?: {
+    project_id?: string;
+    status?: string;
+    complexity?: string;
+    limit?: number;
+    offset?: number;
+  }) => api.get('/api/issues', { params }),
+  get: (number: number, projectId?: string) =>
+    api.get(`/api/issues/${number}`, { params: { project_id: projectId } }),
+  getLogs: (number: number, projectId?: string) =>
+    api.get(`/api/issues/${number}/logs`, { params: { project_id: projectId } }),
+  retry: (number: number, projectId?: string) =>
+    api.post(`/api/issues/${number}/retry`, { project_id: projectId }),
+  cancel: (number: number, projectId?: string) =>
+    api.post(`/api/issues/${number}/cancel`, { project_id: projectId }),
+};
+
+// Agents API
+export const agentsApi = {
+  list: () => api.get('/api/agents'),
+  get: (id: string) => api.get(`/api/agents/${id}`),
+  getStatus: (id: string) => api.get(`/api/agents/${id}/status`),
+  stop: (id: string, force?: boolean) =>
+    api.post(`/api/agents/${id}/stop`, { force }),
+};
+
+// Analytics API
+export const analyticsApi = {
+  getOverall: (range?: string) =>
+    api.get('/api/analytics/overall', { params: { range } }),
+  getProject: (projectId: string, range?: string) =>
+    api.get(`/api/analytics/project/${projectId}`, { params: { range } }),
+  getCosts: () => api.get('/api/analytics/costs'),
+};
