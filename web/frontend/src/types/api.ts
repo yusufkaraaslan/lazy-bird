@@ -71,6 +71,7 @@ export interface Task {
   project_id?: string;
   project_name?: string;
   project_type?: string;
+  status?: 'pending' | 'in-progress' | 'completed' | 'completed-no-changes' | 'failed';
   _file?: string;
   _queued_at?: string;
   _size_bytes?: number;

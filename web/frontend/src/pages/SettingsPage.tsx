@@ -3,7 +3,7 @@
  */
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { settingsApi, systemApi } from '../lib/api';
+import { settingsApi } from '../lib/api';
 import { AlertCircle, CheckCircle, Key, RefreshCw, Shield, Play, Square, RotateCw, Power, ServerCog } from 'lucide-react';
 import { useSystemStatus, useServiceControl } from '../hooks/useSystem';
 
