@@ -53,8 +53,12 @@ export function CostTrackerBlock({}: BlockProps) {
 
   if (!costs) return null;
 
-  const monthlyProgress = (costs.this_month / costs.monthly_budget) * 100;
-  const dailyProgress = (costs.today / costs.daily_budget) * 100;
+  // Handle missing budget fields gracefully with defaults
+  const dailyBudget = costs.daily_budget || 50; // Default $50/day
+  const monthlyBudget = costs.monthly_budget || 1500; // Default $1500/month
+
+  const monthlyProgress = (costs.this_month / monthlyBudget) * 100;
+  const dailyProgress = (costs.today / dailyBudget) * 100;
 
   const getProgressColor = (progress: number) => {
     if (progress >= 100) return 'bg-red-500';
@@ -150,7 +154,7 @@ export function CostTrackerBlock({}: BlockProps) {
               ${costs.today.toFixed(2)}
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              ${costs.daily_budget.toFixed(2)}
+              ${dailyBudget.toFixed(2)}
             </span>
           </div>
         </div>
@@ -176,7 +180,7 @@ export function CostTrackerBlock({}: BlockProps) {
               ${costs.this_month.toFixed(2)}
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              ${costs.monthly_budget.toFixed(2)}
+              ${monthlyBudget.toFixed(2)}
             </span>
           </div>
         </div>
