@@ -60,11 +60,31 @@ def list_issues():
         total = len(tasks)
         tasks = tasks[offset:offset + limit]
 
+        # Map task fields to match frontend Issue interface
+        issues = []
+        for task in tasks:
+            issue = {
+                'number': task.get('issue_id', 0),
+                'project_id': task.get('project_id', ''),
+                'title': task.get('title', ''),
+                'body': task.get('body', ''),
+                'state': 'open',  # Tasks in queue are open
+                'status': task.get('status', 'queued'),
+                'labels': [],
+                'created_at': task.get('_queued_at', ''),
+                'updated_at': task.get('completed_at', task.get('_queued_at', '')),
+                'url': task.get('url', ''),
+                'author': 'system',
+                'complexity': task.get('complexity', 'unknown'),
+                'progress': 0  # TODO: Add progress tracking
+            }
+            issues.append(issue)
+
         return jsonify({
             'total': total,
             'offset': offset,
             'limit': limit,
-            'issues': tasks
+            'issues': issues
         }), 200
 
     except Exception as e:
