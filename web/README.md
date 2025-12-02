@@ -36,7 +36,47 @@ Modern web-based dashboard for managing Lazy_Bird automation system.
 
 ## Quick Start
 
-### Backend Setup
+### ⚡ One-Command Startup (Recommended)
+
+The easiest way to start both backend and frontend together:
+
+```bash
+# From the web directory
+cd web
+
+# Start everything
+./start.sh
+
+# When done, stop everything (or just press Ctrl+C)
+./stop.sh
+```
+
+**What start.sh does:**
+- ✅ Checks that backend venv and frontend node_modules exist
+- ✅ Starts backend server on port 5000
+- ✅ Starts frontend dev server on port 5173
+- ✅ Logs output to `backend.log` and `frontend.log`
+- ✅ Handles cleanup on Ctrl+C
+
+**URLs:**
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:5000`
+- API Docs: `http://localhost:5000/`
+
+**View Logs:**
+```bash
+# Backend logs
+tail -f web/backend.log
+
+# Frontend logs
+tail -f web/frontend.log
+```
+
+### 🔧 Manual Setup (Alternative)
+
+If you prefer to run backend and frontend separately:
+
+#### Backend Setup
 
 ```bash
 # Navigate to backend directory
@@ -56,9 +96,9 @@ python3 app.py
 python3 app.py --port 5001 --host 127.0.0.1
 ```
 
-**Backend will be available at:** `http://localhost:5001`
+**Backend will be available at:** `http://localhost:5000` (or custom port)
 
-### Frontend Setup
+#### Frontend Setup
 
 ```bash
 # Navigate to frontend directory
@@ -71,7 +111,7 @@ npm install
 npm run dev
 ```
 
-**Frontend will be available at:** `http://localhost:3000` or `http://localhost:5173`
+**Frontend will be available at:** `http://localhost:5173`
 
 ## API Documentation
 
@@ -250,6 +290,13 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 ### Development (Localhost Only)
 
+**Recommended - One Command:**
+```bash
+cd web
+./start.sh
+```
+
+**Alternative - Separate Terminals:**
 ```bash
 # Terminal 1: Backend
 cd web/backend && python3 app.py
