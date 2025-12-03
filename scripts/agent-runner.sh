@@ -530,11 +530,51 @@ push_branch() {
     fi
 }
 
+# Extract Claude's implementation summary from agent logs
+extract_claude_summary() {
+    local log_file="$LAZY_BIRD_LOG_DIR/agent-$PROJECT_ID-task-$TASK_ID.log"
+
+    if [ ! -f "$log_file" ]; then
+        echo "_No implementation summary available._"
+        return 1
+    fi
+
+    # Extract summary starting from "## Implementation Complete" or similar patterns
+    # Stop before git status output or other noise
+    local summary
+    summary=$(grep -A 200 "^## Implementation Complete\|^## Summary\|^# Implementation Details" "$log_file" 2>/dev/null | \
+        sed '/^On branch\|^Changes not staged\|^Untracked files\|^nothing to commit/,$d' | \
+        sed 's/\x1b\[[0-9;]*m//g' | \
+        head -100)
+
+    if [ -n "$summary" ]; then
+        echo "$summary"
+        return 0
+    else
+        # Fallback: Try to extract any markdown sections from Claude's output
+        summary=$(grep -A 100 "^###\|^##" "$log_file" 2>/dev/null | \
+            sed '/^On branch\|^Changes not staged\|^Untracked files\|^nothing to commit/,$d' | \
+            sed 's/\x1b\[[0-9;]*m//g' | \
+            head -50)
+
+        if [ -n "$summary" ]; then
+            echo "$summary"
+            return 0
+        else
+            echo "_Implementation completed. See logs for details._"
+            return 1
+        fi
+    fi
+}
+
 # Create pull request
 create_pr() {
     log_info "[$PROJECT_ID] Creating pull request..."
 
     cd "$WORKTREE_PATH" || exit 3
+
+    # Extract Claude's implementation summary from logs
+    CLAUDE_SUMMARY=$(extract_claude_summary)
 
     # Prepare PR body (Phase 1.1: include project context)
     PR_BODY="## Automated Task Implementation
@@ -547,9 +587,7 @@ create_pr() {
 
 ---
 
-### Implementation Details
-
-$TASK_BODY
+$CLAUDE_SUMMARY
 
 ---
 
@@ -583,17 +621,26 @@ https://github.com/yusufkaraaslan/lazy-bird"
         PR_URL=$(gh pr view "$BRANCH_NAME" --json url -q '.url')
         log_success "[$PROJECT_ID] Pull request created: $PR_URL"
 
-        # Comment on original issue with PR link
+        # Comment on original issue with PR link and implementation summary
         if [ -n "$TASK_URL" ]; then
             ISSUE_NUM=$(echo "$TASK_URL" | grep -oE '[0-9]+$')
             if [ -n "$ISSUE_NUM" ]; then
-                gh issue comment "$ISSUE_NUM" --body "✅ **Automated implementation complete**
+                gh issue comment "$ISSUE_NUM" --body "✅ **Implementation Complete**
 
-Pull request created: $PR_URL
+$CLAUDE_SUMMARY
 
-The agent has completed the implementation. Please review the PR and merge if satisfied.
+---
 
-View logs: \`~/.config/lazy_birtd/logs/agent-$PROJECT_ID-task-$TASK_ID.log\`"
+**Pull Request**: $PR_URL
+
+Please review the changes and merge if satisfied.
+
+<details>
+<summary>View Logs</summary>
+
+\`~/.config/lazy_birtd/logs/agent-$PROJECT_ID-task-$TASK_ID.log\`
+
+</details>"
             fi
         fi
 
