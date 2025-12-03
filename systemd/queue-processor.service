@@ -22,11 +22,10 @@ Environment="PYTHONIOENCODING=utf-8"
 Environment="PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
 # Security
+# Note: Systemd sandboxing features (ProtectHome, ProtectSystem) conflict with
+# the need to access and write to arbitrary project directories. These must be
+# disabled for the queue processor to function correctly.
 NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=read-only
-ReadWritePaths=%h/.config/lazy_birtd /tmp
 
 [Install]
 WantedBy=default.target
