@@ -269,7 +269,8 @@ function TaskDetailsModal({ task, onClose }: { task: Task; onClose: () => void }
     if (activeTab === 'logs' && logs === null && !logsLoading) {
       fetchLogs();
     }
-  }, [activeTab]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, logs, logsLoading]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
