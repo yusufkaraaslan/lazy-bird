@@ -2,7 +2,7 @@
 # Lazy_Bird Agent Runner
 # Processes a single task in isolated git worktree
 
-set -euo pipefail
+set -Eeuo pipefail
 
 # Ensure user local bin is in PATH for godot and other tools
 export PATH="$HOME/.local/bin:$PATH"
@@ -203,6 +203,24 @@ update_labels_to_review() {
     else
         log_warning "Failed to update labels (continuing anyway)"
     fi
+}
+
+# Update issue labels on failure: in-process → failed (or remove in-process)
+update_labels_on_failure() {
+    log_info "Updating issue labels for failed task..."
+
+    if gh issue edit "$TASK_ID" \
+        --repo "$REPO_NAME" \
+        --remove-label "in-process" 2>/dev/null; then
+        log_success "Labels updated: removed 'in-process'"
+    else
+        log_warning "Failed to update labels"
+    fi
+
+    # Optionally add 'failed' label if it exists in the repo
+    gh issue edit "$TASK_ID" \
+        --repo "$REPO_NAME" \
+        --add-label "failed" 2>/dev/null || true
 }
 
 # Create worktree
@@ -706,8 +724,20 @@ main() {
 
     TASK_FILE="$1"
 
-    # Setup trap for cleanup
+    # Setup traps for cleanup
     trap cleanup_worktree EXIT
+
+    # Error handler: update labels on failure
+    error_handler() {
+        local exit_code=$?
+        if [ $exit_code -ne 0 ]; then
+            # Only update labels if we've parsed the task (TASK_ID is set)
+            if [ -n "$TASK_ID" ] && [ -n "$REPO_NAME" ]; then
+                update_labels_on_failure
+            fi
+        fi
+    }
+    trap error_handler ERR
 
     # Initialization
     log_info "Step 1/11: Checking dependencies..."
