@@ -255,18 +255,79 @@ class QueueService:
         for task_file in self.queue_dir.glob(f'*{task_id}*.json'):
             possible_files.append(task_file)
 
+        task_deleted = False
         for task_file in possible_files:
             if task_file.exists():
                 try:
                     task_file.unlink()
                     logger.info(f"Deleted task file: {task_file}")
-                    return True
+                    task_deleted = True
+
+                    # Also remove from processed issues cache
+                    self._remove_from_processed_cache(task_id)
+                    break
                 except Exception as e:
                     logger.error(f"Error deleting task file {task_file}: {e}")
                     return False
 
-        logger.warning(f"Task file not found for ID: {task_id}")
-        return False
+        if not task_deleted:
+            logger.warning(f"Task file not found for ID: {task_id}")
+            return False
+
+        return True
+
+    def _remove_from_processed_cache(self, task_id: str):
+        """
+        Remove a task from the processed issues cache
+
+        Args:
+            task_id: Task ID in format 'project-id-issue-number' or just 'issue-number'
+        """
+        try:
+            data_dir = Path.home() / '.config' / 'lazy_birtd' / 'data'
+            cache_file = data_dir / 'processed_issues.json'
+
+            if not cache_file.exists():
+                return
+
+            # Read cache
+            with open(cache_file, 'r') as f:
+                processed = json.load(f)
+
+            # Parse task_id to extract project-id and issue number
+            # Format can be: "lazy-bied-test-26" or just "26"
+            parts = task_id.split('-')
+            if len(parts) >= 2:
+                # Has project-id prefix (e.g., "lazy-bied-test-26")
+                # Try to match "project-id:issue-number" pattern
+                issue_num = parts[-1]
+                project_id = '-'.join(parts[:-1])
+                cache_key = f"{project_id}:{issue_num}"
+            else:
+                # Legacy format - just issue number
+                cache_key = None
+                issue_num = task_id
+
+            # Remove from cache
+            original_len = len(processed)
+            if cache_key:
+                # Remove exact match
+                processed = [p for p in processed if p != cache_key]
+
+            # Also remove any entries ending with the issue number (fallback)
+            processed = [p for p in processed if not p.endswith(f":{issue_num}")]
+
+            if len(processed) < original_len:
+                # Save updated cache
+                with open(cache_file, 'w') as f:
+                    json.dump(processed, f, indent=2)
+                logger.info(f"Removed task {task_id} from processed cache ({original_len - len(processed)} entries removed)")
+            else:
+                logger.debug(f"Task {task_id} was not in processed cache")
+
+        except Exception as e:
+            logger.warning(f"Failed to remove task {task_id} from processed cache: {e}")
+            # Don't fail the delete operation if cache cleanup fails
 
     def get_queue_stats(self) -> Dict[str, Any]:
         """
