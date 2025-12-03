@@ -227,8 +227,28 @@ create_worktree() {
         git branch -D "$BRANCH_NAME" 2>/dev/null || true
     fi
 
-    # Create new worktree with new branch
-    if git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH" HEAD; then
+    # Fetch latest from remote to ensure we have up-to-date refs
+    log_info "[$PROJECT_ID] Fetching latest from remote..."
+    if git fetch origin; then
+        log_success "[$PROJECT_ID] Fetched latest from origin"
+    else
+        log_warning "[$PROJECT_ID] Failed to fetch from origin, using local refs"
+    fi
+
+    # Determine base branch (main or master)
+    if git show-ref --verify --quiet refs/remotes/origin/main; then
+        BASE_BRANCH="origin/main"
+    elif git show-ref --verify --quiet refs/remotes/origin/master; then
+        BASE_BRANCH="origin/master"
+    else
+        log_warning "[$PROJECT_ID] No origin/main or origin/master found, using HEAD"
+        BASE_BRANCH="HEAD"
+    fi
+
+    log_info "[$PROJECT_ID] Creating branch from $BASE_BRANCH"
+
+    # Create new worktree with new branch from latest main/master
+    if git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH" "$BASE_BRANCH"; then
         log_success "[$PROJECT_ID] Worktree created successfully"
     else
         log_error "[$PROJECT_ID] Failed to create worktree"
