@@ -1,0 +1,28 @@
+[Unit]
+Description=Lazy_Bird Queue Processor Service
+Documentation=https://github.com/yusufkaraaslan/lazy-bird
+After=network-online.target issue-watcher.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h
+ExecStart=/usr/bin/python3 /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/queue-processor.py
+Restart=always
+RestartSec=30
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=queue-processor
+
+# Environment
+Environment="PYTHONUNBUFFERED=1"
+Environment="PYTHONIOENCODING=utf-8"
+Environment="PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin"
+
+# Security
+NoNewPrivileges=false
+
+[Install]
+WantedBy=default.target
