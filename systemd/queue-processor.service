@@ -21,8 +21,5 @@ Environment="PYTHONUNBUFFERED=1"
 Environment="PYTHONIOENCODING=utf-8"
 Environment="PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
-# Security
-NoNewPrivileges=false
-
 [Install]
 WantedBy=default.target
