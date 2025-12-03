@@ -21,5 +21,12 @@ Environment="PYTHONUNBUFFERED=1"
 Environment="PYTHONIOENCODING=utf-8"
 Environment="PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin"
 
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.config/lazy_birtd /tmp
+
 [Install]
 WantedBy=default.target
