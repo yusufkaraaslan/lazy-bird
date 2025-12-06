@@ -118,7 +118,8 @@ task_limits:
 
 # Retry configuration
 retry:
-  max_attempts: 3
+  max_attempts: 3  # 3 retries = 4 total attempts (1 initial + 3 retries)
+  backoff_seconds: 30  # Wait between retry attempts (with exponential increase)
   max_cost_per_task_usd: 5.0
   daily_budget_limit_usd: 50.0
 

@@ -205,7 +205,7 @@ update_labels_to_review() {
     fi
 }
 
-# Update issue labels on failure: in-process → failed (or remove in-process)
+# Update issue labels on failure: in-process → needs-manual-fix
 update_labels_on_failure() {
     log_info "Updating issue labels for failed task..."
 
@@ -217,10 +217,10 @@ update_labels_on_failure() {
         log_warning "Failed to update labels"
     fi
 
-    # Optionally add 'failed' label if it exists in the repo
+    # Add 'needs-manual-fix' label
     gh issue edit "$TASK_ID" \
         --repo "$REPO_NAME" \
-        --add-label "failed" 2>/dev/null || true
+        --add-label "needs-manual-fix" 2>/dev/null || true
 }
 
 # Create worktree
@@ -707,6 +707,215 @@ cleanup_worktree() {
     return 0
 }
 
+# Parse test errors from log files
+parse_test_errors() {
+    local test_log="$LOG_DIR/test-output.log"
+    local error_summary=""
+
+    if [ ! -f "$test_log" ]; then
+        echo "No test log found"
+        return 1
+    fi
+
+    # Extract error count
+    local error_count=$(grep -c "ERROR:" "$test_log" 2>/dev/null || echo "0")
+    local failure_count=$(grep -c "FAILED\|FAILURE" "$test_log" 2>/dev/null || echo "0")
+
+    # Extract first few error messages
+    local errors=$(grep -E "ERROR:|SCRIPT ERROR:|Parse Error:" "$test_log" 2>/dev/null | head -5 | sed 's/\x1b\[[0-9;]*m//g')
+
+    # Build summary
+    error_summary="**Test Results:**\n"
+    error_summary+="- Errors: $error_count\n"
+    error_summary+="- Failures: $failure_count\n\n"
+
+    if [ -n "$errors" ]; then
+        error_summary+="**Sample Errors:**\n\`\`\`\n$errors\n\`\`\`"
+    fi
+
+    echo -e "$error_summary"
+}
+
+# Create draft PR with WIP title
+create_draft_pr() {
+    local attempt=${1:-1}
+    local max_attempts=${2:-4}
+
+    log_info "Creating draft pull request..."
+
+    # Extract Claude's summary
+    local summary=$(extract_claude_summary)
+
+    # Build PR body
+    local pr_body="## Implementation Summary\n\n$summary\n\n"
+    pr_body+="---\n\n"
+    pr_body+="🔄 **Status:** Running tests... (Attempt $attempt/$max_attempts)\n\n"
+    pr_body+="📋 **Task:** #$TASK_ID\n"
+    pr_body+="📊 **Logs:** http://localhost:5000/queue/$PROJECT_ID-$TASK_ID/logs\n\n"
+    pr_body+="---\n\n"
+    pr_body+="🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\n"
+    pr_body+="Co-Authored-By: Claude <noreply@anthropic.com>"
+
+    # Create draft PR
+    if PR_URL=$(gh pr create \
+        --repo "$REPO_NAME" \
+        --head "$BRANCH_NAME" \
+        --base "$BASE_BRANCH" \
+        --title "[WIP] Task #$TASK_ID: $TASK_TITLE" \
+        --body "$(echo -e "$pr_body")" \
+        --label "automated" \
+        --label "draft" \
+        --draft 2>&1); then
+
+        log_success "Draft PR created: $PR_URL"
+
+        # Extract PR number
+        PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
+        echo "$PR_NUMBER" > "$LOG_DIR/pr_number.txt"
+
+        return 0
+    else
+        log_error "Failed to create draft PR"
+        return 1
+    fi
+}
+
+# Update PR status with test results
+update_pr_status() {
+    local attempt=$1
+    local max_attempts=$2
+    local status=$3  # "testing", "failed", "passed"
+    local error_details=${4:-""}
+
+    # Read PR number
+    local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
+    if [ -z "$pr_num" ]; then
+        log_warning "No PR number found, skipping PR update"
+        return 1
+    fi
+
+    local comment=""
+
+    case "$status" in
+        failed)
+            comment="### 🔴 Test Failure - Attempt $attempt/$max_attempts\n\n"
+            comment+="$error_details\n\n"
+            if [ $attempt -lt $max_attempts ]; then
+                comment+="**Retrying to fix errors...**"
+            else
+                comment+="**All $max_attempts attempts exhausted. Manual intervention required.**"
+            fi
+            ;;
+        passed)
+            comment="### ✅ Tests Passed\n\n"
+            comment+="All tests completed successfully after $attempt attempt(s)."
+            ;;
+        testing)
+            comment="### 🔄 Running Tests - Attempt $attempt/$max_attempts\n\n"
+            comment+="Testing in progress..."
+            ;;
+    esac
+
+    # Post comment to PR
+    if [ -n "$comment" ]; then
+        gh pr comment "$pr_num" --repo "$REPO_NAME" --body "$(echo -e "$comment")" 2>/dev/null || true
+    fi
+
+    return 0
+}
+
+# Mark PR as ready for review
+mark_pr_ready() {
+    log_info "Converting draft PR to ready for review..."
+
+    local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
+    if [ -z "$pr_num" ]; then
+        log_warning "No PR number found"
+        return 1
+    fi
+
+    # Update PR title (remove [WIP])
+    local new_title="Task #$TASK_ID: $TASK_TITLE"
+
+    # Mark as ready
+    if gh pr ready "$pr_num" --repo "$REPO_NAME" 2>/dev/null; then
+        gh pr edit "$pr_num" --repo "$REPO_NAME" --title "$new_title" 2>/dev/null || true
+        log_success "PR marked as ready for review"
+        return 0
+    else
+        log_warning "Failed to mark PR as ready"
+        return 1
+    fi
+}
+
+# Post detailed failure comment to issue
+post_failure_comment() {
+    local attempt=$1
+    local max_attempts=$2
+    local error_details=$3
+
+    log_info "Posting failure comment to issue #$TASK_ID..."
+
+    local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
+    local pr_link=""
+    if [ -n "$pr_num" ]; then
+        pr_link="**Draft PR:** https://github.com/$REPO_NAME/pull/$pr_num (ready for manual fixes)"
+    fi
+
+    local comment=""
+
+    if [ $attempt -lt $max_attempts ]; then
+        # Retry comment
+        comment="### ⚠️ Attempt $attempt/$max_attempts Failed\n\n"
+        comment+="$error_details\n\n"
+        comment+="**Retrying with error context...**\n\n"
+        comment+="$pr_link\n"
+        comment+="**Logs:** http://localhost:5000/queue/$PROJECT_ID-$TASK_ID/logs"
+    else
+        # Final failure comment
+        comment="### ❌ Task Failed After $max_attempts Attempts\n\n"
+        comment+="**Final Errors:**\n$error_details\n\n"
+        comment+="**Branch:** \`$BRANCH_NAME\` (pushed to remote)\n"
+        comment+="$pr_link\n"
+        comment+="**Full logs:** http://localhost:5000/queue/$PROJECT_ID-$TASK_ID/logs\n\n"
+        comment+="---\n\n"
+        comment+="**To fix manually:**\n"
+        comment+="1. Check out branch: \`git checkout $BRANCH_NAME\`\n"
+        comment+="2. Fix errors listed above\n"
+        comment+="3. Run tests locally\n"
+        comment+="4. Push fixes: \`git push\`\n"
+        comment+="5. Mark PR ready when tests pass\n\n"
+        comment+="**To retry from scratch:**\n"
+        comment+="1. Delete this task from web UI\n"
+        comment+="2. Add 'ready' label back to issue"
+    fi
+
+    gh issue comment "$TASK_ID" --repo "$REPO_NAME" --body "$(echo -e "$comment")" 2>/dev/null || {
+        log_warning "Failed to post comment to issue"
+    }
+}
+
+# Post success comment to issue
+post_success_comment() {
+    log_info "Posting success comment to issue #$TASK_ID..."
+
+    local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
+    local pr_link=""
+    if [ -n "$pr_num" ]; then
+        pr_link="https://github.com/$REPO_NAME/pull/$pr_num"
+    fi
+
+    local comment="### ✅ Implementation Complete!\n\n"
+    comment+="All tests passed. PR is ready for review.\n\n"
+    if [ -n "$pr_link" ]; then
+        comment+="**Pull Request:** $pr_link"
+    fi
+
+    gh issue comment "$TASK_ID" --repo "$REPO_NAME" --body "$(echo -e "$comment")" 2>/dev/null || {
+        log_warning "Failed to post comment to issue"
+    }
+}
+
 # Main execution
 main() {
     log_info "Lazy_Bird Agent Runner v$VERSION"
@@ -754,6 +963,20 @@ main() {
         log_info "Step 3/11: Using project path from task (skipping config load)"
     fi
 
+    # Load retry configuration
+    MAX_RETRY_ATTEMPTS=3  # Default
+    RETRY_BACKOFF=30      # Default 30 seconds
+
+    # Try to load from config if available
+    if [ -f "$CONFIG_FILE" ]; then
+        MAX_RETRY_ATTEMPTS=$(grep -A 10 "^retry:" "$CONFIG_FILE" | grep "max_attempts:" | awk '{print $2}' || echo "3")
+        RETRY_BACKOFF=$(grep -A 10 "^retry:" "$CONFIG_FILE" | grep "backoff_seconds:" | awk '{print $2}' || echo "30")
+    fi
+
+    TOTAL_ATTEMPTS=$((MAX_RETRY_ATTEMPTS + 1))  # 3 retries = 4 total attempts
+
+    log_info "Retry configuration: $TOTAL_ATTEMPTS total attempts, ${RETRY_BACKOFF}s backoff"
+
     log_info "Step 3.5/11: Updating labels to 'in-process'..."
     update_labels_to_processing
 
@@ -763,56 +986,122 @@ main() {
     log_info "Step 4.5/11: Initializing Godot worktree..."
     initialize_godot_worktree
 
-    # Execute task
-    log_info "Step 5/11: Running Claude Code..."
+    # Execute task with retry
+    log_info "Step 5/11: Running Claude Code (Attempt 1/$TOTAL_ATTEMPTS)..."
     if ! run_claude; then
-        log_error "Claude execution failed"
+        log_error "Claude execution failed on first attempt"
         exit 1
     fi
 
     log_info "Step 6/11: Checking for changes..."
     if ! check_changes; then
         log_warning "No changes to commit, task may not have completed"
+        # Post comment to issue
+        gh issue comment "$TASK_ID" --repo "$REPO_NAME" --body "No changes detected. Task may already be complete or needs clarification." 2>/dev/null || true
         exit 1
     fi
 
-    log_info "Step 7/11: Running lint..."
-    if ! run_lint; then
-        log_error "Lint failed"
-        # Continue anyway - lint is optional
-    fi
-
-    log_info "Step 8/11: Running tests..."
-    if ! run_tests; then
-        log_error "Tests failed"
-        exit 1
-    fi
-
-    log_info "Step 9/11: Running build..."
-    if ! run_build; then
-        log_error "Build failed"
-        exit 1
-    fi
-
-    log_info "Step 10/11: Committing and pushing..."
+    # EARLY COMMIT & PUSH & DRAFT PR (NEW WORKFLOW)
+    log_info "Step 7/11: Early commit (before tests)..."
     if ! commit_changes; then
         log_error "Failed to commit changes"
         exit 1
     fi
 
+    log_info "Step 8/11: Pushing branch (before tests)..."
     if ! push_branch; then
         log_error "Failed to push branch"
         exit 1
     fi
 
-    log_info "Step 11/11: Creating pull request..."
-    if ! create_pr; then
-        log_error "Failed to create PR"
+    log_info "Step 9/11: Creating draft PR..."
+    if ! create_draft_pr 1 $TOTAL_ATTEMPTS; then
+        log_warning "Failed to create draft PR (continuing anyway)"
+    else
+        # Post comment to issue
+        local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
+        if [ -n "$pr_num" ]; then
+            gh issue comment "$TASK_ID" --repo "$REPO_NAME" --body "Draft PR created: https://github.com/$REPO_NAME/pull/$pr_num. Running tests..." 2>/dev/null || true
+        fi
+    fi
+
+    # TEST RETRY LOOP
+    log_info "Step 10/11: Running tests with retry logic..."
+
+    TESTS_PASSED=false
+    for attempt in $(seq 1 $TOTAL_ATTEMPTS); do
+        log_info "Test attempt $attempt/$TOTAL_ATTEMPTS..."
+
+        # Run lint (optional, doesn't fail)
+        if ! run_lint; then
+            log_warning "Lint failed (continuing anyway)"
+        fi
+
+        # Run tests
+        if run_tests && run_build; then
+            log_success "Tests passed on attempt $attempt!"
+            TESTS_PASSED=true
+            update_pr_status $attempt $TOTAL_ATTEMPTS "passed"
+            break
+        else
+            log_error "Tests failed on attempt $attempt/$TOTAL_ATTEMPTS"
+
+            # Parse error details
+            error_details=$(parse_test_errors)
+
+            # Update PR and issue with failure info
+            update_pr_status $attempt $TOTAL_ATTEMPTS "failed" "$error_details"
+            post_failure_comment $attempt $TOTAL_ATTEMPTS "$error_details"
+
+            # Check if this was the last attempt
+            if [ $attempt -eq $TOTAL_ATTEMPTS ]; then
+                log_error "All $TOTAL_ATTEMPTS attempts exhausted. Task failed."
+
+                # Final failure: push final state, keep draft PR, update labels
+                commit_changes "Final attempt ($attempt/$TOTAL_ATTEMPTS) - tests still failing"
+                push_branch
+                update_labels_on_failure
+
+                exit 1
+            fi
+
+            # Wait before retry (exponential backoff)
+            sleep_time=$((RETRY_BACKOFF * attempt))
+            log_info "Waiting ${sleep_time}s before retry..."
+            sleep $sleep_time
+
+            # Re-run Claude with error context to fix issues
+            log_info "Re-running Claude with error context (attempt $((attempt + 1))/$TOTAL_ATTEMPTS)..."
+
+            # TODO: Pass error context to Claude (would need to modify run_claude to accept error parameter)
+            if ! run_claude; then
+                log_error "Claude failed to fix errors"
+                continue
+            fi
+
+            # Commit fixes
+            commit_changes "Fix attempt $((attempt + 1))/$TOTAL_ATTEMPTS: Addressing test failures"
+            push_branch
+        fi
+    done
+
+    # Check if tests ultimately passed
+    if [ "$TESTS_PASSED" = false ]; then
+        log_error "Tests never passed after $TOTAL_ATTEMPTS attempts"
         exit 1
+    fi
+
+    # SUCCESS PATH: Mark PR ready
+    log_info "Step 11/11: Marking PR as ready for review..."
+    if ! mark_pr_ready; then
+        log_warning "Failed to mark PR as ready (continuing anyway)"
     fi
 
     log_info "Step 11.5/11: Updating labels to 'in-review'..."
     update_labels_to_review
+
+    # Post success comment
+    post_success_comment
 
     # Success!
     log_success "✅ Task #$TASK_ID completed successfully!"
