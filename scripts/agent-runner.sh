@@ -757,7 +757,7 @@ create_draft_pr() {
     pr_body+="Co-Authored-By: Claude <noreply@anthropic.com>"
 
     # Create draft PR
-    if PR_URL=$(gh pr create \
+    PR_OUTPUT=$(gh pr create \
         --repo "$REPO_NAME" \
         --head "$BRANCH_NAME" \
         --base "$BASE_BRANCH" \
@@ -765,8 +765,12 @@ create_draft_pr() {
         --body "$(echo -e "$pr_body")" \
         --label "automated" \
         --label "draft" \
-        --draft 2>&1); then
+        --draft 2>&1)
 
+    PR_EXIT_CODE=$?
+
+    if [ $PR_EXIT_CODE -eq 0 ]; then
+        PR_URL="$PR_OUTPUT"
         log_success "Draft PR created: $PR_URL"
 
         # Extract PR number
@@ -775,7 +779,8 @@ create_draft_pr() {
 
         return 0
     else
-        log_error "Failed to create draft PR"
+        log_error "Failed to create draft PR:"
+        echo "$PR_OUTPUT" | head -10
         return 1
     fi
 }
