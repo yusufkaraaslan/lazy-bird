@@ -1058,9 +1058,9 @@ main() {
             # Parse error details
             error_details=$(parse_test_errors)
 
-            # Update PR and issue with failure info
-            update_pr_status $attempt $TOTAL_ATTEMPTS "failed" "$error_details"
-            post_failure_comment $attempt $TOTAL_ATTEMPTS "$error_details"
+            # Update PR and issue with failure info (don't fail if PR doesn't exist)
+            update_pr_status $attempt $TOTAL_ATTEMPTS "failed" "$error_details" || true
+            post_failure_comment $attempt $TOTAL_ATTEMPTS "$error_details" || true
 
             # Check if this was the last attempt
             if [ $attempt -eq $TOTAL_ATTEMPTS ]; then
