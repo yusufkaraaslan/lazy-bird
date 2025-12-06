@@ -526,6 +526,8 @@ https://github.com/yusufkaraaslan/lazy-bird"
 
 # Push branch
 push_branch() {
+    local force_push="${1:-false}"  # Optional parameter: "true" to use --force-with-lease
+
     log_info "[$PROJECT_ID] Pushing branch to remote..."
 
     cd "$WORKTREE_PATH" || exit 3
@@ -538,8 +540,15 @@ push_branch() {
         return 1
     fi
 
+    # Build push command
+    local push_cmd="git push -u $REMOTE $BRANCH_NAME"
+    if [ "$force_push" = "true" ]; then
+        push_cmd="git push --force-with-lease -u $REMOTE $BRANCH_NAME"
+        log_info "Using --force-with-lease to overwrite remote branch"
+    fi
+
     # Push branch
-    if git push -u "$REMOTE" "$BRANCH_NAME"; then
+    if $push_cmd; then
         log_success "[$PROJECT_ID] Branch pushed: $BRANCH_NAME"
         return 0
     else
@@ -1016,8 +1025,7 @@ main() {
 
     log_info "Step 8/11: Pushing branch (before tests)..."
     if ! push_branch; then
-        log_error "Failed to push branch"
-        exit 1
+        log_warning "Initial push failed (may need force push later), continuing anyway"
     fi
 
     log_info "Step 9/11: Creating draft PR..."
@@ -1073,7 +1081,7 @@ main() {
 
                 # Final failure: push final state, keep draft PR, update labels
                 commit_changes "Final attempt ($attempt/$TOTAL_ATTEMPTS) - tests still failing"
-                push_branch
+                push_branch "true"  # Use force push since branch already exists
                 update_labels_on_failure
 
                 exit 1
@@ -1095,7 +1103,7 @@ main() {
 
             # Commit fixes
             commit_changes "Fix attempt $((attempt + 1))/$TOTAL_ATTEMPTS: Addressing test failures"
-            push_branch
+            push_branch "true"  # Use force push since branch already exists
         fi
     done
 
