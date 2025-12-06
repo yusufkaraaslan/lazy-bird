@@ -550,7 +550,7 @@ push_branch() {
 
 # Extract Claude's implementation summary from agent logs
 extract_claude_summary() {
-    local log_file="$LAZY_BIRD_LOG_DIR/agent-$PROJECT_ID-task-$TASK_ID.log"
+    local log_file="$LOG_DIR/agent-$PROJECT_ID-task-$TASK_ID.log"
 
     if [ ! -f "$log_file" ]; then
         echo "_No implementation summary available._"
@@ -1029,6 +1029,9 @@ main() {
     # TEST RETRY LOOP
     log_info "Step 10/11: Running tests with retry logic..."
 
+    # Disable ERR trap during retry loop to handle failures ourselves
+    trap - ERR
+
     TESTS_PASSED=false
     for attempt in $(seq 1 $TOTAL_ATTEMPTS); do
         log_info "Test attempt $attempt/$TOTAL_ATTEMPTS..."
@@ -1038,8 +1041,13 @@ main() {
             log_warning "Lint failed (continuing anyway)"
         fi
 
-        # Run tests
-        if run_tests && run_build; then
+        # Run tests (disable errexit temporarily to handle failures in retry loop)
+        set +e
+        run_tests && run_build
+        test_result=$?
+        set -e
+
+        if [ $test_result -eq 0 ]; then
             log_success "Tests passed on attempt $attempt!"
             TESTS_PASSED=true
             update_pr_status $attempt $TOTAL_ATTEMPTS "passed"
