@@ -968,9 +968,10 @@ main() {
     RETRY_BACKOFF=30      # Default 30 seconds
 
     # Try to load from config if available
-    if [ -f "$CONFIG_FILE" ]; then
-        MAX_RETRY_ATTEMPTS=$(grep -A 10 "^retry:" "$CONFIG_FILE" | grep "max_attempts:" | awk '{print $2}' || echo "3")
-        RETRY_BACKOFF=$(grep -A 10 "^retry:" "$CONFIG_FILE" | grep "backoff_seconds:" | awk '{print $2}' || echo "30")
+    local config_file="${LAZY_BIRD_CONFIG:-$HOME/.config/lazy_birtd/config.yml}"
+    if [ -f "$config_file" ]; then
+        MAX_RETRY_ATTEMPTS=$(grep -A 10 "^retry:" "$config_file" | grep "max_attempts:" | awk '{print $2}' || echo "3")
+        RETRY_BACKOFF=$(grep -A 10 "^retry:" "$config_file" | grep "backoff_seconds:" | awk '{print $2}' || echo "30")
     fi
 
     TOTAL_ATTEMPTS=$((MAX_RETRY_ATTEMPTS + 1))  # 3 retries = 4 total attempts
