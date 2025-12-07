@@ -913,14 +913,57 @@ create_draft_pr() {
     fi
 }
 
+# Wait for GitHub's API cache to sync after push
+# Polls the comparison API until commits are visible
+# Returns: 0 if synced, 1 if timeout
+wait_for_github_sync() {
+    local max_attempts=12
+    local delays=(5 5 10 10 15 15 20 20 25 25 30 30)  # ~3.5 minutes total
+
+    log_info "Waiting for GitHub API to sync branch with remote..."
+
+    for attempt in $(seq 1 $max_attempts); do
+        # Query GitHub's comparison API
+        local compare_result=$(gh api "repos/$REPO_NAME/compare/$BASE_BRANCH...$BRANCH_NAME" 2>&1)
+        local api_exit_code=$?
+
+        if [ $api_exit_code -eq 0 ]; then
+            # Check if commits exist
+            local ahead_by=$(echo "$compare_result" | jq -r '.ahead_by // 0' 2>/dev/null || echo "0")
+
+            if [ "$ahead_by" -gt 0 ]; then
+                log_success "GitHub API synced! Found $ahead_by commit(s) on branch"
+                return 0
+            else
+                log_info "Sync check $attempt/$max_attempts: No commits visible yet (ahead_by=$ahead_by)"
+            fi
+        else
+            # API call failed - branch might not exist yet
+            log_info "Sync check $attempt/$max_attempts: API call failed (branch may not be visible yet)"
+        fi
+
+        # Wait before next attempt
+        if [ $attempt -lt $max_attempts ]; then
+            local delay=${delays[$((attempt - 1))]}
+            log_info "Waiting ${delay}s before next sync check..."
+            sleep $delay
+        fi
+    done
+
+    # Timeout - GitHub still hasn't synced
+    log_warning "GitHub API sync timeout after $max_attempts attempts (~3.5 minutes)"
+    log_warning "PR creation may fail, but will attempt anyway..."
+    return 1
+}
+
 # Create PR with retry logic to handle GitHub API sync delays
 # Usage: create_pr_with_retry <title> <body> <is_draft>
 create_pr_with_retry() {
     local title=$1
     local body=$2
     local is_draft=${3:-false}
-    local max_retries=3
-    local delays=(2 5 10)  # Exponential backoff delays in seconds
+    local max_retries=2
+    local delays=(5 10)  # Reduced retries since we confirm sync first
 
     for attempt in $(seq 1 $max_retries); do
         log_info "Attempting PR creation (attempt $attempt/$max_retries)..."
@@ -1299,9 +1342,8 @@ main() {
     if ! push_branch; then
         log_warning "Initial push failed (may need force push later), continuing anyway"
     else
-        # Wait for GitHub API to sync after push
-        log_info "Waiting 3 seconds for GitHub API to sync..."
-        sleep 3
+        # Wait for GitHub API to sync after push (polls comparison API)
+        wait_for_github_sync || true  # Continue even if timeout
     fi
 
     log_info "Step 9/11: Creating draft PR..."
