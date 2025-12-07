@@ -925,15 +925,14 @@ create_pr_with_retry() {
     for attempt in $(seq 1 $max_retries); do
         log_info "Attempting PR creation (attempt $attempt/$max_retries)..."
 
-        # Build gh pr create command
-        local cmd="gh pr create --repo \"$REPO_NAME\" --head \"$BRANCH_NAME\" --base \"$BASE_BRANCH\" --title \"$title\" --body \"\$(echo -e \"$body\")\""
-
+        # Execute PR creation directly (avoid eval for proper escaping)
         if [ "$is_draft" = "true" ]; then
-            cmd="$cmd --draft"
+            PR_OUTPUT=$(gh pr create --repo "$REPO_NAME" --head "$BRANCH_NAME" --base "$BASE_BRANCH" \
+                --title "$title" --body "$body" --draft 2>&1)
+        else
+            PR_OUTPUT=$(gh pr create --repo "$REPO_NAME" --head "$BRANCH_NAME" --base "$BASE_BRANCH" \
+                --title "$title" --body "$body" 2>&1)
         fi
-
-        # Execute PR creation
-        PR_OUTPUT=$(eval "$cmd" 2>&1)
         PR_EXIT_CODE=$?
 
         if [ $PR_EXIT_CODE -eq 0 ]; then
