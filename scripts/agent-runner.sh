@@ -922,9 +922,12 @@ wait_for_github_sync() {
 
     log_info "Waiting for GitHub API to sync branch with remote..."
 
+    # Strip 'origin/' prefix from BASE_BRANCH for GitHub API (it expects branch names, not remote refs)
+    local base_branch_name="${BASE_BRANCH#origin/}"
+
     for attempt in $(seq 1 $max_attempts); do
         # Query GitHub's comparison API (suppress stderr to avoid contamination)
-        local compare_result=$(gh api "repos/$REPO_NAME/compare/$BASE_BRANCH...$BRANCH_NAME" 2>/dev/null)
+        local compare_result=$(gh api "repos/$REPO_NAME/compare/$base_branch_name...$BRANCH_NAME" 2>/dev/null)
         local api_exit_code=$?
 
         if [ $api_exit_code -eq 0 ]; then
