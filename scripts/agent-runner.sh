@@ -191,6 +191,18 @@ update_labels_to_processing() {
     fi
 }
 
+# Ensure a label exists in the repository (helper function)
+ensure_label_exists() {
+    local label_name=$1
+    local color=$2
+    local description=$3
+
+    # Check if label exists, create if missing
+    if ! gh label list --repo "$REPO_NAME" 2>/dev/null | grep -q "^$label_name"; then
+        gh label create "$label_name" --repo "$REPO_NAME" --color "$color" --description "$description" 2>/dev/null || true
+    fi
+}
+
 # Update issue labels: in-process → in-review
 update_labels_to_review() {
     log_info "Updating issue labels to 'in-review'..."
@@ -205,22 +217,27 @@ update_labels_to_review() {
     fi
 }
 
-# Update issue labels on failure: in-process → needs-manual-fix
+# Update issue labels on failure: in-process → failed-automation, needs-manual-review
 update_labels_on_failure() {
     log_info "Updating issue labels for failed task..."
 
-    if gh issue edit "$TASK_ID" \
-        --repo "$REPO_NAME" \
-        --remove-label "in-process" 2>/dev/null; then
-        log_success "Labels updated: removed 'in-process'"
-    else
-        log_warning "Failed to update labels"
-    fi
+    # Ensure new labels exist
+    ensure_label_exists "failed-automation" "d73a4a" "Task failed after all retry attempts"
+    ensure_label_exists "needs-manual-review" "fbca04" "Requires developer review and intervention"
 
-    # Add 'needs-manual-fix' label
+    # Remove processing labels
     gh issue edit "$TASK_ID" \
         --repo "$REPO_NAME" \
-        --add-label "needs-manual-fix" 2>/dev/null || true
+        --remove-label "in-process" \
+        --remove-label "ready" 2>/dev/null || true
+
+    # Add failure labels
+    gh issue edit "$TASK_ID" \
+        --repo "$REPO_NAME" \
+        --add-label "failed-automation" \
+        --add-label "needs-manual-review" 2>/dev/null && \
+        log_success "Labels updated: in-process → failed-automation, needs-manual-review" || \
+        log_warning "Failed to update labels (continuing anyway)"
 }
 
 # Create worktree
@@ -323,6 +340,8 @@ initialize_godot_worktree() {
 
 # Run Claude Code
 run_claude() {
+    local error_context="${1:-}"  # Optional error context from previous attempt
+
     log_info "[$PROJECT_ID] Running Claude Code on task..."
 
     cd "$WORKTREE_PATH" || exit 3
@@ -345,6 +364,19 @@ Implement this task following the detailed steps above. Make sure to:
 Work in the current directory: $WORKTREE_PATH
 
 **DO NOT use git commit** - just make the file changes. The automation will commit and push."
+
+    # Append error context if this is a retry attempt
+    if [ -n "$error_context" ]; then
+        CLAUDE_PROMPT="$CLAUDE_PROMPT
+
+## PREVIOUS ATTEMPT FAILED - ERROR CONTEXT
+
+The previous implementation attempt failed with the following errors. Please analyze these errors and fix them:
+
+$error_context
+
+**IMPORTANT**: Focus on addressing the specific errors listed above. Review the code you previously generated and make the necessary corrections."
+    fi
 
     # Create log file (Phase 1.1: include project-id in filename)
     LOG_DIR="${LAZY_BIRD_LOG_DIR:-$HOME/.config/lazy_birtd/logs}"
@@ -491,6 +523,68 @@ run_build() {
         cat "$LOG_DIR/build-output.log"
         return 1
     fi
+}
+
+# Parse test errors from test output log
+parse_test_errors() {
+    local test_log="$LOG_DIR/test-output.log"
+
+    if [ ! -f "$test_log" ]; then
+        echo "No test output available"
+        return 0
+    fi
+
+    # Try to use advanced Python parser first
+    local parser_script="$(dirname "$BASH_SOURCE")/parse_test_errors.py"
+    if [ -f "$parser_script" ]; then
+        # Use Python parser for structured error extraction
+        local error_output
+        error_output=$(python3 "$parser_script" "$test_log" "$PROJECT_TYPE" 2>/dev/null)
+
+        if [ $? -eq 0 ] && [ -n "$error_output" ]; then
+            # Save JSON output for debugging
+            python3 "$parser_script" "$test_log" "$PROJECT_TYPE" --json > "$LOG_DIR/test-errors.json" 2>/dev/null || true
+
+            # Return formatted summary for Claude
+            echo "$error_output"
+            return 0
+        fi
+    fi
+
+    # Fallback to basic parsing if Python parser unavailable or fails
+    local error_summary=""
+
+    if [ "$PROJECT_TYPE" = "godot" ]; then
+        # Parse Godot/gdUnit4 test errors
+        # Look for test failures, error messages, and stack traces
+        error_summary=$(cat "$test_log" | grep -A 5 -i "error\|failed\|assertion" | head -100)
+
+        # Also try to extract test statistics
+        local test_stats=$(cat "$test_log" | grep -i "tests:\|passed:\|failed:\|errors:" | head -10)
+        if [ -n "$test_stats" ]; then
+            error_summary="$test_stats\n\n$error_summary"
+        fi
+    elif [ "$PROJECT_TYPE" = "python" ]; then
+        # Parse Python/pytest errors
+        error_summary=$(cat "$test_log" | grep -A 10 -E "FAILED|ERROR|AssertionError" | head -100)
+    elif [ "$PROJECT_TYPE" = "rust" ]; then
+        # Parse Rust test errors
+        error_summary=$(cat "$test_log" | grep -A 10 -E "test result:|failures:|error\[" | head -100)
+    else
+        # Generic error extraction
+        error_summary=$(cat "$test_log" | grep -i -A 5 "error\|fail" | head -100)
+    fi
+
+    # Fallback if no specific errors found - show last 30 lines
+    if [ -z "$error_summary" ]; then
+        error_summary=$(tail -30 "$test_log")
+    fi
+
+    # Format for display
+    echo "**Test Output Summary:**"
+    echo "\`\`\`"
+    echo "$error_summary"
+    echo "\`\`\`"
 }
 
 # Commit changes
@@ -716,7 +810,7 @@ cleanup_worktree() {
     return 0
 }
 
-# Parse test errors from log files
+# Parse test errors from log files using Python parser for structured output
 parse_test_errors() {
     local test_log="$LOG_DIR/test-output.log"
     local error_summary=""
@@ -726,20 +820,39 @@ parse_test_errors() {
         return 1
     fi
 
-    # Extract error count
+    # Try to use advanced Python parser first
+    local parser_script="$(dirname "$BASH_SOURCE")/parse_test_errors.py"
+    if [ -f "$parser_script" ] && command -v python3 &>/dev/null; then
+        # Get human-readable output from Python parser
+        local parser_output
+        parser_output=$(python3 "$parser_script" "$test_log" "$PROJECT_TYPE" 2>/dev/null)
+
+        if [ $? -eq 0 ] && [ -n "$parser_output" ]; then
+            # Parser succeeded - use its output
+            echo "$parser_output"
+
+            # Also save JSON for debugging
+            python3 "$parser_script" "$test_log" "$PROJECT_TYPE" --json > "$LOG_DIR/test-errors.json" 2>/dev/null || true
+            return 0
+        fi
+    fi
+
+    # Fallback to basic parsing if Python parser unavailable or fails
     local error_count=$(grep -c "ERROR:" "$test_log" 2>/dev/null || echo "0")
     local failure_count=$(grep -c "FAILED\|FAILURE" "$test_log" 2>/dev/null || echo "0")
 
-    # Extract first few error messages
-    local errors=$(grep -E "ERROR:|SCRIPT ERROR:|Parse Error:" "$test_log" 2>/dev/null | head -5 | sed 's/\x1b\[[0-9;]*m//g')
+    # Extract actual error lines (not just count)
+    local errors=$(grep -E "ERROR:|FAILED|FAILURE|expected|got|assert" "$test_log" 2>/dev/null | head -10 | sed 's/\x1b\[[0-9;]*m//g')
 
-    # Build summary
+    # Build summary with more details
     error_summary="**Test Results:**\n"
-    error_summary+="- Errors: $error_count\n"
-    error_summary+="- Failures: $failure_count\n\n"
+    error_summary+="- Total errors: $error_count\n"
+    error_summary+="- Total failures: $failure_count\n\n"
 
     if [ -n "$errors" ]; then
-        error_summary+="**Sample Errors:**\n\`\`\`\n$errors\n\`\`\`"
+        error_summary+="**Error Details:**\n\`\`\`\n$errors\n\`\`\`"
+    else
+        error_summary+="**Error Details:** Check test output log for full details"
     fi
 
     echo -e "$error_summary"
@@ -760,20 +873,22 @@ create_draft_pr() {
     pr_body+="---\n\n"
     pr_body+="🔄 **Status:** Running tests... (Attempt $attempt/$max_attempts)\n\n"
     pr_body+="📋 **Task:** #$TASK_ID\n"
-    pr_body+="📊 **Logs:** http://localhost:5000/queue/$PROJECT_ID-$TASK_ID/logs\n\n"
+    pr_body+="🌿 **Branch:** \`$BRANCH_NAME\`\n\n"
     pr_body+="---\n\n"
     pr_body+="🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\n"
     pr_body+="Co-Authored-By: Claude <noreply@anthropic.com>"
 
-    # Create draft PR
+    # Ensure 'automated' label exists (create if missing)
+    gh label list --repo "$REPO_NAME" | grep -q "automated" || \
+        gh label create "automated" --repo "$REPO_NAME" --color "0e8a16" --description "Automated task by Lazy_Bird" 2>/dev/null || true
+
+    # Create draft PR (only use --draft flag, labels applied separately to avoid errors)
     PR_OUTPUT=$(gh pr create \
         --repo "$REPO_NAME" \
         --head "$BRANCH_NAME" \
         --base "$BASE_BRANCH" \
         --title "[WIP] Task #$TASK_ID: $TASK_TITLE" \
         --body "$(echo -e "$pr_body")" \
-        --label "automated" \
-        --label "draft" \
         --draft 2>&1)
 
     PR_EXIT_CODE=$?
@@ -785,6 +900,10 @@ create_draft_pr() {
         # Extract PR number
         PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
         echo "$PR_NUMBER" > "$LOG_DIR/pr_number.txt"
+
+        # Add 'automated' label to PR (gracefully handle if it fails)
+        gh pr edit "$PR_NUMBER" --repo "$REPO_NAME" --add-label "automated" 2>/dev/null || \
+            log_warning "Could not add 'automated' label to PR (continuing anyway)"
 
         return 0
     else
@@ -883,25 +1002,42 @@ post_failure_comment() {
         comment="### ⚠️ Attempt $attempt/$max_attempts Failed\n\n"
         comment+="$error_details\n\n"
         comment+="**Retrying with error context...**\n\n"
-        comment+="$pr_link\n"
-        comment+="**Logs:** http://localhost:5000/queue/$PROJECT_ID-$TASK_ID/logs"
+        comment+="**Branch:** \`$BRANCH_NAME\`\n"
+        comment+="$pr_link"
     else
         # Final failure comment
         comment="### ❌ Task Failed After $max_attempts Attempts\n\n"
-        comment+="**Final Errors:**\n$error_details\n\n"
-        comment+="**Branch:** \`$BRANCH_NAME\` (pushed to remote)\n"
-        comment+="$pr_link\n"
-        comment+="**Full logs:** http://localhost:5000/queue/$PROJECT_ID-$TASK_ID/logs\n\n"
-        comment+="---\n\n"
-        comment+="**To fix manually:**\n"
-        comment+="1. Check out branch: \`git checkout $BRANCH_NAME\`\n"
-        comment+="2. Fix errors listed above\n"
-        comment+="3. Run tests locally\n"
-        comment+="4. Push fixes: \`git push\`\n"
-        comment+="5. Mark PR ready when tests pass\n\n"
-        comment+="**To retry from scratch:**\n"
-        comment+="1. Delete this task from web UI\n"
-        comment+="2. Add 'ready' label back to issue"
+        comment+="**Attempt Summary:**\n"
+        comment+="- All $max_attempts attempts exhausted\n"
+        comment+="- Tests failed consistently\n"
+        comment+="- Branch and commits have been pushed to remote for manual review\n\n"
+        comment+="**Final Error Details:**\n$error_details\n\n"
+        comment+="**Branch Information:**\n"
+        comment+="- Branch: \`$BRANCH_NAME\` (pushed to remote)\n"
+        comment+="- Commits: $max_attempts (one per attempt)\n"
+        if [ -n "$pr_link" ]; then
+            comment+="- $pr_link\n"
+        fi
+        comment+="\n---\n\n"
+        comment+="**Suggested Next Steps:**\n\n"
+        comment+="**Option 1: Manual Fix** (recommended)\n"
+        comment+="1. Check out the branch: \`git checkout $BRANCH_NAME\`\n"
+        comment+="2. Review the errors listed above\n"
+        comment+="3. Fix the issues locally\n"
+        comment+="4. Run tests: verify they pass\n"
+        comment+="5. Push fixes: \`git push\`\n"
+        comment+="6. Tests will re-run automatically on push\n\n"
+        comment+="**Option 2: Reduce Scope**\n"
+        comment+="- Task may be too complex for a single implementation\n"
+        comment+="- Consider splitting into smaller, more focused tasks\n"
+        comment+="- Close this issue and create new ones with reduced scope\n\n"
+        comment+="**Option 3: Adjust Requirements**\n"
+        comment+="- Review acceptance criteria - they might be too strict\n"
+        comment+="- Update issue description with relaxed requirements\n"
+        comment+="- Remove \`failed-automation\` label and add \`ready\` to retry\n\n"
+        comment+="**Option 4: Close**\n"
+        comment+="- Close this issue if the task is no longer needed\n"
+        comment+="- Or if it turns out to be infeasible"
     fi
 
     gh issue comment "$TASK_ID" --repo "$REPO_NAME" --body "$(echo -e "$comment")" 2>/dev/null || {
@@ -919,15 +1055,78 @@ post_success_comment() {
         pr_link="https://github.com/$REPO_NAME/pull/$pr_num"
     fi
 
-    local comment="### ✅ Implementation Complete!\n\n"
-    comment+="All tests passed. PR is ready for review.\n\n"
-    if [ -n "$pr_link" ]; then
-        comment+="**Pull Request:** $pr_link"
+    # Get number of attempts from current retry loop context (default to 1 if not in retry loop)
+    local attempts=${attempt:-1}
+    local max_attempts=${TOTAL_ATTEMPTS:-4}
+
+    local comment="### ✅ Task Completed Successfully!\n\n"
+
+    # Success summary
+    if [ $attempts -eq 1 ]; then
+        comment+="**Status:** Passed on first attempt! ✨\n\n"
+    else
+        comment+="**Status:** Completed after $attempts attempt(s)\n\n"
     fi
+
+    # PR and branch information
+    if [ -n "$pr_link" ]; then
+        comment+="**Pull Request:** $pr_link\n"
+    fi
+    comment+="**Branch:** \`$BRANCH_NAME\`\n"
+    comment+="**Tests:** All passed ✓\n\n"
+
+    comment+="---\n\n"
+    comment+="**Next Steps:**\n"
+    comment+="1. Review the pull request and code changes\n"
+    comment+="2. Test the implementation locally if needed:\n"
+    comment+="   \`\`\`bash\n"
+    comment+="   git fetch origin\n"
+    comment+="   git checkout $BRANCH_NAME\n"
+    comment+="   # Run your tests/validations\n"
+    comment+="   \`\`\`\n"
+    comment+="3. Approve and merge the PR when satisfied\n"
+    comment+="4. Issue will auto-close on merge\n\n"
+    comment+="**Questions or issues?** Comment on the PR or re-open this issue."
 
     gh issue comment "$TASK_ID" --repo "$REPO_NAME" --body "$(echo -e "$comment")" 2>/dev/null || {
         log_warning "Failed to post comment to issue"
     }
+}
+
+# Cleanup worktree and branch on script exit
+cleanup_worktree() {
+    # Only cleanup if WORKTREE_PATH and BRANCH_NAME are set
+    if [ -z "$WORKTREE_PATH" ] || [ -z "$BRANCH_NAME" ]; then
+        return 0
+    fi
+
+    log_info "[$PROJECT_ID] Cleaning up worktree and branch..."
+
+    # Change to project directory
+    if [ -n "$PROJECT_PATH" ] && [ -d "$PROJECT_PATH" ]; then
+        cd "$PROJECT_PATH" || return 0
+    else
+        return 0
+    fi
+
+    # Remove worktree
+    if [ -d "$WORKTREE_PATH" ]; then
+        log_info "[$PROJECT_ID] Removing worktree: $WORKTREE_PATH"
+        git worktree remove --force "$WORKTREE_PATH" 2>/dev/null || rm -rf "$WORKTREE_PATH"
+        git worktree prune 2>/dev/null || true
+    fi
+
+    # Delete local branch (only if it wasn't pushed to remote, or if task failed)
+    # Check if branch exists locally
+    if git show-ref --verify --quiet refs/heads/"$BRANCH_NAME"; then
+        # Check if branch exists on remote
+        if git show-ref --verify --quiet refs/remotes/origin/"$BRANCH_NAME"; then
+            log_info "[$PROJECT_ID] Branch $BRANCH_NAME exists on remote, keeping local branch"
+        else
+            log_info "[$PROJECT_ID] Deleting local branch: $BRANCH_NAME"
+            git branch -D "$BRANCH_NAME" 2>/dev/null || true
+        fi
+    fi
 }
 
 # Main execution
@@ -1063,7 +1262,7 @@ main() {
         if [ $test_result -eq 0 ]; then
             log_success "Tests passed on attempt $attempt!"
             TESTS_PASSED=true
-            update_pr_status $attempt $TOTAL_ATTEMPTS "passed"
+            update_pr_status $attempt $TOTAL_ATTEMPTS "passed" || true
             break
         else
             log_error "Tests failed on attempt $attempt/$TOTAL_ATTEMPTS"
@@ -1095,8 +1294,8 @@ main() {
             # Re-run Claude with error context to fix issues
             log_info "Re-running Claude with error context (attempt $((attempt + 1))/$TOTAL_ATTEMPTS)..."
 
-            # TODO: Pass error context to Claude (would need to modify run_claude to accept error parameter)
-            if ! run_claude; then
+            # Pass error details to Claude for debugging
+            if ! run_claude "$error_details"; then
                 log_error "Claude failed to fix errors"
                 continue
             fi
@@ -1113,10 +1312,56 @@ main() {
         exit 1
     fi
 
-    # SUCCESS PATH: Mark PR ready
-    log_info "Step 11/11: Marking PR as ready for review..."
-    if ! mark_pr_ready; then
-        log_warning "Failed to mark PR as ready (continuing anyway)"
+    # SUCCESS PATH: Ensure PR exists and mark ready
+    log_info "Step 11/11: Ensuring PR exists and marking as ready..."
+
+    local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
+    if [ -z "$pr_num" ]; then
+        # No PR exists - create one now with final results
+        log_info "No PR found, creating final PR with passing tests..."
+
+        # Get test summary from last successful run
+        local summary="Implementation completed successfully after $attempt attempt(s)."
+
+        # Create final PR (not draft, ready for review)
+        local pr_body="## Implementation Summary\n\n$summary\n\n"
+        pr_body+="---\n\n"
+        pr_body+="✅ **Status:** All tests passed (Attempt $attempt/$TOTAL_ATTEMPTS)\n\n"
+        pr_body+="📋 **Task:** #$TASK_ID\n"
+        pr_body+="🌿 **Branch:** \`$BRANCH_NAME\`\n\n"
+        pr_body+="---\n\n"
+
+        # Ensure 'automated' label exists
+        gh label list --repo "$REPO_NAME" | grep -q "automated" || \
+            gh label create "automated" --repo "$REPO_NAME" --color "0e8a16" --description "Automated task by Lazy_Bird" 2>/dev/null || true
+
+        # Create final PR (not draft)
+        PR_OUTPUT=$(gh pr create \
+            --repo "$REPO_NAME" \
+            --head "$BRANCH_NAME" \
+            --base "$BASE_BRANCH" \
+            --title "Task #$TASK_ID: $TASK_TITLE" \
+            --body "$(echo -e "$pr_body")" 2>&1)
+
+        if [ $? -eq 0 ]; then
+            PR_URL="$PR_OUTPUT"
+            log_success "Final PR created: $PR_URL"
+
+            # Extract PR number
+            pr_num=$(echo "$PR_URL" | grep -oP '\d+$')
+            echo "$pr_num" > "$LOG_DIR/pr_number.txt"
+
+            # Add 'automated' label
+            gh pr edit "$pr_num" --repo "$REPO_NAME" --add-label "automated" 2>/dev/null || \
+                log_warning "Could not add 'automated' label"
+        else
+            log_warning "Failed to create final PR: $PR_OUTPUT"
+        fi
+    else
+        # PR exists - mark it as ready
+        if ! mark_pr_ready; then
+            log_warning "Failed to mark PR as ready (continuing anyway)"
+        fi
     fi
 
     log_info "Step 11.5/11: Updating labels to 'in-review'..."
