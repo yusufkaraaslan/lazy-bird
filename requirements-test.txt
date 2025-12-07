@@ -1,0 +1,25 @@
+# Test dependencies for Lazy_Bird
+
+# Core testing framework
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.1  # Parallel test execution
+
+# Coverage reporting
+coverage[toml]>=7.3.0
+
+# Test utilities
+pytest-timeout>=2.1.0  # Timeout for long-running tests
+pytest-mock>=3.11.1    # Mocking utilities
+responses>=0.23.3      # HTTP mocking
+
+# Code quality
+flake8>=6.1.0          # Linting
+pylint>=2.17.0         # Static analysis
+black>=23.7.0          # Code formatting
+isort>=5.12.0          # Import sorting
+
+# Type checking
+mypy>=1.5.0            # Type checking
+types-requests         # Type stubs for requests
+types-setuptools       # Type stubs for setuptools
