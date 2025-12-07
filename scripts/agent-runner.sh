@@ -969,15 +969,18 @@ create_pr_with_retry() {
     local max_retries=2
     local delays=(5 10)  # Reduced retries since we confirm sync first
 
+    # Strip 'origin/' prefix from BASE_BRANCH for gh pr create (expects branch name, not remote ref)
+    local base_branch_name="${BASE_BRANCH#origin/}"
+
     for attempt in $(seq 1 $max_retries); do
         log_info "Attempting PR creation (attempt $attempt/$max_retries)..."
 
         # Execute PR creation directly (avoid eval for proper escaping)
         if [ "$is_draft" = "true" ]; then
-            PR_OUTPUT=$(gh pr create --repo "$REPO_NAME" --head "$BRANCH_NAME" --base "$BASE_BRANCH" \
+            PR_OUTPUT=$(gh pr create --repo "$REPO_NAME" --head "$BRANCH_NAME" --base "$base_branch_name" \
                 --title "$title" --body "$body" --draft 2>&1)
         else
-            PR_OUTPUT=$(gh pr create --repo "$REPO_NAME" --head "$BRANCH_NAME" --base "$BASE_BRANCH" \
+            PR_OUTPUT=$(gh pr create --repo "$REPO_NAME" --head "$BRANCH_NAME" --base "$base_branch_name" \
                 --title "$title" --body "$body" 2>&1)
         fi
         PR_EXIT_CODE=$?
