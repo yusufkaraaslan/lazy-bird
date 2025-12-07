@@ -882,11 +882,14 @@ create_draft_pr() {
     gh label list --repo "$REPO_NAME" | grep -q "automated" || \
         gh label create "automated" --repo "$REPO_NAME" --color "0e8a16" --description "Automated task by Lazy_Bird" 2>/dev/null || true
 
+    # Strip 'origin/' prefix from BASE_BRANCH for gh pr create (GitHub API expects branch name, not remote ref)
+    local base_branch_name="${BASE_BRANCH#origin/}"
+
     # Create draft PR (only use --draft flag, labels applied separately to avoid errors)
     PR_OUTPUT=$(gh pr create \
         --repo "$REPO_NAME" \
         --head "$BRANCH_NAME" \
-        --base "$BASE_BRANCH" \
+        --base "$base_branch_name" \
         --title "[WIP] Task #$TASK_ID: $TASK_TITLE" \
         --body "$(echo -e "$pr_body")" \
         --draft 2>&1)
@@ -899,7 +902,7 @@ create_draft_pr() {
 
         # Extract PR number
         PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
-        echo "$PR_NUMBER" > "$LOG_DIR/pr_number.txt"
+        echo "$PR_NUMBER" > "$LOG_DIR/pr_number-task-${TASK_ID}.txt"
 
         # Add 'automated' label to PR (gracefully handle if it fails)
         gh pr edit "$PR_NUMBER" --repo "$REPO_NAME" --add-label "automated" 2>/dev/null || \
@@ -992,7 +995,7 @@ create_pr_with_retry() {
 
             # Extract and save PR number
             PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
-            echo "$PR_NUMBER" > "$LOG_DIR/pr_number.txt"
+            echo "$PR_NUMBER" > "$LOG_DIR/pr_number-task-${TASK_ID}.txt"
 
             # Add 'automated' label
             gh pr edit "$PR_NUMBER" --repo "$REPO_NAME" --add-label "automated" 2>/dev/null || \
@@ -1025,7 +1028,7 @@ update_pr_status() {
     local error_details=${4:-""}
 
     # Read PR number
-    local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
+    local pr_num=$(cat "$LOG_DIR/pr_number-task-${TASK_ID}.txt" 2>/dev/null || echo "")
     if [ -z "$pr_num" ]; then
         log_warning "No PR number found, skipping PR update"
         return 1
@@ -1065,7 +1068,7 @@ update_pr_status() {
 mark_pr_ready() {
     log_info "Converting draft PR to ready for review..."
 
-    local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
+    local pr_num=$(cat "$LOG_DIR/pr_number-task-${TASK_ID}.txt" 2>/dev/null || echo "")
     if [ -z "$pr_num" ]; then
         log_warning "No PR number found"
         return 1
@@ -1093,7 +1096,7 @@ post_failure_comment() {
 
     log_info "Posting failure comment to issue #$TASK_ID..."
 
-    local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
+    local pr_num=$(cat "$LOG_DIR/pr_number-task-${TASK_ID}.txt" 2>/dev/null || echo "")
     local pr_link=""
     if [ -n "$pr_num" ]; then
         pr_link="**Draft PR:** https://github.com/$REPO_NAME/pull/$pr_num (ready for manual fixes)"
@@ -1153,7 +1156,7 @@ post_failure_comment() {
 post_success_comment() {
     log_info "Posting success comment to issue #$TASK_ID..."
 
-    local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
+    local pr_num=$(cat "$LOG_DIR/pr_number-task-${TASK_ID}.txt" 2>/dev/null || echo "")
     local pr_link=""
     if [ -n "$pr_num" ]; then
         pr_link="https://github.com/$REPO_NAME/pull/$pr_num"
@@ -1367,7 +1370,7 @@ main() {
         log_warning "Failed to create draft PR (continuing anyway)"
     else
         # Post comment to issue
-        local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
+        local pr_num=$(cat "$LOG_DIR/pr_number-task-${TASK_ID}.txt" 2>/dev/null || echo "")
         if [ -n "$pr_num" ]; then
             gh issue comment "$TASK_ID" --repo "$REPO_NAME" --body "Draft PR created: https://github.com/$REPO_NAME/pull/$pr_num. Running tests..." 2>/dev/null || true
         fi
@@ -1450,7 +1453,7 @@ main() {
     # SUCCESS PATH: Ensure PR exists and mark ready
     log_info "Step 11/11: Ensuring PR exists and marking as ready..."
 
-    local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
+    local pr_num=$(cat "$LOG_DIR/pr_number-task-${TASK_ID}.txt" 2>/dev/null || echo "")
     if [ -z "$pr_num" ]; then
         # No PR exists - create one now with final results using retry logic
         log_info "No PR found, creating final PR with passing tests (with retry)..."
