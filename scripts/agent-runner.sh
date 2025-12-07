@@ -1163,6 +1163,9 @@ post_success_comment() {
     local attempts=${attempt:-1}
     local max_attempts=${TOTAL_ATTEMPTS:-4}
 
+    # Extract Claude's detailed implementation summary
+    local implementation_summary=$(extract_claude_summary)
+
     local comment="### ✅ Task Completed Successfully!\n\n"
 
     # Success summary
@@ -1171,6 +1174,12 @@ post_success_comment() {
     else
         comment+="**Status:** Completed after $attempts attempt(s)\n\n"
     fi
+
+    # Include detailed implementation summary from Claude's output
+    comment+="---\n\n"
+    comment+="## Implementation Details\n\n"
+    comment+="$implementation_summary\n\n"
+    comment+="---\n\n"
 
     # PR and branch information
     if [ -n "$pr_link" ]; then
