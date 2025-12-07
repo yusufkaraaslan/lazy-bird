@@ -923,15 +923,16 @@ wait_for_github_sync() {
     log_info "Waiting for GitHub API to sync branch with remote..."
 
     for attempt in $(seq 1 $max_attempts); do
-        # Query GitHub's comparison API
-        local compare_result=$(gh api "repos/$REPO_NAME/compare/$BASE_BRANCH...$BRANCH_NAME" 2>&1)
+        # Query GitHub's comparison API (suppress stderr to avoid contamination)
+        local compare_result=$(gh api "repos/$REPO_NAME/compare/$BASE_BRANCH...$BRANCH_NAME" 2>/dev/null)
         local api_exit_code=$?
 
         if [ $api_exit_code -eq 0 ]; then
-            # Check if commits exist
-            local ahead_by=$(echo "$compare_result" | jq -r '.ahead_by // 0' 2>/dev/null || echo "0")
+            # Check if commits exist - strip whitespace and ensure clean parsing
+            local ahead_by=$(echo "$compare_result" | jq -r '.ahead_by // 0' 2>/dev/null | tr -d '\n\r ' || echo "0")
 
-            if [ "$ahead_by" -gt 0 ]; then
+            # Ensure ahead_by is a valid integer
+            if [ -n "$ahead_by" ] && [ "$ahead_by" -gt 0 ] 2>/dev/null; then
                 log_success "GitHub API synced! Found $ahead_by commit(s) on branch"
                 return 0
             else
