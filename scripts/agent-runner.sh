@@ -660,23 +660,37 @@ extract_claude_summary() {
         return 1
     fi
 
-    # Extract summary starting from "## Implementation Complete" or similar patterns
-    # Stop before git status output or other noise
+    # Extract summary with better pattern matching for Claude's actual output
+    # Look for common summary patterns that Claude uses
     local summary
-    summary=$(grep -A 200 "^## Implementation Complete\|^## Summary\|^# Implementation Details" "$log_file" 2>/dev/null | \
-        sed '/^On branch\|^Changes not staged\|^Untracked files\|^nothing to commit/,$d' | \
+    summary=$(grep -B 2 -A 300 "^## Implementation Complete\|^## Summary\|^## Implementation Summary\|^## Task.*Implementation Summary\|^# Implementation Details\|^## Changes Made" "$log_file" 2>/dev/null | \
+        sed '/^On branch\|^Changes not staged\|^Untracked files\|^nothing to commit\|^Completed:/,$d' | \
         sed 's/\x1b\[[0-9;]*m//g' | \
-        head -100)
+        head -150)
 
     if [ -n "$summary" ]; then
+        # Add file changes information from git diff
+        cd "$WORKTREE_PATH" 2>/dev/null || true
+        local changes_info=""
+        if git diff --name-status HEAD~1 HEAD 2>/dev/null | head -20 > /dev/null; then
+            changes_info="
+
+### Files Changed
+
+\`\`\`
+$(git diff --name-status HEAD~1 HEAD 2>/dev/null | head -20)
+\`\`\`"
+        fi
+
         echo "$summary"
+        echo "$changes_info"
         return 0
     else
         # Fallback: Try to extract any markdown sections from Claude's output
-        summary=$(grep -A 100 "^###\|^##" "$log_file" 2>/dev/null | \
-            sed '/^On branch\|^Changes not staged\|^Untracked files\|^nothing to commit/,$d' | \
+        summary=$(grep -A 150 "^###\|^##" "$log_file" 2>/dev/null | \
+            sed '/^On branch\|^Changes not staged\|^Untracked files\|^nothing to commit\|^Completed:/,$d' | \
             sed 's/\x1b\[[0-9;]*m//g' | \
-            head -50)
+            head -100)
 
         if [ -n "$summary" ]; then
             echo "$summary"

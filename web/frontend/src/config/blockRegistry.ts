@@ -27,7 +27,7 @@ export interface BlockProps {
 }
 
 // Import blocks
-import { Activity, FolderOpen, ListTodo, Bot, Clock, DollarSign, FileText, BarChart3, TrendingUp, FlaskConical } from 'lucide-react';
+import { Activity, FolderOpen, ListTodo, Bot, Clock, DollarSign, FileText, BarChart3, FlaskConical } from 'lucide-react';
 import { SystemStatusBlock } from '../components/blocks/SystemStatusBlock';
 import { ActiveProjectsBlock } from '../components/blocks/ActiveProjectsBlock';
 import { QueueOverviewBlock } from '../components/blocks/QueueOverviewBlock';

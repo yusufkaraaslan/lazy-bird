@@ -172,7 +172,7 @@ export function ProjectTimelineBlock({}: BlockProps) {
         {/* Vertical line */}
         <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700" />
 
-        {events.map((event, index) => (
+        {events.map((event) => (
           <div key={event.id} className="relative flex gap-3">
             {/* Icon */}
             <div className={`

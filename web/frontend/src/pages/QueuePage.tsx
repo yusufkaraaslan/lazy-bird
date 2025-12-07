@@ -3,7 +3,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useQueue, useQueueStats, useCancelTask } from '../hooks/useQueue';
-import { ExternalLink, X, AlertCircle, Clock, FileText } from 'lucide-react';
+import { ExternalLink, X, AlertCircle, Clock, FileText, RefreshCw } from 'lucide-react';
 import type { Task } from '../types/api';
 
 export function QueuePage() {
@@ -383,6 +383,20 @@ function TaskDetailsModal({ task, onClose }: { task: Task; onClose: () => void }
         ) : (
           <div>
             {/* Logs Tab */}
+            <div className="mb-4 flex justify-between items-center">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {logs && 'Full log content'}
+              </div>
+              <button
+                onClick={fetchLogs}
+                disabled={logsLoading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                title="Refresh logs"
+              >
+                <RefreshCw size={16} className={logsLoading ? 'animate-spin' : ''} />
+                {logsLoading ? 'Loading...' : 'Refresh Logs'}
+              </button>
+            </div>
             {logsLoading ? (
               <div className="text-center py-8 text-gray-600 dark:text-gray-400">
                 Loading logs...
@@ -392,7 +406,7 @@ function TaskDetailsModal({ task, onClose }: { task: Task; onClose: () => void }
                 {logsError}
               </div>
             ) : logs ? (
-              <div className="bg-gray-900 dark:bg-black rounded-lg p-4 overflow-auto">
+              <div className="bg-gray-900 dark:bg-black rounded-lg p-4 overflow-auto max-h-[500px]">
                 <pre className="text-sm text-gray-100 font-mono whitespace-pre-wrap">
                   {logs}
                 </pre>

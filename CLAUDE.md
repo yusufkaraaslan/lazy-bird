@@ -139,7 +139,50 @@ The system follows a 6-phase progressive development model:
 
 ## Key Components
 
-### 1. Setup Wizard (Primary Installation Method)
+### 1. Agent Runner (Core Execution Engine)
+
+**Location:** `scripts/agent-runner.sh`
+
+The agent runner is the heart of task execution. It orchestrates the entire workflow for a single task.
+
+**What it does:**
+1. Creates isolated git worktree for the task
+2. Runs Claude Code with task-specific prompts (11 steps)
+3. Executes tests and validates results
+4. Creates draft PR on success
+5. Posts detailed implementation comment to GitHub issue
+6. Cleans up worktree after completion
+
+**Exit Codes:**
+- `0` - Task completed successfully, PR created
+- `1` - Task failed (Claude error, test failure, etc.)
+- `2` - Invalid arguments or configuration
+- `3` - Git/worktree error
+- `4` - Cleanup failed (worktree may need manual removal)
+
+**Usage:**
+```bash
+# Run manually (usually called by queue-processor)
+./scripts/agent-runner.sh ~/.config/lazy_birtd/queue/task-PROJECT-ISSUE.json
+
+# View logs
+tail -f ~/.config/lazy_birtd/logs/task-PROJECT-ISSUE.log
+```
+
+**11-Step Execution Process:**
+1. Parse task details from queue file
+2. Create git worktree and branch
+3. Generate implementation plan
+4. Implement changes (Claude Code)
+5. Run tests
+6. Fix any test failures (with retries)
+7. Commit changes with detailed message
+8. Push to GitHub
+9. Wait for GitHub API sync (polling)
+10. Create draft PR
+11. Post implementation comment to issue
+
+### 2. Setup Wizard (Primary Installation Method)
 
 The wizard is the **recommended way** to install and manage the system.
 
@@ -430,19 +473,45 @@ godot --headless \\
 ./wizard.sh --weekly-review    # Progress report
 ```
 
-### Godot Server (systemd service)
+### Core Services (systemd user services - preferred)
 ```bash
-sudo systemctl start godot-server
-sudo systemctl status godot-server
-journalctl -u godot-server -f
+# Issue Watcher - detects new GitHub issues
+systemctl --user start issue-watcher
+systemctl --user status issue-watcher
+journalctl --user -u issue-watcher -f
+
+# Queue Processor - executes tasks from queue
+systemctl --user start queue-processor
+systemctl --user status queue-processor
+journalctl --user -u queue-processor -f
+
+# Enable services to start on boot (requires user lingering)
+systemctl --user enable issue-watcher queue-processor
+sudo loginctl enable-linger $USER
 ```
 
-### Issue Watcher (systemd service)
+### Web Dashboard (Phase 3+)
 ```bash
-sudo systemctl start issue-watcher
-sudo systemctl status issue-watcher
-journalctl -u issue-watcher -f
+# Start backend (Flask API)
+cd web/backend
+python3 app.py              # Dev mode: http://localhost:5000
+
+# Start frontend (separate terminal)
+cd web/frontend
+npm install                  # First time only
+npm run dev                  # Dev mode: http://localhost:5173
+npm run build                # Production build
+
+# Access dashboard
+# Navigate to http://localhost:5173 (dev) or http://localhost:5000 (production)
 ```
+
+**Dashboard Features:**
+- Real-time queue monitoring
+- Task execution logs viewer
+- PR creation status
+- Multi-project overview
+- System health metrics
 
 ### Manual Testing
 ```bash
@@ -504,6 +573,33 @@ gh issue create --template task --title "Test" --label "ready"
 | Phase 5 | 16GB | 24-32GB | GitLab CE alone needs 8GB |
 | Phase 6 | 32GB+ | 32GB+ | Correct |
 
+## Directory Structure
+
+### Runtime Directories
+
+**User Configuration** (`~/.config/lazy_birtd/`):
+```
+~/.config/lazy_birtd/
+├── config.yml              # Main configuration
+├── secrets/                # API tokens (chmod 700)
+│   ├── api_token          # GitHub/GitLab token (chmod 600)
+│   └── github_token       # Alternative token location
+├── queue/                  # Task queue files
+│   └── task-*.json        # Individual task files (project-id-issue-number)
+├── logs/                   # System and task logs
+│   ├── issue-watcher.log  # Issue detection service
+│   ├── queue-processor.log# Task processing service
+│   └── task-*.log         # Per-task execution logs
+└── data/                   # Runtime data and metrics
+```
+
+**Temporary Worktrees** (`/tmp/`):
+```
+/tmp/
+└── lazy-bird-agent-*/      # Isolated git worktrees
+    └── feature-*           # Per-task branch (auto-cleaned after PR merge)
+```
+
 ## Configuration Files
 
 ### Primary Config
@@ -514,14 +610,15 @@ gh issue create --template task --title "Test" --label "ready"
 ### Project-Specific
 - `.github/ISSUE_TEMPLATE/task.yml` - GitHub issue template
 - `.gitlab/issue_templates/task.md` - GitLab issue template
-- `/var/lib/lazy_birtd/queue/` - Task queue files
-- `/var/lib/lazy_birtd/tests/` - Test artifacts
-- `/tmp/agents/` - Git worktrees (ephemeral)
+- `/var/lib/lazy_birtd/queue/` - Task queue files (alternative location)
+- `/var/lib/lazy_birtd/tests/` - Test artifacts (alternative location)
+- `/tmp/lazy-bird-agent-*/` - Git worktrees (ephemeral, task-specific)
 
 ### System Services
-- `/etc/systemd/system/godot-server.service`
-- `/etc/systemd/system/issue-watcher.service`
-- `/etc/lazy_birtd/godot-server.conf`
+- `~/.config/systemd/user/issue-watcher.service` - User service (preferred)
+- `~/.config/systemd/user/queue-processor.service` - User service (preferred)
+- `/etc/systemd/system/godot-server.service` - System service (alternative)
+- `/etc/systemd/system/issue-watcher.service` - System service (alternative)
 
 ## Testing Strategy
 
@@ -747,14 +844,59 @@ sudo systemctl restart godot-server
 
 ### Tasks Not Being Picked Up
 ```bash
-# Check issue watcher
-systemctl status issue-watcher
+# Check issue watcher (user service)
+systemctl --user status issue-watcher
+journalctl --user -u issue-watcher -n 50
+
+# Check queue processor (user service)
+systemctl --user status queue-processor
+journalctl --user -u queue-processor -n 50
+
+# Verify services are enabled
+systemctl --user list-unit-files | grep lazy
+
+# Check user lingering (required for services to run when not logged in)
+loginctl show-user $USER | grep Linger
+# If Linger=no, enable it:
+sudo loginctl enable-linger $USER
 
 # Verify API token
 ./tests/phase0/test-api-access.sh
+cat ~/.config/lazy_birtd/secrets/github_token  # Should exist and be valid
 
-# Check issue labels
+# Check issue labels on GitHub
 gh issue list --label "ready"
+
+# Manually trigger queue processing (testing)
+python3 scripts/queue-processor.py  # Run once manually
+```
+
+### Services Won't Start After Reboot
+```bash
+# This happens when user lingering is not enabled
+# Enable it so services start without login:
+sudo loginctl enable-linger $USER
+
+# Verify lingering is enabled
+loginctl show-user $USER | grep "Linger=yes"
+
+# Restart services
+systemctl --user daemon-reload
+systemctl --user restart issue-watcher queue-processor
+```
+
+### Worktree Cleanup Failures
+```bash
+# List stale worktrees
+git worktree list
+
+# Remove stale worktree manually
+git worktree remove /tmp/lazy-bird-agent-PROJECT-ISSUE --force
+
+# Clean up all completed task worktrees
+for dir in /tmp/lazy-bird-agent-*; do
+    [ -d "$dir" ] && git worktree remove "$dir" --force
+done
 ```
 
 ### Tests Failing
@@ -841,8 +983,16 @@ MIT License - See LICENSE file
 
 ---
 
-**Last Updated:** 2025-11-29
-**Version:** 2.3 (CI/CD Pipeline Operational)
+**Last Updated:** 2025-12-07
+**Version:** 2.4 (Enhanced Documentation)
 **Status:** Phase 1.1 implemented and tested - Production ready!
 **CI/CD Status:** ✅ Automated testing, code quality checks, and coverage tracking operational
 **Project Status:** Fully initialized - Multi-project support active with comprehensive test suite
+
+**Recent Enhancements (v2.4):**
+- Added detailed directory structure documentation
+- Documented agent-runner.sh 11-step execution process with exit codes
+- Added web dashboard setup and usage instructions
+- Enhanced troubleshooting section with systemd user service specifics
+- Added worktree cleanup procedures
+- Documented user lingering requirement for persistent services
