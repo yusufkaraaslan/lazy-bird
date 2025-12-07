@@ -913,6 +913,61 @@ create_draft_pr() {
     fi
 }
 
+# Create PR with retry logic to handle GitHub API sync delays
+# Usage: create_pr_with_retry <title> <body> <is_draft>
+create_pr_with_retry() {
+    local title=$1
+    local body=$2
+    local is_draft=${3:-false}
+    local max_retries=3
+    local delays=(2 5 10)  # Exponential backoff delays in seconds
+
+    for attempt in $(seq 1 $max_retries); do
+        log_info "Attempting PR creation (attempt $attempt/$max_retries)..."
+
+        # Build gh pr create command
+        local cmd="gh pr create --repo \"$REPO_NAME\" --head \"$BRANCH_NAME\" --base \"$BASE_BRANCH\" --title \"$title\" --body \"\$(echo -e \"$body\")\""
+
+        if [ "$is_draft" = "true" ]; then
+            cmd="$cmd --draft"
+        fi
+
+        # Execute PR creation
+        PR_OUTPUT=$(eval "$cmd" 2>&1)
+        PR_EXIT_CODE=$?
+
+        if [ $PR_EXIT_CODE -eq 0 ]; then
+            # Success!
+            PR_URL="$PR_OUTPUT"
+            log_success "PR created successfully: $PR_URL"
+
+            # Extract and save PR number
+            PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
+            echo "$PR_NUMBER" > "$LOG_DIR/pr_number.txt"
+
+            # Add 'automated' label
+            gh pr edit "$PR_NUMBER" --repo "$REPO_NAME" --add-label "automated" 2>/dev/null || \
+                log_warning "Could not add 'automated' label to PR (continuing anyway)"
+
+            return 0
+        else
+            # PR creation failed
+            log_warning "PR creation attempt $attempt failed: $PR_OUTPUT"
+
+            # If not last attempt, wait before retrying
+            if [ $attempt -lt $max_retries ]; then
+                local delay=${delays[$((attempt - 1))]}
+                log_info "Waiting ${delay}s before retry (GitHub API may need time to sync)..."
+                sleep $delay
+            fi
+        fi
+    done
+
+    # All retries failed
+    log_error "Failed to create PR after $max_retries attempts"
+    return 1
+}
+
 # Update PR status with test results
 update_pr_status() {
     local attempt=$1
@@ -1071,22 +1126,41 @@ post_success_comment() {
     # PR and branch information
     if [ -n "$pr_link" ]; then
         comment+="**Pull Request:** $pr_link\n"
-    fi
-    comment+="**Branch:** \`$BRANCH_NAME\`\n"
-    comment+="**Tests:** All passed ✓\n\n"
+        comment+="**Branch:** \`$BRANCH_NAME\`\n"
+        comment+="**Tests:** All passed ✓\n\n"
 
-    comment+="---\n\n"
-    comment+="**Next Steps:**\n"
-    comment+="1. Review the pull request and code changes\n"
-    comment+="2. Test the implementation locally if needed:\n"
-    comment+="   \`\`\`bash\n"
-    comment+="   git fetch origin\n"
-    comment+="   git checkout $BRANCH_NAME\n"
-    comment+="   # Run your tests/validations\n"
-    comment+="   \`\`\`\n"
-    comment+="3. Approve and merge the PR when satisfied\n"
-    comment+="4. Issue will auto-close on merge\n\n"
-    comment+="**Questions or issues?** Comment on the PR or re-open this issue."
+        comment+="---\n\n"
+        comment+="**Next Steps:**\n"
+        comment+="1. Review the pull request and code changes\n"
+        comment+="2. Test the implementation locally if needed:\n"
+        comment+="   \`\`\`bash\n"
+        comment+="   git fetch origin\n"
+        comment+="   git checkout $BRANCH_NAME\n"
+        comment+="   # Run your tests/validations\n"
+        comment+="   \`\`\`\n"
+        comment+="3. Approve and merge the PR when satisfied\n"
+        comment+="4. Issue will auto-close on merge\n\n"
+        comment+="**Questions or issues?** Comment on the PR or re-open this issue."
+    else
+        # No PR created - provide manual instructions
+        comment+="**Branch:** \`$BRANCH_NAME\` (pushed to remote)\n"
+        comment+="**Tests:** All passed ✓\n\n"
+        comment+="⚠️ **Note:** PR creation failed due to GitHub API timing issues. Please create the PR manually.\n\n"
+
+        comment+="---\n\n"
+        comment+="**Manual PR Creation:**\n"
+        comment+="1. Visit: https://github.com/$REPO_NAME/compare/main...$BRANCH_NAME\n"
+        comment+="2. Click \"Create pull request\"\n"
+        comment+="3. Review the implementation and code changes\n"
+        comment+="4. Test locally if needed:\n"
+        comment+="   \`\`\`bash\n"
+        comment+="   git fetch origin\n"
+        comment+="   git checkout $BRANCH_NAME\n"
+        comment+="   # Run your tests/validations\n"
+        comment+="   \`\`\`\n"
+        comment+="5. Merge the PR when satisfied\n\n"
+        comment+="The implementation is complete and all tests passed. Only PR creation was affected."
+    fi
 
     gh issue comment "$TASK_ID" --repo "$REPO_NAME" --body "$(echo -e "$comment")" 2>/dev/null || {
         log_warning "Failed to post comment to issue"
@@ -1225,6 +1299,10 @@ main() {
     log_info "Step 8/11: Pushing branch (before tests)..."
     if ! push_branch; then
         log_warning "Initial push failed (may need force push later), continuing anyway"
+    else
+        # Wait for GitHub API to sync after push
+        log_info "Waiting 3 seconds for GitHub API to sync..."
+        sleep 3
     fi
 
     log_info "Step 9/11: Creating draft PR..."
@@ -1317,45 +1395,32 @@ main() {
 
     local pr_num=$(cat "$LOG_DIR/pr_number.txt" 2>/dev/null || echo "")
     if [ -z "$pr_num" ]; then
-        # No PR exists - create one now with final results
-        log_info "No PR found, creating final PR with passing tests..."
+        # No PR exists - create one now with final results using retry logic
+        log_info "No PR found, creating final PR with passing tests (with retry)..."
 
         # Get test summary from last successful run
         local summary="Implementation completed successfully after $attempt attempt(s)."
 
-        # Create final PR (not draft, ready for review)
+        # Build PR body
         local pr_body="## Implementation Summary\n\n$summary\n\n"
         pr_body+="---\n\n"
         pr_body+="✅ **Status:** All tests passed (Attempt $attempt/$TOTAL_ATTEMPTS)\n\n"
         pr_body+="📋 **Task:** #$TASK_ID\n"
         pr_body+="🌿 **Branch:** \`$BRANCH_NAME\`\n\n"
         pr_body+="---\n\n"
+        pr_body+="🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\n"
+        pr_body+="Co-Authored-By: Claude <noreply@anthropic.com>"
 
         # Ensure 'automated' label exists
-        gh label list --repo "$REPO_NAME" | grep -q "automated" || \
-            gh label create "automated" --repo "$REPO_NAME" --color "0e8a16" --description "Automated task by Lazy_Bird" 2>/dev/null || true
+        ensure_label_exists "automated" "0e8a16" "Automated task by Lazy_Bird"
 
-        # Create final PR (not draft)
-        PR_OUTPUT=$(gh pr create \
-            --repo "$REPO_NAME" \
-            --head "$BRANCH_NAME" \
-            --base "$BASE_BRANCH" \
-            --title "Task #$TASK_ID: $TASK_TITLE" \
-            --body "$(echo -e "$pr_body")" 2>&1)
-
-        if [ $? -eq 0 ]; then
-            PR_URL="$PR_OUTPUT"
-            log_success "Final PR created: $PR_URL"
-
-            # Extract PR number
-            pr_num=$(echo "$PR_URL" | grep -oP '\d+$')
-            echo "$pr_num" > "$LOG_DIR/pr_number.txt"
-
-            # Add 'automated' label
-            gh pr edit "$pr_num" --repo "$REPO_NAME" --add-label "automated" 2>/dev/null || \
-                log_warning "Could not add 'automated' label"
+        # Create final PR with retry logic (not draft)
+        local pr_title="Task #$TASK_ID: $TASK_TITLE"
+        if create_pr_with_retry "$pr_title" "$pr_body" false; then
+            log_success "Final PR created successfully"
         else
-            log_warning "Failed to create final PR: $PR_OUTPUT"
+            log_warning "Failed to create PR after retries - continuing anyway (PR can be created manually)"
+            log_info "Branch '$BRANCH_NAME' has been pushed and is ready for manual PR creation"
         fi
     else
         # PR exists - mark it as ready
