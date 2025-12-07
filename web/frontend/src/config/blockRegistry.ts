@@ -27,13 +27,14 @@ export interface BlockProps {
 }
 
 // Import blocks
-import { Activity, FolderOpen, ListTodo, Bot, Clock, DollarSign } from 'lucide-react';
+import { Activity, FolderOpen, ListTodo, Bot, Clock, DollarSign, FileText, BarChart3, TrendingUp, FlaskConical } from 'lucide-react';
 import { SystemStatusBlock } from '../components/blocks/SystemStatusBlock';
 import { ActiveProjectsBlock } from '../components/blocks/ActiveProjectsBlock';
 import { QueueOverviewBlock } from '../components/blocks/QueueOverviewBlock';
 import { AgentStatusBlock } from '../components/blocks/AgentStatusBlock';
 import { RecentActivityBlock } from '../components/blocks/RecentActivityBlock';
 import { CostTrackerBlock } from '../components/blocks/CostTrackerBlock';
+import { ProjectHeaderBlock } from '../components/blocks/ProjectHeaderBlock';
 
 /**
  * Block Registry
@@ -98,6 +99,15 @@ export const BLOCK_REGISTRY: Record<string, BlockDefinition> = {
     component: CostTrackerBlock,
     availableIn: ['dashboard'],
     requiresView: 'overall',
+  },
+  'project-header': {
+    id: 'project-header',
+    name: 'Project Header',
+    description: 'Project information and controls (always visible)',
+    icon: FolderOpen,
+    component: ProjectHeaderBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'project',
   },
 };
 
