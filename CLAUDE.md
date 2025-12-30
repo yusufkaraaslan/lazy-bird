@@ -6,6 +6,47 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Lazy_Bird** is a progressive development automation system that enables Claude Code instances to work on software development tasks autonomously while developers are away. The system supports 15+ frameworks (Godot, Unity, Python, Rust, React, Django, and more) and scales from simple task automation to enterprise-level orchestration.
 
+## Quick Reference for Developers
+
+**Most Common Commands:**
+
+```bash
+# Testing & Quality
+pytest                          # Run all tests
+pytest --cov=lazy_bird --cov-report=html  # With coverage
+black lazy_bird/ tests/         # Format code
+flake8 lazy_bird/ tests/        # Lint code
+
+# Development
+lazy-bird setup                 # Setup wizard
+lazy-bird server                # Start web backend
+cd web && ./start.sh            # Start both frontend & backend
+cd web/frontend && npm run dev  # Frontend only
+
+# Services
+systemctl --user status issue-watcher
+systemctl --user status queue-processor
+journalctl --user -u issue-watcher -f
+
+# Project Management
+lazy-bird project list          # List projects
+lazy-bird project add           # Add project
+
+# Key Files to Know
+lazy_bird/cli.py               # CLI entry point
+scripts/agent-runner.sh        # Task executor
+scripts/issue-watcher.py       # Issue monitor
+web/backend/app.py             # Web API
+web/frontend/src/App.tsx       # Frontend router
+```
+
+**Architecture at a Glance:**
+- **Python package** (`lazy_bird/`) - CLI tool and package structure
+- **Bash scripts** (`scripts/`) - Core automation logic
+- **Web UI** (`web/`) - Flask backend + React frontend
+- **Config** (`~/.config/lazy_birtd/`) - Runtime configuration
+- **Tests** (`tests/`) - pytest test suite
+
 ## Core Philosophy
 
 **Start simple, add complexity only when needed.** Each phase must deliver immediate value.
@@ -181,6 +222,78 @@ tail -f ~/.config/lazy_birtd/logs/task-PROJECT-ISSUE.log
 9. Wait for GitHub API sync (polling)
 10. Create draft PR
 11. Post implementation comment to issue
+
+### 1.1 Web Dashboard (Phase 0 - Implemented)
+
+**Location:** `web/` directory
+
+Modern React + TypeScript web interface for monitoring and managing Lazy_Bird.
+
+**Architecture:**
+```
+web/
+├── backend/              # Flask REST API
+│   ├── app.py           # Main Flask application
+│   ├── api/             # API endpoints
+│   │   ├── projects.py  # Project CRUD
+│   │   ├── system.py    # System status & control
+│   │   └── queue.py     # Task queue management
+│   └── services/        # Business logic
+│       ├── config_service.py    # Config.yml reader/writer
+│       ├── systemd_service.py   # Service control
+│       └── queue_service.py     # Queue reader
+│
+└── frontend/            # React SPA
+    ├── src/
+    │   ├── App.tsx      # Main app with React Router
+    │   ├── pages/       # Route-based pages
+    │   │   ├── DashboardPage.tsx    # System overview
+    │   │   ├── ProjectsPage.tsx     # Project list
+    │   │   ├── ProjectFormPage.tsx  # Add/edit project
+    │   │   ├── ServicesPage.tsx     # Service management
+    │   │   ├── QueuePage.tsx        # Task queue viewer
+    │   │   └── SettingsPage.tsx     # Configuration
+    │   ├── components/  # Reusable components
+    │   ├── hooks/       # Custom React hooks
+    │   │   ├── useProjects.ts
+    │   │   └── useSystem.ts
+    │   ├── lib/         # API client & utilities
+    │   └── types/       # TypeScript interfaces
+    └── package.json
+```
+
+**Key Backend API Endpoints:**
+```
+GET    /api/projects              # List all projects
+POST   /api/projects              # Create project
+GET    /api/projects/:id          # Get project details
+PUT    /api/projects/:id          # Update project
+DELETE /api/projects/:id          # Delete project
+
+GET    /api/system/status         # System health (CPU, RAM, services)
+POST   /api/system/services/:name/start
+POST   /api/system/services/:name/stop
+POST   /api/system/services/:name/restart
+
+GET    /api/queue                 # List queued tasks
+GET    /api/queue/:id             # Get task details
+DELETE /api/queue/:id             # Cancel task
+```
+
+**Frontend Tech Stack:**
+- **React 18+** with TypeScript for type safety
+- **Vite** for fast builds and hot module replacement
+- **TanStack Query** (React Query) for server state management
+- **React Router** for client-side routing
+- **Shadcn/ui** components built on Radix UI
+- **Tailwind CSS** for styling
+
+**Development Workflow:**
+1. Backend changes: Edit `web/backend/api/*.py` or `web/backend/services/*.py`
+2. Frontend changes: Edit `web/frontend/src/**/*.tsx`
+3. Both servers auto-reload on file changes
+4. API changes require backend restart
+5. Frontend changes hot-reload instantly
 
 ### 2. Setup Wizard (Primary Installation Method)
 
@@ -461,9 +574,33 @@ godot --headless \\
 
 **See:** `Docs/Design/security-baseline.md`
 
-## Commands (Current Implementation Status)
+## Commands Reference
 
-### Wizard Commands (Primary Interface)
+### Python Package CLI (Recommended)
+
+After installing via pip (`pip install lazy-bird`), use the `lazy-bird` command:
+
+```bash
+# Setup and management
+lazy-bird setup              # Run setup wizard
+lazy-bird status             # Show system status (same as ./wizard.sh --status)
+
+# Web dashboard
+lazy-bird server             # Start web backend on http://localhost:5000
+lazy-bird server --host 0.0.0.0 --port 8080  # Custom host/port
+
+# Services
+lazy-bird watch              # Run issue watcher (foreground)
+lazy-bird godot              # Run Godot test server (foreground)
+lazy-bird project list       # List all projects
+lazy-bird project add        # Add new project
+
+# Version
+lazy-bird --version          # Show version
+```
+
+### Wizard Commands (Alternative - Direct Script)
+
 ```bash
 ./wizard.sh                    # Install/configure system
 ./wizard.sh --status           # System health and status
@@ -471,9 +608,11 @@ godot --headless \\
 ./wizard.sh --health           # Run diagnostics
 ./wizard.sh --repair           # Fix common issues
 ./wizard.sh --weekly-review    # Progress report
+./wizard.sh --add-project      # Add new project (Phase 1.1+)
 ```
 
 ### Core Services (systemd user services - preferred)
+
 ```bash
 # Issue Watcher - detects new GitHub issues
 systemctl --user start issue-watcher
@@ -490,30 +629,90 @@ systemctl --user enable issue-watcher queue-processor
 sudo loginctl enable-linger $USER
 ```
 
-### Web Dashboard (Phase 3+)
-```bash
-# Start backend (Flask API)
-cd web/backend
-python3 app.py              # Dev mode: http://localhost:5000
+### Web Dashboard Development
 
-# Start frontend (separate terminal)
+**Quick Start (One Command):**
+```bash
+cd web
+./start.sh                   # Starts both backend (5000) and frontend (5173)
+./stop.sh                    # Stops both servers
+```
+
+**Manual Development:**
+```bash
+# Backend (Terminal 1)
+cd web/backend
+source venv/bin/activate     # Activate virtual environment
+python3 app.py               # Start Flask server on :5000
+python3 app.py --debug       # Dev mode with auto-reload
+
+# Frontend (Terminal 2)
 cd web/frontend
 npm install                  # First time only
-npm run dev                  # Dev mode: http://localhost:5173
+npm run dev                  # Start Vite dev server on :5173
 npm run build                # Production build
-
-# Access dashboard
-# Navigate to http://localhost:5173 (dev) or http://localhost:5000 (production)
+npm run preview              # Preview production build
+npm run lint                 # Lint TypeScript/React code
 ```
+
+**Dashboard URLs:**
+- Frontend: http://localhost:5173 (dev)
+- Backend API: http://localhost:5000/api
+- API Docs: http://localhost:5000/
 
 **Dashboard Features:**
 - Real-time queue monitoring
 - Task execution logs viewer
 - PR creation status
-- Multi-project overview
-- System health metrics
+- Multi-project overview (CRUD operations)
+- System health metrics (CPU, RAM, disk)
+- Service control (start/stop/restart systemd services)
+- Settings (GitHub token configuration)
+
+### Testing Commands
+
+**Python/Backend Tests:**
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=lazy_bird --cov-report=term
+pytest --cov=lazy_bird --cov-report=html  # Generate HTML report
+
+# Run specific test types
+pytest -m unit               # Unit tests only
+pytest -m integration        # Integration tests only
+pytest -m "not slow"         # Skip slow tests
+
+# Run specific test files
+pytest tests/unit/test_init.py
+pytest tests/integration/ -v
+
+# Coverage threshold check
+pytest --cov=lazy_bird --cov-fail-under=10
+```
+
+**Code Quality Checks:**
+```bash
+# Format code (auto-fix)
+black lazy_bird/ tests/
+
+# Check formatting (no changes)
+black --check --diff lazy_bird/ tests/
+
+# Lint code
+flake8 lazy_bird/ tests/
+
+# Type checking
+mypy lazy_bird/ --ignore-missing-imports
+
+# Security scan
+bandit -r lazy_bird/
+```
 
 ### Manual Testing
+
 ```bash
 # Test Claude Code (Phase 0)
 ./tests/phase0/validate-claude-all.sh
@@ -523,6 +722,33 @@ curl http://localhost:5000/health
 
 # Test issue creation
 gh issue create --template task --title "Test" --label "ready"
+
+# Test web backend API
+curl http://localhost:5000/api/projects
+curl http://localhost:5000/api/system/status
+curl http://localhost:5000/api/queue
+```
+
+### Project Management (Phase 1.1+)
+
+```bash
+# Using Python package CLI
+lazy-bird project list                    # List all projects
+lazy-bird project add                     # Interactive add
+lazy-bird project show my-project         # Show project details
+lazy-bird project enable my-project       # Enable project
+lazy-bird project disable my-project      # Disable project
+lazy-bird project remove my-project       # Remove project
+
+# Using direct script
+python3 scripts/project-manager.py list
+python3 scripts/project-manager.py add \
+  --id "my-backend" \
+  --name "My Backend API" \
+  --type python \
+  --path /path/to/backend \
+  --repository https://github.com/user/backend \
+  --test-command "pytest tests/"
 ```
 
 ## Target Environment
@@ -981,18 +1207,67 @@ MIT License - See LICENSE file
 5. **Monitor costs** - Set budget limits
 6. **Start simple** - Phase 1 first, then iterate
 
+## Python Package Structure
+
+Lazy_Bird is distributed as a Python package on PyPI:
+
+```
+lazy_bird/                    # Main Python package
+├── __init__.py              # Package metadata, exports
+├── cli.py                   # CLI entry point (lazy-bird command)
+├── scripts/                 # Symlink to ../scripts/
+└── web/                     # Symlink to ../web/
+
+scripts/                     # Core automation scripts
+├── agent-runner.sh          # Task execution engine
+├── issue-watcher.py         # GitHub/GitLab issue monitor
+├── queue-processor.py       # Task queue processor
+├── project-manager.py       # Multi-project CLI tool
+├── godot-server.py          # Test coordination server
+└── wizard-multi-project.sh  # Multi-project wizard
+
+web/                         # Web dashboard
+├── backend/
+│   ├── app.py              # Flask API server
+│   ├── api/                # REST endpoints
+│   └── services/           # Business logic
+└── frontend/
+    └── src/                # React + TypeScript SPA
+
+tests/                       # Test suite
+├── conftest.py             # pytest fixtures
+├── unit/                   # Fast, isolated tests
+└── integration/            # Integration tests
+
+config/                      # Configuration templates
+├── config.example.yml      # Example config
+└── framework-presets.yml   # Framework definitions
+```
+
+**Installation Methods:**
+1. **PyPI (Recommended):** `pip install lazy-bird`
+2. **From source:** `pip install -e .` (development mode)
+3. **Wizard script:** `curl -L <url> | bash` (legacy)
+
+**Entry Points:**
+- `lazy-bird` command → `lazy_bird.cli:main`
+- Scripts accessible via package symlinks
+- Web dashboard via `lazy-bird server`
+
 ---
 
-**Last Updated:** 2025-12-07
-**Version:** 2.4 (Enhanced Documentation)
+**Last Updated:** 2025-12-29
+**Version:** 2.5 (Enhanced Developer Documentation)
 **Status:** Phase 1.1 implemented and tested - Production ready!
 **CI/CD Status:** ✅ Automated testing, code quality checks, and coverage tracking operational
 **Project Status:** Fully initialized - Multi-project support active with comprehensive test suite
 
-**Recent Enhancements (v2.4):**
-- Added detailed directory structure documentation
-- Documented agent-runner.sh 11-step execution process with exit codes
-- Added web dashboard setup and usage instructions
-- Enhanced troubleshooting section with systemd user service specifics
-- Added worktree cleanup procedures
-- Documented user lingering requirement for persistent services
+**Recent Enhancements (v2.5):**
+- Added Quick Reference section for developers
+- Documented Python package CLI commands (`lazy-bird` command)
+- Enhanced Web Dashboard architecture documentation
+- Added comprehensive testing commands section
+- Documented web development workflow (frontend + backend)
+- Added Python package structure overview
+- Improved code quality check commands
+- Enhanced web API endpoint documentation
