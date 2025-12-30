@@ -61,18 +61,53 @@ This document outlines the comprehensive plan to refactor Lazy-Bird from a tight
 └──────────────┘      └──────────────┘     └──────────────┘
 ```
 
+## Multi-Repository Architecture
+
+The v2.0 refactor splits Lazy-Bird into **3 separate repositories**:
+
+### 1. **lazy-bird** (Core Engine) - This Repository
+- FastAPI REST API
+- PostgreSQL database
+- Celery task queue
+- Webhook publisher
+- **Implementation**: [docs/refactor/IMPLEMENTATION_CORE.md](docs/refactor/IMPLEMENTATION_CORE.md)
+
+### 2. **lazy-bird-ui** (Web UI Client) - New Repository
+- React + TypeScript
+- Vite build system
+- API client library
+- **Setup**: [.github/repos-setup/lazy-bird-ui/](.github/repos-setup/lazy-bird-ui/)
+- **Implementation**: [.github/repos-setup/lazy-bird-ui/IMPLEMENTATION.md](.github/repos-setup/lazy-bird-ui/IMPLEMENTATION.md)
+
+### 3. **plane-lazy-bird-integration** (Plane Client) - New Repository
+- Django package
+- API client wrapper
+- Signal handlers + webhooks
+- **Setup**: [.github/repos-setup/plane-lazy-bird-integration/](.github/repos-setup/plane-lazy-bird-integration/)
+- **Implementation**: [.github/repos-setup/plane-lazy-bird-integration/IMPLEMENTATION.md](.github/repos-setup/plane-lazy-bird-integration/IMPLEMENTATION.md)
+
+## Repository Setup Guide
+
+📋 **[REPOSITORY_SETUP.md](.github/repos-setup/REPOSITORY_SETUP.md)** - Complete guide for creating and configuring the 3 repositories with GitHub Projects and issues
+
 ## Documentation Structure
 
-This refactoring plan is organized into the following documents:
+### Core Documentation (Applies to All Repos)
 
 1. **[Architecture](docs/refactor/01-architecture.md)** - System design and component overview
 2. **[Database Schema](docs/refactor/02-database-schema.md)** - PostgreSQL schema and migrations
 3. **[API Endpoints](docs/refactor/03-api-endpoints.md)** - Complete REST API specification
 4. **[Webhooks](docs/refactor/04-webhooks.md)** - Event system and webhook architecture
 5. **[Client Separation](docs/refactor/05-client-separation.md)** - Guide to extracting clients
-6. **[Implementation Timeline](docs/refactor/06-implementation-timeline.md)** - Week-by-week plan
+6. **[Implementation Timeline](docs/refactor/06-implementation-timeline.md)** - Week-by-week plan (unified view)
 7. **[Migration Guide](docs/refactor/07-migration-guide.md)** - v1.1 to v2.0 upgrade path
 8. **[Testing Strategy](docs/refactor/08-testing-strategy.md)** - Testing approach and coverage
+
+### Repository-Specific Implementation Plans
+
+- **[Core Engine Implementation](docs/refactor/IMPLEMENTATION_CORE.md)** - Week 1-3, lazy-bird repo (125+ issues)
+- **[Web UI Implementation](.github/repos-setup/lazy-bird-ui/IMPLEMENTATION.md)** - Week 4, lazy-bird-ui repo (47+ issues)
+- **[Plane Integration Implementation](.github/repos-setup/plane-lazy-bird-integration/IMPLEMENTATION.md)** - Week 4, plane-lazy-bird-integration repo (33+ issues)
 
 ## Quick Start
 
