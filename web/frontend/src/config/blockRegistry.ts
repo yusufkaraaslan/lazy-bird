@@ -27,13 +27,19 @@ export interface BlockProps {
 }
 
 // Import blocks
-import { Activity, FolderOpen, ListTodo, Bot, Clock, DollarSign } from 'lucide-react';
+import { Activity, FolderOpen, ListTodo, Bot, Clock, DollarSign, FileText, BarChart3, FlaskConical } from 'lucide-react';
 import { SystemStatusBlock } from '../components/blocks/SystemStatusBlock';
 import { ActiveProjectsBlock } from '../components/blocks/ActiveProjectsBlock';
 import { QueueOverviewBlock } from '../components/blocks/QueueOverviewBlock';
 import { AgentStatusBlock } from '../components/blocks/AgentStatusBlock';
 import { RecentActivityBlock } from '../components/blocks/RecentActivityBlock';
 import { CostTrackerBlock } from '../components/blocks/CostTrackerBlock';
+import { ProjectHeaderBlock } from '../components/blocks/ProjectHeaderBlock';
+import { ProjectIssuesBlock } from '../components/blocks/ProjectIssuesBlock';
+import { ProjectStatisticsBlock } from '../components/blocks/ProjectStatisticsBlock';
+import { ProjectTimelineBlock } from '../components/blocks/ProjectTimelineBlock';
+import { ProjectTestHistoryBlock } from '../components/blocks/ProjectTestHistoryBlock';
+import { ProjectCostBlock } from '../components/blocks/ProjectCostBlock';
 
 /**
  * Block Registry
@@ -98,6 +104,60 @@ export const BLOCK_REGISTRY: Record<string, BlockDefinition> = {
     component: CostTrackerBlock,
     availableIn: ['dashboard'],
     requiresView: 'overall',
+  },
+  'project-header': {
+    id: 'project-header',
+    name: 'Project Header',
+    description: 'Project information and controls (always visible)',
+    icon: FolderOpen,
+    component: ProjectHeaderBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'project',
+  },
+  'project-issues': {
+    id: 'project-issues',
+    name: 'Project Issues',
+    description: 'All issues for the project with filtering and sorting',
+    icon: FileText,
+    component: ProjectIssuesBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'project',
+  },
+  'project-statistics': {
+    id: 'project-statistics',
+    name: 'Project Statistics',
+    description: 'Key metrics and statistics for the project',
+    icon: BarChart3,
+    component: ProjectStatisticsBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'project',
+  },
+  'project-timeline': {
+    id: 'project-timeline',
+    name: 'Project Timeline',
+    description: 'Visual timeline of project activity and events',
+    icon: Clock,
+    component: ProjectTimelineBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'project',
+  },
+  'project-test-history': {
+    id: 'project-test-history',
+    name: 'Project Test History',
+    description: 'Test pass/fail trends and recent test results',
+    icon: FlaskConical,
+    component: ProjectTestHistoryBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'project',
+  },
+  'project-cost': {
+    id: 'project-cost',
+    name: 'Project Cost',
+    description: 'Cost breakdown and spending metrics for the project',
+    icon: DollarSign,
+    component: ProjectCostBlock,
+    availableIn: ['dashboard'],
+    requiresView: 'project',
   },
 };
 
