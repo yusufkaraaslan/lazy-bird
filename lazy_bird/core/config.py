@@ -154,6 +154,12 @@ class Settings(BaseSettings):
         le=128,
         description="Minimum password length for validation"
     )
+    RATE_LIMIT_PER_MINUTE: int = Field(
+        default=60,
+        ge=1,
+        le=10000,
+        description="Maximum requests per minute per client (IP or API key)"
+    )
 
     # -------------------------------------------------------------------------
     # CLAUDE API CONFIGURATION
