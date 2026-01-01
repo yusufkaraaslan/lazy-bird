@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:14-alpine
+    container_name: lazy-bird-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lazy_bird
+      POSTGRES_USER: lazy_bird
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-lazy_bird_dev_password_change_me}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lazy_bird -d lazy_bird"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lazy-bird-network
+
+  # Redis (for Celery and caching)
+  redis:
+    image: redis:7-alpine
+    container_name: lazy-bird-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_dev_password_change_me}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lazy-bird-network
+
+  # FastAPI Application (v2.0)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lazy-bird-api
+    restart: unless-stopped
+    command: uvicorn lazy_bird.api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://lazy_bird:${DB_PASSWORD:-lazy_bird_dev_password_change_me}@postgres:5432/lazy_bird
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_dev_password_change_me}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis_dev_password_change_me}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis_dev_password_change_me}@redis:6379/1
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - ENVIRONMENT=development
+      - DEBUG=true
+    volumes:
+      - .:/app
+      - git_repos:/var/lib/lazy_bird/repos
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - lazy-bird-network
+
+  # Celery Worker
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lazy-bird-worker
+    restart: unless-stopped
+    command: celery -A lazy_bird.tasks worker --loglevel=info --concurrency=4
+    environment:
+      - DATABASE_URL=postgresql://lazy_bird:${DB_PASSWORD:-lazy_bird_dev_password_change_me}@postgres:5432/lazy_bird
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_dev_password_change_me}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis_dev_password_change_me}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis_dev_password_change_me}@redis:6379/1
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+    volumes:
+      - .:/app
+      - git_repos:/var/lib/lazy_bird/repos
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - lazy-bird-network
+
+  # Celery Beat (Scheduler)
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lazy-bird-beat
+    restart: unless-stopped
+    command: celery -A lazy_bird.tasks beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://lazy_bird:${DB_PASSWORD:-lazy_bird_dev_password_change_me}@postgres:5432/lazy_bird
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_dev_password_change_me}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis_dev_password_change_me}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis_dev_password_change_me}@redis:6379/1
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+    volumes:
+      - .:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - lazy-bird-network
+
+networks:
+  lazy-bird-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  git_repos:
+    driver: local

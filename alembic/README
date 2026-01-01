@@ -1,0 +1,134 @@
+# Alembic Database Migrations
+
+This directory contains database migration scripts for Lazy-Bird v2.0.
+
+## Structure
+
+```
+alembic/
+├── versions/          # Migration scripts (auto-generated)
+├── env.py            # Alembic environment configuration
+├── script.py.mako    # Migration script template
+└── README            # This file
+```
+
+## Common Commands
+
+### Create a new migration
+
+```bash
+# Auto-generate migration from model changes
+alembic revision --autogenerate -m "Description of changes"
+
+# Create empty migration
+alembic revision -m "Description of manual changes"
+```
+
+### Apply migrations
+
+```bash
+# Upgrade to latest migration
+alembic upgrade head
+
+# Upgrade by 1 version
+alembic upgrade +1
+
+# Upgrade to specific revision
+alembic upgrade abc123
+```
+
+### Rollback migrations
+
+```bash
+# Downgrade by 1 version
+alembic downgrade -1
+
+# Downgrade to specific revision
+alembic downgrade abc123
+
+# Downgrade all (back to empty database)
+alembic downgrade base
+```
+
+### View migration status
+
+```bash
+# Show current revision
+alembic current
+
+# Show migration history
+alembic history
+
+# Show pending migrations
+alembic history --verbose
+```
+
+## Configuration
+
+Alembic is configured via:
+- `alembic.ini` - Main configuration file
+- `alembic/env.py` - Python environment setup
+- `.env` - Database URL (via DATABASE_URL variable)
+
+## Auto-generation
+
+Alembic can auto-generate migrations by comparing:
+1. Current database schema
+2. SQLAlchemy model definitions in `lazy_bird/models/`
+
+It will detect:
+- New tables
+- Removed tables
+- New columns
+- Removed columns
+- Column type changes
+- Index changes
+- Constraint changes
+
+## Best Practices
+
+1. **Always review auto-generated migrations** before applying
+2. **Test migrations** on development database first
+3. **Backup production database** before migrating
+4. **Version control all migrations** (commit to git)
+5. **Never edit applied migrations** (create new one instead)
+6. **Write descriptive migration messages**
+
+## Example Workflow
+
+```bash
+# 1. Make changes to models in lazy_bird/models/
+vim lazy_bird/models/project.py
+
+# 2. Generate migration
+alembic revision --autogenerate -m "Add new_field to projects table"
+
+# 3. Review generated migration
+cat alembic/versions/*_add_new_field_to_projects_table.py
+
+# 4. Apply migration
+alembic upgrade head
+
+# 5. Verify in database
+psql -U lazy_bird -d lazy_bird -c "\d projects"
+```
+
+## Troubleshooting
+
+### "Can't locate revision identified by 'xyz'"
+- Check that all migrations are in versions/ directory
+- Verify alembic_version table in database
+
+### "Target database is not up to date"
+```bash
+# Stamp database with current version
+alembic stamp head
+```
+
+### Conflict during merge
+```bash
+# Create merge migration
+alembic merge heads
+```
+
+For more information: https://alembic.sqlalchemy.org/
