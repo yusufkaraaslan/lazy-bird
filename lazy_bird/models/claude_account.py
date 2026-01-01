@@ -15,7 +15,6 @@ from sqlalchemy import (
     CheckConstraint,
     Column,
     DateTime,
-    Decimal as SQLDecimal,
     Integer,
     Numeric,
     String,

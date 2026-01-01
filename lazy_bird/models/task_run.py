@@ -109,7 +109,7 @@ class TaskRun(Base):
         tokens_used: Total tokens consumed
         cost_usd: Total cost in USD
 
-        metadata: Additional data as JSONB
+        task_metadata: Additional data as JSONB
         created_at: Creation timestamp
         updated_at: Last update timestamp
 
@@ -329,7 +329,7 @@ class TaskRun(Base):
     # METADATA
     # -------------------------------------------------------------------------
 
-    metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+    task_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(
         JSONB,
         nullable=True,
         server_default="{}",
@@ -535,9 +535,9 @@ class TaskRun(Base):
             key: Metadata key
             value: Metadata value (must be JSON-serializable)
         """
-        if self.metadata is None:
-            self.metadata = {}
-        self.metadata[key] = value
+        if self.task_metadata is None:
+            self.task_metadata = {}
+        self.task_metadata[key] = value
 
         # Flag as modified for SQLAlchemy JSONB change detection
         from sqlalchemy.orm.attributes import flag_modified
@@ -545,7 +545,7 @@ class TaskRun(Base):
 
         session = inspect(self).session
         if session:
-            flag_modified(self, "metadata")
+            flag_modified(self, "task_metadata")
 
     def get_metadata(self, key: str, default: Any = None) -> Any:
         """Get a metadata value.
@@ -557,9 +557,9 @@ class TaskRun(Base):
         Returns:
             Any: Metadata value or default
         """
-        if not self.metadata:
+        if not self.task_metadata:
             return default
-        return self.metadata.get(key, default)
+        return self.task_metadata.get(key, default)
 
     def to_dict(self) -> dict:
         """Convert task run to dictionary for API responses.
@@ -589,7 +589,7 @@ class TaskRun(Base):
             "tests_passed": self.tests_passed,
             "tokens_used": self.tokens_used,
             "cost_usd": float(self.cost_usd) if self.cost_usd else None,
-            "metadata": self.metadata or {},
+            "task_metadata": self.task_metadata or {},
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

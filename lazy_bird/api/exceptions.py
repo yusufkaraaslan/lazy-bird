@@ -200,8 +200,59 @@ class ResourceConflictError(LazyBirdException):
         )
 
 
-class InsufficientPermissionsError(LazyBirdException):
-    """Insufficient permissions (403)."""
+class AuthenticationError(LazyBirdException):
+    """Authentication error (401)."""
+
+    def __init__(
+        self,
+        detail: str = "Authentication required",
+    ):
+        """Initialize authentication error.
+
+        Args:
+            detail: Human-readable error message
+        """
+        super().__init__(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=detail,
+            error_type="https://lazy-bird.dev/errors/authentication-required",
+            title="Authentication Required",
+        )
+
+
+class AuthorizationError(LazyBirdException):
+    """Authorization error / insufficient permissions (403)."""
+
+    def __init__(
+        self,
+        detail: str = "Insufficient permissions",
+        required_scope: Optional[str] = None,
+        user_scopes: Optional[list[str]] = None,
+    ):
+        """Initialize authorization error.
+
+        Args:
+            detail: Human-readable error message
+            required_scope: Single required permission scope
+            user_scopes: User's current scopes
+        """
+        errors = {}
+        if required_scope:
+            errors["required_scope"] = required_scope
+        if user_scopes:
+            errors["user_scopes"] = user_scopes
+
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=detail,
+            error_type="https://lazy-bird.dev/errors/insufficient-permissions",
+            title="Insufficient Permissions",
+            errors=errors if errors else None,
+        )
+
+
+class InsufficientPermissionsError(AuthorizationError):
+    """Insufficient permissions (403) - alias for backward compatibility."""
 
     def __init__(
         self,
@@ -214,13 +265,11 @@ class InsufficientPermissionsError(LazyBirdException):
             detail: Human-readable error message
             required_scopes: Required permission scopes
         """
-        errors = {"required_scopes": required_scopes} if required_scopes else None
+        # Convert to new format
+        required_scope = required_scopes[0] if required_scopes else None
         super().__init__(
-            status_code=status.HTTP_403_FORBIDDEN,
             detail=detail,
-            error_type="https://lazy-bird.dev/errors/insufficient-permissions",
-            title="Insufficient Permissions",
-            errors=errors,
+            required_scope=required_scope,
         )
 
 

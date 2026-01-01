@@ -50,7 +50,7 @@ class TaskRunLog(Base):
         step: Execution step (init, planning, implementation, testing, etc.)
         tool_name: Claude tool name used (Read, Write, Bash, etc.)
 
-        metadata: Additional data as JSONB
+        log_metadata: Additional data as JSONB
         created_at: Log timestamp
     """
 
@@ -117,7 +117,7 @@ class TaskRunLog(Base):
     # ADDITIONAL DATA
     # -------------------------------------------------------------------------
 
-    metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+    log_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(
         JSONB,
         nullable=True,
         server_default="{}",

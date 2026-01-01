@@ -129,7 +129,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 # Create FastAPI application instance
 app = FastAPI(
-    title=settings.PROJECT_NAME,
+    title=settings.API_TITLE,
     description="""
     **Lazy-Bird v2.0** - Progressive Development Automation System
 
@@ -169,8 +169,8 @@ app = FastAPI(
     - [Documentation](https://github.com/yusyus/lazy-bird/tree/main/Docs)
     - [Issue Tracker](https://github.com/yusyus/lazy-bird/issues)
     """,
-    version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
+    version=settings.API_VERSION,
+    openapi_url="/api/v1/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
@@ -240,16 +240,16 @@ from lazy_bird.api.routers import (
 )
 
 # Include API routers
-app.include_router(health_router, prefix=settings.API_V1_PREFIX)
-app.include_router(projects_router, prefix=settings.API_V1_PREFIX)
-app.include_router(task_runs_router, prefix=settings.API_V1_PREFIX)
-app.include_router(claude_accounts_router, prefix=settings.API_V1_PREFIX)
-app.include_router(framework_presets_router, prefix=settings.API_V1_PREFIX)
-app.include_router(api_keys_router, prefix=settings.API_V1_PREFIX)
-app.include_router(webhooks_router, prefix=settings.API_V1_PREFIX)
+app.include_router(health_router, prefix="/api/v1")
+app.include_router(projects_router, prefix="/api/v1")
+app.include_router(task_runs_router, prefix="/api/v1")
+app.include_router(claude_accounts_router, prefix="/api/v1")
+app.include_router(framework_presets_router, prefix="/api/v1")
+app.include_router(api_keys_router, prefix="/api/v1")
+app.include_router(webhooks_router, prefix="/api/v1")
 
 # TODO: Add remaining routers when implemented
-# app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
+# app.include_router(auth_router, prefix="/api/v1")
 
 
 # Root endpoint
@@ -262,13 +262,13 @@ async def root() -> JSONResponse:
     """
     return JSONResponse(
         content={
-            "name": settings.PROJECT_NAME,
-            "version": settings.VERSION,
+            "name": settings.API_TITLE,
+            "version": settings.API_VERSION,
             "status": "operational",
             "environment": settings.ENVIRONMENT,
             "docs": "/docs",
             "redoc": "/redoc",
-            "openapi": f"{settings.API_V1_PREFIX}/openapi.json",
+            "openapi": "/api/v1/openapi.json",
         }
     )
 

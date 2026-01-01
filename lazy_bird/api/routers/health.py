@@ -197,7 +197,7 @@ async def health_check() -> JSONResponse:
     response = {
         "status": overall_status,
         "timestamp": datetime.utcnow().isoformat() + "Z",
-        "version": settings.VERSION,
+        "version": settings.API_VERSION,
         "environment": settings.ENVIRONMENT,
         "services": {
             "database": db_health,

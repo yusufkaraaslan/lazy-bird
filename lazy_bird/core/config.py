@@ -26,6 +26,28 @@ class Settings(BaseSettings):
     )
 
     # -------------------------------------------------------------------------
+    # GENERAL CONFIGURATION
+    # -------------------------------------------------------------------------
+    ENVIRONMENT: str = Field(
+        default="development",
+        description="Runtime environment (development, production, testing)"
+    )
+    USE_ASYNC_DB: bool = Field(
+        default=True,
+        description="Use async database engine (recommended)"
+    )
+    HOST: str = Field(
+        default="0.0.0.0",
+        description="API host (alias for API_HOST)"
+    )
+    PORT: int = Field(
+        default=8000,
+        ge=1024,
+        le=65535,
+        description="API port (alias for API_PORT)"
+    )
+
+    # -------------------------------------------------------------------------
     # DATABASE CONFIGURATION
     # -------------------------------------------------------------------------
     DATABASE_URL: str = Field(
