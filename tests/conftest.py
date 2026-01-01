@@ -210,3 +210,115 @@ def mock_package_root(temp_dir):
     )
 
     return temp_dir
+
+
+# ============================================================================
+# FastAPI / API Testing Fixtures
+# ============================================================================
+
+
+@pytest.fixture
+async def test_db():
+    """Create test database session.
+
+    Creates an in-memory SQLite database for testing.
+    """
+    from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+    from sqlalchemy.orm import sessionmaker
+    from lazy_bird.core.database import Base
+
+    # Create in-memory async SQLite database
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        echo=False,
+    )
+
+    # Create all tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    # Create session factory
+    async_session_factory = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
+
+    # Create session
+    async with async_session_factory() as session:
+        yield session
+
+    # Cleanup
+    await engine.dispose()
+
+
+@pytest.fixture
+def test_client(test_db):
+    """Create FastAPI test client with mocked database."""
+    from fastapi.testclient import TestClient
+    from lazy_bird.api.main import app
+    from lazy_bird.api.dependencies import get_async_database
+
+    # Override database dependency
+    async def override_get_db():
+        yield test_db
+
+    app.dependency_overrides[get_async_database] = override_get_db
+
+    client = TestClient(app)
+    yield client
+
+    # Cleanup
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def test_api_key(test_db):
+    """Create test API key with admin scope."""
+    from lazy_bird.models.api_key import ApiKey
+    from datetime import datetime, timezone
+    import secrets
+
+    api_key = ApiKey(
+        name="Test API Key",
+        key_hash=secrets.token_urlsafe(32),
+        scope="admin",
+        is_active=True,
+        created_at=datetime.now(timezone.utc),
+    )
+
+    test_db.add(api_key)
+    await test_db.commit()
+    await test_db.refresh(api_key)
+
+    return api_key
+
+
+@pytest.fixture
+async def test_project(test_db):
+    """Create test project in database."""
+    from lazy_bird.models.project import Project
+    from datetime import datetime, timezone
+    from decimal import Decimal
+
+    project = Project(
+        name="Test Project",
+        slug="test-project",
+        repo_url="https://github.com/user/test-project",
+        default_branch="main",
+        project_type="python",
+        automation_enabled=True,
+        test_command="pytest",
+        build_command="python -m build",
+        lint_command="flake8",
+        max_concurrent_tasks=3,
+        task_timeout_seconds=1800,
+        max_cost_per_task_usd=Decimal("5.00"),
+        daily_cost_limit_usd=Decimal("50.00"),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+
+    test_db.add(project)
+    await test_db.commit()
+    await test_db.refresh(project)
+
+    return project

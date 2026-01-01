@@ -319,6 +319,32 @@ class ProjectResponse(ProjectBase):
         description="Whether project is active (not deleted)",
     )
 
+    # Optional statistics (only included in list view)
+    total_tasks: Optional[int] = Field(
+        default=None,
+        description="Total number of tasks for this project",
+    )
+    tasks_queued: Optional[int] = Field(
+        default=None,
+        description="Number of queued tasks",
+    )
+    tasks_running: Optional[int] = Field(
+        default=None,
+        description="Number of running tasks",
+    )
+    tasks_success: Optional[int] = Field(
+        default=None,
+        description="Number of successful tasks",
+    )
+    tasks_failed: Optional[int] = Field(
+        default=None,
+        description="Number of failed tasks",
+    )
+    last_task_at: Optional[datetime] = Field(
+        default=None,
+        description="Timestamp of last task execution",
+    )
+
     model_config = ConfigDict(from_attributes=True)  # Enable ORM mode
 
 
