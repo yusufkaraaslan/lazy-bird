@@ -11,11 +11,13 @@ This package contains all API route handlers organized by resource:
 - auth: Authentication endpoints
 """
 
+from lazy_bird.api.routers.claude_accounts import router as claude_accounts_router
 from lazy_bird.api.routers.health import router as health_router
 from lazy_bird.api.routers.projects import router as projects_router
 from lazy_bird.api.routers.task_runs import router as task_runs_router
 
 __all__ = [
+    "claude_accounts_router",
     "health_router",
     "projects_router",
     "task_runs_router",

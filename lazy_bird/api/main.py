@@ -229,15 +229,20 @@ from lazy_bird.api.exceptions import register_exception_handlers
 register_exception_handlers(app)
 
 # Import routers
-from lazy_bird.api.routers import health_router, projects_router, task_runs_router
+from lazy_bird.api.routers import (
+    claude_accounts_router,
+    health_router,
+    projects_router,
+    task_runs_router,
+)
 
 # Include API routers
 app.include_router(health_router, prefix=settings.API_V1_PREFIX)
 app.include_router(projects_router, prefix=settings.API_V1_PREFIX)
 app.include_router(task_runs_router, prefix=settings.API_V1_PREFIX)
+app.include_router(claude_accounts_router, prefix=settings.API_V1_PREFIX)
 
 # TODO: Add remaining routers when implemented
-# app.include_router(claude_accounts_router, prefix=settings.API_V1_PREFIX)
 # app.include_router(framework_presets_router, prefix=settings.API_V1_PREFIX)
 # app.include_router(webhooks_router, prefix=settings.API_V1_PREFIX)
 # app.include_router(api_keys_router, prefix=settings.API_V1_PREFIX)
