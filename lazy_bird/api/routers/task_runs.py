@@ -785,6 +785,12 @@ async def stream_task_run_logs(
     level: Optional[str] = Query(
         None, description="Filter by log level (DEBUG, INFO, WARNING, ERROR)"
     ),
+    search: Optional[str] = Query(
+        None, description="Filter logs containing this text (case-insensitive)"
+    ),
+    since: Optional[datetime] = Query(
+        None, description="Only show logs after this timestamp (ISO 8601 format)"
+    ),
     db: AsyncSession = Depends(get_async_database),
     api_key: ApiKey = Depends(RequireRead),
 ):
@@ -795,6 +801,8 @@ async def stream_task_run_logs(
 
     **Query Parameters:**
     - level: string - Filter by minimum log level (DEBUG < INFO < WARNING < ERROR)
+    - search: string - Filter logs containing this text (case-insensitive)
+    - since: datetime - Only show logs after this timestamp (ISO 8601 format)
 
     **Response Format (SSE):**
     ```
@@ -860,6 +868,41 @@ async def stream_task_run_logs(
     LOG_LEVELS = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
     min_level = LOG_LEVELS.get(level.upper(), 10) if level else 10
 
+    def should_include_log(log_entry: dict) -> bool:
+        """Check if log entry passes all filters."""
+        # Filter by log level
+        entry_level = LOG_LEVELS.get(log_entry.get("level", "INFO"), 20)
+        if entry_level < min_level:
+            return False
+
+        # Filter by search text (case-insensitive)
+        if search:
+            message = log_entry.get("message", "").lower()
+            if search.lower() not in message:
+                return False
+
+        # Filter by timestamp
+        if since:
+            timestamp_str = log_entry.get("timestamp")
+            if timestamp_str:
+                try:
+                    from dateutil.parser import parse as parse_datetime
+                    log_timestamp = parse_datetime(timestamp_str)
+                    # Make both timezone-aware for comparison
+                    if log_timestamp.tzinfo is None:
+                        log_timestamp = log_timestamp.replace(tzinfo=timezone.utc)
+                    if since.tzinfo is None:
+                        since_aware = since.replace(tzinfo=timezone.utc)
+                    else:
+                        since_aware = since
+                    if log_timestamp < since_aware:
+                        return False
+                except Exception:
+                    # If timestamp parsing fails, include the log
+                    pass
+
+        return True
+
     async def event_generator():
         """Generate SSE events from Redis Pub/Sub and log history."""
         redis_client = await get_async_redis()
@@ -872,9 +915,8 @@ async def stream_task_run_logs(
             # Send initial log history
             history = await publisher.get_log_history_async(task_id=str(task_run_id), limit=100)
             for log_entry in reversed(history):  # Send oldest first
-                # Filter by log level
-                entry_level = LOG_LEVELS.get(log_entry.get("level", "INFO"), 20)
-                if entry_level >= min_level:
+                # Apply all filters
+                if should_include_log(log_entry):
                     yield f"event: log\ndata: {json.dumps(log_entry)}\n\n"
 
             # Send status event
@@ -911,9 +953,8 @@ async def stream_task_run_logs(
                         # Parse log entry
                         log_entry = json.loads(message["data"])
 
-                        # Filter by log level
-                        entry_level = LOG_LEVELS.get(log_entry.get("level", "INFO"), 20)
-                        if entry_level >= min_level:
+                        # Apply all filters
+                        if should_include_log(log_entry):
                             yield f"event: log\ndata: {json.dumps(log_entry)}\n\n"
 
                         # Check if task is complete

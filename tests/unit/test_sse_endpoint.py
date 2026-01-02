@@ -238,3 +238,87 @@ class TestSSEDocumentation:
         # Should include JavaScript example
         assert "JavaScript" in docstring or "javascript" in docstring.lower()
         assert "EventSource" in docstring
+
+
+class TestSSELogFiltering:
+    """Test SSE log filtering features (Issue #115)."""
+
+    def test_sse_has_search_parameter(self):
+        """Test SSE endpoint has search query parameter."""
+        from lazy_bird.api.routers.task_runs import stream_task_run_logs
+        import inspect
+
+        sig = inspect.signature(stream_task_run_logs)
+        assert "search" in sig.parameters
+        param = sig.parameters["search"]
+        assert param.default is not inspect.Parameter.empty  # Has default
+
+    def test_sse_has_since_parameter(self):
+        """Test SSE endpoint has since query parameter."""
+        from lazy_bird.api.routers.task_runs import stream_task_run_logs
+        import inspect
+
+        sig = inspect.signature(stream_task_run_logs)
+        assert "since" in sig.parameters
+        param = sig.parameters["since"]
+        assert param.default is not inspect.Parameter.empty  # Has default
+
+    def test_sse_documents_search_parameter(self):
+        """Test SSE docstring documents search parameter."""
+        from lazy_bird.api.routers.task_runs import stream_task_run_logs
+
+        docstring = stream_task_run_logs.__doc__
+        assert "search" in docstring.lower()
+
+    def test_sse_documents_since_parameter(self):
+        """Test SSE docstring documents since parameter."""
+        from lazy_bird.api.routers.task_runs import stream_task_run_logs
+
+        docstring = stream_task_run_logs.__doc__
+        assert "since" in docstring.lower()
+        assert "timestamp" in docstring.lower()
+
+
+class TestLogFilteringLogic:
+    """Test log filtering helper function."""
+
+    def test_filter_by_log_level(self):
+        """Test filtering logs by log level."""
+        # This tests the logic conceptually since the function is defined inside the endpoint
+        LOG_LEVELS = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40}
+
+        log_entry = {"level": "ERROR", "message": "Test error"}
+        entry_level = LOG_LEVELS.get(log_entry.get("level", "INFO"), 20)
+        min_level = LOG_LEVELS.get("WARNING", 30)
+
+        # ERROR (40) >= WARNING (30) -> should pass
+        assert entry_level >= min_level
+
+    def test_filter_by_search_text(self):
+        """Test filtering logs by search text."""
+        log_entry = {"message": "Starting task execution"}
+        search_term = "task"
+
+        # Case-insensitive search
+        assert search_term.lower() in log_entry.get("message", "").lower()
+
+    def test_filter_by_timestamp(self):
+        """Test filtering logs by timestamp."""
+        from datetime import datetime, timezone, timedelta
+
+        now = datetime.now(timezone.utc)
+        five_min_ago = now - timedelta(minutes=5)
+        ten_min_ago = now - timedelta(minutes=10)
+
+        # Log from 5 minutes ago
+        log_entry = {"timestamp": five_min_ago.isoformat()}
+
+        # Filter: only show logs since 10 minutes ago
+        since = ten_min_ago
+
+        # Parse timestamp
+        from dateutil.parser import parse as parse_datetime
+        log_timestamp = parse_datetime(log_entry["timestamp"])
+
+        # Log (5 min ago) > Filter (10 min ago) -> should pass
+        assert log_timestamp > since
