@@ -7,11 +7,14 @@ This module provides CRUD operations for task runs with:
 - Cancellation, retry, and log retrieval
 """
 
+import asyncio
+import json
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -23,6 +26,7 @@ from lazy_bird.api.exceptions import (
     ResourceNotFoundError,
 )
 from lazy_bird.core.logging import get_logger
+from lazy_bird.core.redis import get_async_redis
 from lazy_bird.models.api_key import ApiKey
 from lazy_bird.models.task_run import TaskRun
 from lazy_bird.schemas.task_run import (
@@ -31,6 +35,7 @@ from lazy_bird.schemas.task_run import (
     TaskRunResponse,
     TaskRunUpdate,
 )
+from lazy_bird.services.log_publisher import LogPublisher
 
 logger = get_logger(__name__)
 
@@ -772,3 +777,211 @@ async def get_task_run_logs(
         "pages": 0,
         "note": "Task run logs feature not yet implemented. Use test_output field for now.",
     }
+
+
+@router.get("/{task_run_id}/logs/stream")
+async def stream_task_run_logs(
+    task_run_id: UUID,
+    level: Optional[str] = Query(
+        None, description="Filter by log level (DEBUG, INFO, WARNING, ERROR)"
+    ),
+    db: AsyncSession = Depends(get_async_database),
+    api_key: ApiKey = Depends(RequireRead),
+):
+    """Stream task run logs in real-time using Server-Sent Events (SSE).
+
+    **Path Parameters:**
+    - task_run_id: UUID - Task run identifier
+
+    **Query Parameters:**
+    - level: string - Filter by minimum log level (DEBUG < INFO < WARNING < ERROR)
+
+    **Response Format (SSE):**
+    ```
+    event: log
+    data: {"timestamp": "2025-01-02T10:30:00Z", "level": "INFO", "message": "...", "metadata": {...}}
+
+    event: status
+    data: {"status": "running", "progress": 50}
+
+    event: error
+    data: {"error": "Connection lost"}
+
+    event: end
+    data: {"message": "Task completed"}
+    ```
+
+    **Connection:**
+    - Uses Server-Sent Events (text/event-stream)
+    - Client reconnection handled via Last-Event-ID
+    - Idle timeout: 30 seconds (keepalive pings)
+    - Graceful disconnection on task completion
+
+    **Errors:**
+    - 404 Not Found: Task run doesn't exist
+    - 403 Forbidden: API key scope restricted
+
+    **Authentication:**
+    - Requires: API key with 'read', 'write', or 'admin' scope
+
+    **Usage Example (JavaScript):**
+    ```javascript
+    const eventSource = new EventSource('/api/task-runs/{id}/logs/stream?level=INFO');
+
+    eventSource.addEventListener('log', (event) => {
+        const logEntry = JSON.parse(event.data);
+        console.log(logEntry.message);
+    });
+
+    eventSource.addEventListener('end', () => {
+        eventSource.close();
+    });
+    ```
+    """
+    # Verify task run exists
+    task_run_query = select(TaskRun).where(TaskRun.id == task_run_id)
+    task_run_result = await db.execute(task_run_query)
+    task_run = task_run_result.scalar_one_or_none()
+
+    if not task_run:
+        raise ResourceNotFoundError(
+            resource_type="TaskRun",
+            resource_id=str(task_run_id),
+        )
+
+    # Check API key scope
+    if api_key.project_id and api_key.project_id != task_run.project_id:
+        raise InsufficientPermissionsError(
+            detail=f"API key is scoped to project {api_key.project_id}, "
+            f"cannot access logs for project {task_run.project_id}"
+        )
+
+    # Define log level hierarchy
+    LOG_LEVELS = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
+    min_level = LOG_LEVELS.get(level.upper(), 10) if level else 10
+
+    async def event_generator():
+        """Generate SSE events from Redis Pub/Sub and log history."""
+        redis_client = await get_async_redis()
+        publisher = LogPublisher(use_async=True)
+
+        try:
+            # Determine channel based on task run
+            channel = f"lazy_bird:logs:task:{task_run_id}"
+
+            # Send initial log history
+            history = await publisher.get_log_history_async(task_id=str(task_run_id), limit=100)
+            for log_entry in reversed(history):  # Send oldest first
+                # Filter by log level
+                entry_level = LOG_LEVELS.get(log_entry.get("level", "INFO"), 20)
+                if entry_level >= min_level:
+                    yield f"event: log\ndata: {json.dumps(log_entry)}\n\n"
+
+            # Send status event
+            yield f"event: status\ndata: {{\"status\": \"{task_run.status}\"}}\n\n"
+
+            # Subscribe to Redis Pub/Sub for real-time logs
+            pubsub = redis_client.pubsub()
+            await pubsub.subscribe(channel)
+
+            logger.info(
+                f"Started SSE stream for task run: {task_run.work_item_id}",
+                extra={
+                    "extra_fields": {
+                        "task_run_id": str(task_run_id),
+                        "channel": channel,
+                        "min_level": level or "DEBUG",
+                    }
+                },
+            )
+
+            # Stream real-time logs
+            last_keepalive = asyncio.get_event_loop().time()
+            keepalive_interval = 30  # seconds
+
+            while True:
+                try:
+                    # Check for new messages with timeout
+                    message = await asyncio.wait_for(
+                        pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0),
+                        timeout=2.0,
+                    )
+
+                    if message and message["type"] == "message":
+                        # Parse log entry
+                        log_entry = json.loads(message["data"])
+
+                        # Filter by log level
+                        entry_level = LOG_LEVELS.get(log_entry.get("level", "INFO"), 20)
+                        if entry_level >= min_level:
+                            yield f"event: log\ndata: {json.dumps(log_entry)}\n\n"
+
+                        # Check if task is complete
+                        if log_entry.get("metadata", {}).get("task_complete"):
+                            yield f"event: end\ndata: {{\"message\": \"Task completed\"}}\n\n"
+                            break
+
+                    # Send keepalive ping if needed
+                    current_time = asyncio.get_event_loop().time()
+                    if current_time - last_keepalive > keepalive_interval:
+                        yield f": keepalive\n\n"
+                        last_keepalive = current_time
+
+                except asyncio.TimeoutError:
+                    # No message received, send keepalive
+                    yield f": keepalive\n\n"
+                    last_keepalive = asyncio.get_event_loop().time()
+                    continue
+
+                except Exception as e:
+                    logger.error(
+                        f"Error in SSE stream: {str(e)}",
+                        extra={
+                            "extra_fields": {
+                                "task_run_id": str(task_run_id),
+                                "error": str(e),
+                            }
+                        },
+                    )
+                    yield f"event: error\ndata: {{\"error\": \"{str(e)}\"}}\n\n"
+                    break
+
+        except Exception as e:
+            logger.error(
+                f"Fatal error in SSE stream: {str(e)}",
+                extra={
+                    "extra_fields": {
+                        "task_run_id": str(task_run_id),
+                        "error": str(e),
+                    }
+                },
+                exc_info=True,
+            )
+            yield f"event: error\ndata: {{\"error\": \"Stream terminated: {str(e)}\"}}\n\n"
+
+        finally:
+            # Cleanup
+            try:
+                await pubsub.unsubscribe(channel)
+                await pubsub.close()
+            except Exception:
+                pass
+
+            logger.info(
+                f"Closed SSE stream for task run: {task_run.work_item_id}",
+                extra={
+                    "extra_fields": {
+                        "task_run_id": str(task_run_id),
+                    }
+                },
+            )
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+        },
+    )
