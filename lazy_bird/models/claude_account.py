@@ -303,7 +303,7 @@ class ClaudeAccount(Base):
 
     @validates("max_tokens")
     def validate_max_tokens(self, key: str, value: int) -> int:
-        """Validate max_tokens is positive.
+        """Validate max_tokens is in valid range.
 
         Args:
             key: Field name
@@ -313,10 +313,10 @@ class ClaudeAccount(Base):
             int: Validated max tokens
 
         Raises:
-            ValueError: If max_tokens is not positive
+            ValueError: If max_tokens is out of valid range
         """
-        if value <= 0:
-            raise ValueError(f"max_tokens must be positive, got {value}")
+        if value < 1 or value > 200000:
+            raise ValueError(f"max_tokens must be between 1 and 200000, got {value}")
         return value
 
     # -------------------------------------------------------------------------
@@ -417,7 +417,7 @@ class ClaudeAccount(Base):
             "account_type": self.account_type,
             "model": self.model,
             "max_tokens": self.max_tokens,
-            "temperature": float(self.temperature),
+            "temperature": float(self.temperature) if self.temperature is not None else None,
             "monthly_budget_usd": float(self.monthly_budget_usd) if self.monthly_budget_usd else None,
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,

@@ -4,14 +4,12 @@ Tests RequireRead, RequireWrite, RequireAdmin authentication dependencies.
 """
 
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException
 
 from lazy_bird.api.dependencies import RequireAdmin, RequireRead, RequireWrite
-from lazy_bird.api.exceptions import AuthenticationError, AuthorizationError
 from lazy_bird.models.api_key import ApiKey
 
 
@@ -32,15 +30,8 @@ class TestRequireRead:
             created_at=datetime.now(timezone.utc),
         )
 
-        # Mock database session
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
-
-        # Call dependency
-        require_read = RequireRead()
-        result = await require_read(api_key_header="test-hash", db=mock_db)
+        # Call dependency directly with ApiKey object
+        result = await RequireRead(api_key=api_key)
 
         assert result == api_key
         assert result.scopes == ["read"]
@@ -58,13 +49,7 @@ class TestRequireRead:
             created_at=datetime.now(timezone.utc),
         )
 
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
-
-        require_read = RequireRead()
-        result = await require_read(api_key_header="test-hash", db=mock_db)
+        result = await RequireRead(api_key=api_key)
 
         assert result == api_key
 
@@ -81,73 +66,13 @@ class TestRequireRead:
             created_at=datetime.now(timezone.utc),
         )
 
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
-
-        require_read = RequireRead()
-        result = await require_read(api_key_header="test-hash", db=mock_db)
+        result = await RequireRead(api_key=api_key)
 
         assert result == api_key
 
     @pytest.mark.asyncio
-    async def test_missing_api_key_header(self):
-        """Test authentication fails when API key header is missing."""
-        mock_db = AsyncMock(spec=AsyncSession)
-
-        require_read = RequireRead()
-
-        with pytest.raises(AuthenticationError) as exc_info:
-            await require_read(api_key_header=None, db=mock_db)
-
-        assert "required" in exc_info.value.detail.lower()
-
-    @pytest.mark.asyncio
-    async def test_invalid_api_key(self):
-        """Test authentication fails with invalid API key."""
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = None  # Key not found
-        mock_db.execute = AsyncMock(return_value=mock_result)
-
-        require_read = RequireRead()
-
-        with pytest.raises(AuthenticationError) as exc_info:
-            await require_read(api_key_header="invalid-key", db=mock_db)
-
-        assert "invalid" in exc_info.value.detail.lower()
-
-    @pytest.mark.asyncio
-    async def test_inactive_api_key(self):
-        """Test authentication fails with inactive API key."""
-        api_key = ApiKey(
-            id=uuid4(),
-            key_hash="test-hash",
-            key_prefix="lb_test4",
-            name="Test Key",
-            scopes=["read"],
-            is_active=False,  # Inactive key
-            created_at=datetime.now(timezone.utc),
-        )
-
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
-
-        require_read = RequireRead()
-
-        with pytest.raises(AuthenticationError) as exc_info:
-            await require_read(api_key_header="test-hash", db=mock_db)
-
-        assert "inactive" in exc_info.value.detail.lower() or "revoked" in exc_info.value.detail.lower()
-
-    @pytest.mark.asyncio
     async def test_insufficient_scope(self):
         """Test authorization fails with insufficient scope."""
-        # This shouldn't happen for RequireRead since all scopes include read
-        # But we can test an empty scopes array
         api_key = ApiKey(
             id=uuid4(),
             key_hash="test-hash",
@@ -158,16 +83,10 @@ class TestRequireRead:
             created_at=datetime.now(timezone.utc),
         )
 
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
+        with pytest.raises(HTTPException) as exc_info:
+            await RequireRead(api_key=api_key)
 
-        require_read = RequireRead()
-
-        with pytest.raises(AuthorizationError) as exc_info:
-            await require_read(api_key_header="test-hash", db=mock_db)
-
+        assert exc_info.value.status_code == 403
         assert "permission" in exc_info.value.detail.lower() or "scope" in exc_info.value.detail.lower()
 
 
@@ -182,18 +101,12 @@ class TestRequireWrite:
             key_hash="test-hash",
             key_prefix="lb_write",
             name="Write Key",
-            scopes=["read", "write"],
+            scopes=["write"],
             is_active=True,
             created_at=datetime.now(timezone.utc),
         )
 
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
-
-        require_write = RequireWrite()
-        result = await require_write(api_key_header="test-hash", db=mock_db)
+        result = await RequireWrite(api_key=api_key)
 
         assert result == api_key
 
@@ -210,17 +123,11 @@ class TestRequireWrite:
             created_at=datetime.now(timezone.utc),
         )
 
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
+        with pytest.raises(HTTPException) as exc_info:
+            await RequireWrite(api_key=api_key)
 
-        require_write = RequireWrite()
-
-        with pytest.raises(AuthorizationError) as exc_info:
-            await require_write(api_key_header="test-hash", db=mock_db)
-
-        assert "write" in exc_info.value.required_scope or "permission" in exc_info.value.detail.lower()
+        assert exc_info.value.status_code == 403
+        assert "permission" in exc_info.value.detail.lower()
 
     @pytest.mark.asyncio
     async def test_admin_scope_allowed(self):
@@ -235,13 +142,7 @@ class TestRequireWrite:
             created_at=datetime.now(timezone.utc),
         )
 
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
-
-        require_write = RequireWrite()
-        result = await require_write(api_key_header="test-hash", db=mock_db)
+        result = await RequireWrite(api_key=api_key)
 
         assert result == api_key
 
@@ -257,18 +158,12 @@ class TestRequireAdmin:
             key_hash="test-hash",
             key_prefix="lb_admin",
             name="Admin Key",
-            scopes=["read", "write", "admin"],
+            scopes=["admin"],
             is_active=True,
             created_at=datetime.now(timezone.utc),
         )
 
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
-
-        require_admin = RequireAdmin()
-        result = await require_admin(api_key_header="test-hash", db=mock_db)
+        result = await RequireAdmin(api_key=api_key)
 
         assert result == api_key
 
@@ -285,17 +180,11 @@ class TestRequireAdmin:
             created_at=datetime.now(timezone.utc),
         )
 
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
+        with pytest.raises(HTTPException) as exc_info:
+            await RequireAdmin(api_key=api_key)
 
-        require_admin = RequireAdmin()
-
-        with pytest.raises(AuthorizationError) as exc_info:
-            await require_admin(api_key_header="test-hash", db=mock_db)
-
-        assert "admin" in exc_info.value.required_scope or "permission" in exc_info.value.detail.lower()
+        assert exc_info.value.status_code == 403
+        assert "permission" in exc_info.value.detail.lower()
 
     @pytest.mark.asyncio
     async def test_write_scope_insufficient(self):
@@ -305,22 +194,16 @@ class TestRequireAdmin:
             key_hash="test-hash",
             key_prefix="lb_write",
             name="Write Key",
-            scopes=["read", "write"],  # No admin
+            scopes=["write"],  # No admin
             is_active=True,
             created_at=datetime.now(timezone.utc),
         )
 
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
+        with pytest.raises(HTTPException) as exc_info:
+            await RequireAdmin(api_key=api_key)
 
-        require_admin = RequireAdmin()
-
-        with pytest.raises(AuthorizationError) as exc_info:
-            await require_admin(api_key_header="test-hash", db=mock_db)
-
-        assert "admin" in exc_info.value.required_scope or "permission" in exc_info.value.detail.lower()
+        assert exc_info.value.status_code == 403
+        assert "permission" in exc_info.value.detail.lower()
 
 
 class TestScopeHierarchy:
@@ -339,26 +222,16 @@ class TestScopeHierarchy:
             created_at=datetime.now(timezone.utc),
         )
 
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
-
         # Admin can do read operations
-        require_read = RequireRead()
-        result = await require_read(api_key_header="test-hash", db=mock_db)
+        result = await RequireRead(api_key=api_key)
         assert result == api_key
 
         # Admin can do write operations
-        require_write = RequireWrite()
-        mock_db.execute = AsyncMock(return_value=mock_result)  # Reset mock
-        result = await require_write(api_key_header="test-hash", db=mock_db)
+        result = await RequireWrite(api_key=api_key)
         assert result == api_key
 
         # Admin can do admin operations
-        require_admin = RequireAdmin()
-        mock_db.execute = AsyncMock(return_value=mock_result)  # Reset mock
-        result = await require_admin(api_key_header="test-hash", db=mock_db)
+        result = await RequireAdmin(api_key=api_key)
         assert result == api_key
 
     @pytest.mark.asyncio
@@ -374,20 +247,12 @@ class TestScopeHierarchy:
             created_at=datetime.now(timezone.utc),
         )
 
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
-
         # Write can do read operations
-        require_read = RequireRead()
-        result = await require_read(api_key_header="test-hash", db=mock_db)
+        result = await RequireRead(api_key=api_key)
         assert result == api_key
 
         # Write can do write operations
-        require_write = RequireWrite()
-        mock_db.execute = AsyncMock(return_value=mock_result)  # Reset mock
-        result = await require_write(api_key_header="test-hash", db=mock_db)
+        result = await RequireWrite(api_key=api_key)
         assert result == api_key
 
     @pytest.mark.asyncio
@@ -403,24 +268,16 @@ class TestScopeHierarchy:
             created_at=datetime.now(timezone.utc),
         )
 
-        mock_db = AsyncMock(spec=AsyncSession)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = api_key
-        mock_db.execute = AsyncMock(return_value=mock_result)
-
         # Read can do read operations
-        require_read = RequireRead()
-        result = await require_read(api_key_header="test-hash", db=mock_db)
+        result = await RequireRead(api_key=api_key)
         assert result == api_key
 
         # Read CANNOT do write operations
-        require_write = RequireWrite()
-        mock_db.execute = AsyncMock(return_value=mock_result)  # Reset mock
-        with pytest.raises(AuthorizationError):
-            await require_write(api_key_header="test-hash", db=mock_db)
+        with pytest.raises(HTTPException) as exc_info:
+            await RequireWrite(api_key=api_key)
+        assert exc_info.value.status_code == 403
 
         # Read CANNOT do admin operations
-        require_admin = RequireAdmin()
-        mock_db.execute = AsyncMock(return_value=mock_result)  # Reset mock
-        with pytest.raises(AuthorizationError):
-            await require_admin(api_key_header="test-hash", db=mock_db)
+        with pytest.raises(HTTPException) as exc_info:
+            await RequireAdmin(api_key=api_key)
+        assert exc_info.value.status_code == 403

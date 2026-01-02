@@ -155,6 +155,11 @@ class Settings(BaseSettings):
         min_length=32,
         description="Secret key for JWT signing"
     )
+    JWT_SECRET_KEY: str = Field(
+        default="your-secret-key-here-change-in-production-use-openssl-rand-hex-32",
+        min_length=32,
+        description="Secret key for JWT signing (alias for SECRET_KEY)"
+    )
     API_KEY_SALT: str = Field(
         default="your-api-key-salt-here-change-in-production",
         min_length=16,
@@ -169,6 +174,18 @@ class Settings(BaseSettings):
         ge=5,
         le=1440,
         description="JWT access token expiration in minutes"
+    )
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
+        default=15,
+        ge=5,
+        le=1440,
+        description="JWT access token expiration in minutes (alias)"
+    )
+    JWT_REFRESH_TOKEN_EXPIRE_MINUTES: int = Field(
+        default=10080,  # 7 days in minutes
+        ge=60,
+        le=43200,  # 30 days in minutes
+        description="JWT refresh token expiration in minutes"
     )
     PASSWORD_MIN_LENGTH: int = Field(
         default=12,

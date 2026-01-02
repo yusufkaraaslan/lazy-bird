@@ -101,7 +101,12 @@ class LazyBirdException(HTTPException):
             title: Short summary of error type
             errors: Additional error details
         """
-        super().__init__(status_code=status_code, detail=detail)
+        # Initialize parent with RFC 7807 headers
+        super().__init__(
+            status_code=status_code,
+            detail=detail,
+            headers={"Content-Type": "application/problem+json"},
+        )
         self.error_type = error_type
         self.title = title or self._default_title(status_code)
         self.errors = errors
@@ -129,6 +134,25 @@ class LazyBirdException(HTTPException):
         }
         return titles.get(status_code, "Error")
 
+    def to_problem_details(self) -> Dict[str, Any]:
+        """Convert exception to RFC 7807 Problem Details dict.
+
+        Returns:
+            Dict[str, Any]: RFC 7807 formatted problem details
+        """
+        problem = {
+            "type": "about:blank",
+            "title": self.title,
+            "status": self.status_code,
+            "detail": self.detail,
+        }
+
+        # Merge errors dict into top level (flatten structure)
+        if self.errors:
+            problem.update(self.errors)
+
+        return problem
+
 
 class ValidationError(LazyBirdException):
     """Validation error (422)."""
@@ -136,19 +160,33 @@ class ValidationError(LazyBirdException):
     def __init__(
         self,
         detail: str,
+        field: Optional[str] = None,
+        reason: Optional[str] = None,
         errors: Optional[Dict[str, Any]] = None,
     ):
         """Initialize validation error.
 
         Args:
             detail: Human-readable error message
-            errors: Field-level validation errors
+            field: Field name that failed validation
+            reason: Reason for validation failure
+            errors: Field-level validation errors (alternative to field/reason)
         """
+        # Store as instance attributes for test access
+        self.field = field
+        self.reason = reason
+
+        # Build errors dict from field/reason if provided
+        if field is not None and errors is None:
+            errors = {"field": field}
+            if reason is not None:
+                errors["reason"] = reason
+
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=detail,
             error_type="https://lazy-bird.dev/errors/validation-error",
-            title="Validation Error",
+            title="Unprocessable Entity",
             errors=errors,
         )
 
@@ -160,18 +198,28 @@ class ResourceNotFoundError(LazyBirdException):
         self,
         resource_type: str,
         resource_id: str,
+        detail: Optional[str] = None,
     ):
         """Initialize not found error.
 
         Args:
             resource_type: Type of resource (e.g., "Project", "ApiKey")
             resource_id: ID of resource that wasn't found
+            detail: Optional custom detail message
         """
+        # Store as instance attributes for test access
+        self.resource_type = resource_type
+        self.resource_id = resource_id
+
+        # Use custom detail or generate default
+        if detail is None:
+            detail = f"{resource_type} with ID '{resource_id}' not found"
+
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"{resource_type} with ID '{resource_id}' not found",
+            detail=detail,
             error_type="https://lazy-bird.dev/errors/not-found",
-            title="Resource Not Found",
+            title="Not Found",
             errors={"resource_type": resource_type, "resource_id": resource_id},
         )
 
@@ -183,20 +231,32 @@ class ResourceConflictError(LazyBirdException):
         self,
         detail: str,
         conflict_field: Optional[str] = None,
+        conflict_value: Optional[str] = None,
     ):
         """Initialize conflict error.
 
         Args:
             detail: Human-readable error message
             conflict_field: Field that caused the conflict
+            conflict_value: Value that caused the conflict
         """
-        errors = {"conflict_field": conflict_field} if conflict_field else None
+        # Store as instance attributes for test access
+        self.conflict_field = conflict_field
+        self.conflict_value = conflict_value
+
+        # Build errors dict
+        errors = {}
+        if conflict_field is not None:
+            errors["conflict_field"] = conflict_field
+        if conflict_value is not None:
+            errors["conflict_value"] = conflict_value
+
         super().__init__(
             status_code=status.HTTP_409_CONFLICT,
             detail=detail,
             error_type="https://lazy-bird.dev/errors/conflict",
-            title="Resource Conflict",
-            errors=errors,
+            title="Conflict",
+            errors=errors if errors else None,
         )
 
 
@@ -216,8 +276,10 @@ class AuthenticationError(LazyBirdException):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=detail,
             error_type="https://lazy-bird.dev/errors/authentication-required",
-            title="Authentication Required",
+            title="Unauthorized",
         )
+        # Add WWW-Authenticate header for 401 responses
+        self.headers["WWW-Authenticate"] = 'Bearer realm="api"'
 
 
 class AuthorizationError(LazyBirdException):
@@ -236,6 +298,10 @@ class AuthorizationError(LazyBirdException):
             required_scope: Single required permission scope
             user_scopes: User's current scopes
         """
+        # Store as instance attributes for test access
+        self.required_scope = required_scope
+        self.user_scopes = user_scopes
+
         errors = {}
         if required_scope:
             errors["required_scope"] = required_scope
@@ -246,7 +312,7 @@ class AuthorizationError(LazyBirdException):
             status_code=status.HTTP_403_FORBIDDEN,
             detail=detail,
             error_type="https://lazy-bird.dev/errors/insufficient-permissions",
-            title="Insufficient Permissions",
+            title="Forbidden",
             errors=errors if errors else None,
         )
 
