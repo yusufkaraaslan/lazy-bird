@@ -16,6 +16,7 @@ from sqlalchemy import (
     Index,
     String,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -82,7 +83,7 @@ class ApiKey(Base):
     scopes: Mapped[List[str]] = mapped_column(
         ARRAY(String),
         nullable=False,
-        server_default="ARRAY['read']",
+        server_default=text("'{read}'"),
         default=lambda: ["read"],
     )
 
