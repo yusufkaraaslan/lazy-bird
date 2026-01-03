@@ -178,25 +178,37 @@ setup_virtualenv() {
     log_success "Dependencies installed"
 }
 
-# Setup test database (SQLite)
+# Setup test database (PostgreSQL or SQLite)
 setup_database() {
-    log_step "Setting Up Test Database (SQLite)"
+    # Check if DATABASE_URL is already set (PostgreSQL)
+    if [ -n "${DATABASE_URL:-}" ] && [[ "$DATABASE_URL" == postgresql* ]]; then
+        log_step "Setting Up Test Database (PostgreSQL)"
+        log_info "Using existing DATABASE_URL: $DATABASE_URL"
 
-    # Track database file for cleanup
-    CLEANUP_FILES+=("$TEST_DB_PATH")
+        # Install PostgreSQL driver instead of SQLite
+        log_info "Installing asyncpg (PostgreSQL driver)..."
+        pip install asyncpg &>> "$E2E_LOG_FILE"
+    else
+        log_step "Setting Up Test Database (SQLite)"
 
-    # Set database URL to SQLite
-    export DATABASE_URL="sqlite+aiosqlite:///$TEST_DB_PATH"
-    log_info "Database URL: $DATABASE_URL"
+        # Track database file for cleanup
+        CLEANUP_FILES+=("$TEST_DB_PATH")
 
-    # Create Alembic config for SQLite
+        # Set database URL to SQLite
+        export DATABASE_URL="sqlite+aiosqlite:///$TEST_DB_PATH"
+        log_info "Database URL: $DATABASE_URL"
+    fi
+
+    # Run Alembic migrations
     cd "$LAZY_BIRD_ROOT"
 
     # Check if alembic.ini exists
     if [ ! -f "alembic.ini" ]; then
         log_warning "alembic.ini not found, skipping migrations"
-        log_info "Creating empty database file"
-        touch "$TEST_DB_PATH"
+        if [[ "$DATABASE_URL" != postgresql* ]]; then
+            log_info "Creating empty SQLite database file"
+            touch "$TEST_DB_PATH"
+        fi
         return
     fi
 
@@ -205,7 +217,11 @@ setup_database() {
     if alembic upgrade head 2>&1 | tee -a "$E2E_LOG_FILE"; then
         log_success "Migrations completed"
     else
-        log_warning "Migrations failed (may not be critical for SQLite)"
+        if [[ "$DATABASE_URL" == postgresql* ]]; then
+            log_warning "Migrations failed for PostgreSQL"
+        else
+            log_warning "Migrations failed (may not be critical for SQLite)"
+        fi
     fi
 }
 
