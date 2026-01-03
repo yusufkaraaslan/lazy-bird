@@ -1,5 +1,8 @@
 # Lazy_Bird Frontend
 
+**Status:** ✅ **Included in v2.0** - Production Ready
+**Repository:** Part of lazy-bird core (monorepo structure)
+
 Modern React dashboard for managing the Lazy_Bird automation system.
 
 ## Tech Stack

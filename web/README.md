@@ -1,10 +1,13 @@
 # Lazy_Bird Web UI
 
+**Status:** ✅ **Included in v2.0** - Production Ready
+**Repository:** Part of lazy-bird core (monorepo structure)
+
 Modern web-based dashboard for managing Lazy_Bird automation system.
 
 ## Features
 
-### ✅ Implemented (Phase 0)
+### ✅ Implemented in v2.0 (formerly "Phase 0")
 - **Dashboard**: System overview with status cards and quick stats
 - **Project Management**: Full CRUD with route-based forms (`/projects/add`, `/projects/:id/edit`)
 - **Service Management**: systemd service control with dedicated form pages
