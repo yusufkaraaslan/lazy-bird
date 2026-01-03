@@ -1,5 +1,10 @@
 # Godot Server - Coordination Service Specification
 
+**Applies to:** lazy-bird core engine (Phase 2 - Multi-Agent)
+**Related repos:** lazy-bird (core) - NOT lazy-bird-ui or plane-lazy-bird-integration
+**Status:** 📋 **Planned for Future** - Phase 2 multi-agent implementation
+**v2.0 Note:** Current v2.0 uses Celery task queue; Godot Server planned for Phase 2+
+
 ## Problem Statement
 
 When multiple Claude Code agents work on different tasks simultaneously, they may need to run Godot tests. However, Godot cannot safely handle concurrent test execution on the same project - this leads to:

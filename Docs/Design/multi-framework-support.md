@@ -1,5 +1,9 @@
 # Multi-Framework Support Design
 
+**Applies to:** lazy-bird core engine (Phase 1.1+)
+**Related repos:** lazy-bird (core) - NOT lazy-bird-ui or plane-lazy-bird-integration
+**Status:** ✅ **IMPLEMENTED** in v2.0 (18+ frameworks supported)
+
 ## Overview
 
 Transform Lazy_Bird from a Godot-specific automation system to a **framework-agnostic development automation platform** that works with any programming language, framework, or game engine.

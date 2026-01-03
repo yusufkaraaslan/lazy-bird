@@ -1,5 +1,9 @@
 # GitHub/GitLab Issue Workflow
 
+**Applies to:** lazy-bird core engine (all versions)
+**Related repos:** lazy-bird (core) - NOT lazy-bird-ui or plane-lazy-bird-integration
+**Status:** ✅ Current and relevant for v2.0
+
 ## Overview
 
 Lazy_Birtd uses GitHub or GitLab Issues as the task queue. Every morning, you create issues with detailed implementation steps, and the system automatically processes them throughout the day.

@@ -1,7 +1,9 @@
 # Phase 1.1: Multi-Project Support
 
-**Status:** ✅ Implemented and Tested
-**Version:** 2.1
+**Applies to:** lazy-bird core engine (Phase 1.1+)
+**Related repos:** lazy-bird (core) - NOT lazy-bird-ui or plane-lazy-bird-integration
+**Status:** ✅ **IMPLEMENTED** and Tested
+**Version:** 2.1 (incorporated into v2.0)
 **Date:** November 7, 2025
 **Complexity:** Medium
 **Estimated Implementation:** 2-3 days

@@ -1,5 +1,9 @@
 # Phase 0: Validation & Prerequisites
 
+**Applies to:** lazy-bird core engine (all versions)
+**Related repos:** lazy-bird (core) - NOT lazy-bird-ui or plane-lazy-bird-integration
+**Status:** ✅ **IMPLEMENTED** - Validation framework complete
+
 ## Overview
 
 **Phase 0 is the most important phase.** Before automating anything, we must validate that all core assumptions are correct and all prerequisites are met.

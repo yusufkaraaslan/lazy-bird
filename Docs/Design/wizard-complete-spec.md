@@ -1,5 +1,9 @@
 # Setup Wizard - Complete Specification
 
+**Applies to:** lazy-bird core engine (all versions)
+**Related repos:** lazy-bird (core) - NOT lazy-bird-ui or plane-lazy-bird-integration
+**Status:** ✅ **IMPLEMENTED** - wizard.sh functional
+
 ## Overview
 
 The Setup Wizard is the primary installation and management interface for the Lazy_Birtd game development automation system. It transforms a complex multi-phase setup into a simple, interactive process that takes 15-30 minutes for initial installation.

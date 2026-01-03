@@ -1,5 +1,12 @@
 # Security Baseline
 
+**Applies to:** ALL lazy-bird repositories
+**Related repos:**
+- ✅ lazy-bird (core engine)
+- ✅ lazy-bird-ui (web interface)
+- ✅ plane-lazy-bird-integration (Plane integration)
+**Status:** ✅ Critical - MUST follow for all implementations
+
 ## Overview
 
 Lazy_Birtd automates game development by running Claude Code with access to your codebase, git repository, and potentially destructive operations. **Security must be a top priority.**

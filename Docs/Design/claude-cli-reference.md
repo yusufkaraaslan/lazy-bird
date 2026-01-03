@@ -1,5 +1,9 @@
 # Claude Code CLI - Complete Reference for Automation
 
+**Applies to:** lazy-bird core engine (all versions)
+**Related repos:** lazy-bird (core) - NOT lazy-bird-ui or plane-lazy-bird-integration
+**Status:** ✅ Current and relevant for v2.0
+
 ## Critical Correction
 
 The original automation plan assumed commands like `claude-code --task "description" --auto-commit`. **These flags do NOT exist.**

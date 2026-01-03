@@ -1,5 +1,10 @@
 # Performance Targets and Optimization (Issue #117)
 
+**Applies to:** lazy-bird core engine (v2.0+ FastAPI)
+**Related repos:** lazy-bird (core) - Performance targets for API
+**Status:** ✅ Current and relevant for v2.0
+**Last Updated:** 2026-01-02
+
 ## Performance Requirements
 
 ### API Response Times

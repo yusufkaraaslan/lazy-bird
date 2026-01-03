@@ -1,5 +1,9 @@
 # Test Retry Logic Specification
 
+**Applies to:** lazy-bird core engine (all versions)
+**Related repos:** lazy-bird (core) - NOT lazy-bird-ui or plane-lazy-bird-integration
+**Status:** ✅ **IMPLEMENTED** in v2.0
+
 ## Overview
 
 When automated tests fail, the system should attempt to fix the issues and retry - but not indefinitely. This document specifies the retry behavior, limits, and escalation strategies.
