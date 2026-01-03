@@ -130,7 +130,7 @@ class ApiKey(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "scopes <@ ARRAY['read', 'write', 'admin']::TEXT[]",
+            "scopes <@ ARRAY['read', 'write', 'admin']::VARCHAR[]",
             name="check_scopes",
         ),
         {"comment": "API authentication tokens"},
