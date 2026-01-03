@@ -73,7 +73,7 @@
 ```
 /Git/
 ├── lazy-bird/                           ✅ Core Engine
-│   ├── REFACTOR_PLAN.md                ✅ Main plan with links to all docs
+│   ├── Docs/Planning/REFACTOR_PLAN.md  ✅ Main plan with links to all docs
 │   ├── docs/refactor/
 │   │   ├── IMPLEMENTATION_CORE.md      ✅ Week 1-3 detailed plan
 │   │   ├── 01-architecture.md          ✅ System architecture
@@ -187,7 +187,7 @@ Once issues are created:
 - [Plane Integration Project](https://github.com/users/yusufkaraaslan/projects/7)
 
 ### Documentation
-- [Main Refactor Plan](../../REFACTOR_PLAN.md)
+- [Main Refactor Plan](../../Docs/Planning/REFACTOR_PLAN.md)
 - [Core Implementation](../../docs/refactor/IMPLEMENTATION_CORE.md)
 - [UI Implementation](../repos-setup/lazy-bird-ui/IMPLEMENTATION.md)
 - [Plane Implementation](../repos-setup/plane-lazy-bird-integration/IMPLEMENTATION.md)

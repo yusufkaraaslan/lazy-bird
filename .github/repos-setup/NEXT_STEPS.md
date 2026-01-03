@@ -209,7 +209,7 @@ Use these labels in all 3 repos:
 - **Core Plan**: [IMPLEMENTATION_CORE.md](../../docs/refactor/IMPLEMENTATION_CORE.md)
 - **UI Plan**: [lazy-bird-ui/IMPLEMENTATION.md](lazy-bird-ui/IMPLEMENTATION.md)
 - **Plane Plan**: [plane-lazy-bird-integration/IMPLEMENTATION.md](plane-lazy-bird-integration/IMPLEMENTATION.md)
-- **Main Refactor Plan**: [REFACTOR_PLAN.md](../../REFACTOR_PLAN.md)
+- **Main Refactor Plan**: [REFACTOR_PLAN.md](../../Docs/Planning/REFACTOR_PLAN.md)
 
 ### Helpful Commands
 

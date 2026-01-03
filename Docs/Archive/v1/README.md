@@ -11,9 +11,9 @@ This directory contains planning and design documents from the v1.x era (Phase 1
 
 ### 1. game-dev-automation-plan-v2.md (43,715 bytes)
 **Original Purpose:** 6-phase progressive development plan for Lazy-Bird
-**Why Archived:** Superseded by `REFACTOR_PLAN.md` and `docs/refactor/` implementation docs
+**Why Archived:** Superseded by `Docs/Planning/REFACTOR_PLAN.md` and `docs/refactor/` implementation docs
 **Historical Value:** Shows original vision and progressive architecture approach
-**Replacement:** See `REFACTOR_PLAN.md` and `docs/refactor/IMPLEMENTATION_CORE.md`
+**Replacement:** See `Docs/Planning/REFACTOR_PLAN.md` and `docs/refactor/IMPLEMENTATION_CORE.md`
 
 ### 2. implementation-roadmap.md (21,580 bytes)
 **Original Purpose:** Week-by-week implementation roadmap for initial development
@@ -44,7 +44,7 @@ These documents are preserved for:
 For current v2.0 documentation, see:
 
 **Planning & Architecture:**
-- `REFACTOR_PLAN.md` - v2.0 complete refactoring plan (✅ COMPLETE)
+- `Docs/Planning/REFACTOR_PLAN.md` - v2.0 complete refactoring plan (✅ COMPLETE)
 - `docs/refactor/` - Detailed v2.0 implementation docs (9 files)
 
 **Design Specs:**
@@ -53,7 +53,7 @@ For current v2.0 documentation, see:
 - `Docs/DEPLOYMENT.md` - Production deployment guide
 
 **Test Results:**
-- `E2E_TEST_SUCCESS_SUMMARY.md` - v2.0 E2E test validation
+- `Docs/Testing/E2E_TEST_SUCCESS_SUMMARY.md` - v2.0 E2E test validation
 - `CHANGELOG.md` - v2.0 release notes
 
 ---
