@@ -18,8 +18,8 @@ Quick reference for starting/stopping all Lazy_Bird services.
 - **queue-processor** - Processes tasks from queue
 
 ### Web Services (manual processes)
-- **Backend** - Flask API on port 5000
-- **Frontend** - Vue.js dev server on port 5173
+- **Backend** - FastAPI/Flask API on port 5000 (v2.0: port 8000)
+- **Frontend** - React dev server on port 5173
 
 ## Usage
 
