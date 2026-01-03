@@ -357,8 +357,8 @@ async def create_project():
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
-        # Find Godot preset
-        stmt = select(FrameworkPreset).where(FrameworkPreset.name == "Godot")
+        # Find Godot preset (lowercase name)
+        stmt = select(FrameworkPreset).where(FrameworkPreset.name == "godot")
         result = await session.execute(stmt)
         godot_preset = result.scalar_one_or_none()
 
