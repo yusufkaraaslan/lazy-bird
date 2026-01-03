@@ -722,6 +722,6 @@ def verify_webhook(request_body: bytes, signature: str, secret: str) -> bool:
 
 ---
 
-**Last Updated:** 2026-01-02
+**Last Updated:** 2026-01-03
 **API Version:** 2.0.0
-**Status:** Production Ready
+**Status:** Production Ready ✅

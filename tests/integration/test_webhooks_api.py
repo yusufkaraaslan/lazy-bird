@@ -394,7 +394,7 @@ class TestWebhookTestDelivery:
         await test_db.refresh(webhook)
 
         # Mock the test delivery to succeed
-        with patch("lazy_bird.services.webhook_service.test_webhook_delivery") as mock_test:
+        with patch("lazy_bird.services.webhook_service.send_test_webhook") as mock_test:
             mock_test.return_value = {
                 "success": True,
                 "status_code": 200,
@@ -431,7 +431,7 @@ class TestWebhookTestDelivery:
         await test_db.refresh(webhook)
 
         # Mock the test delivery to fail
-        with patch("lazy_bird.services.webhook_service.test_webhook_delivery") as mock_test:
+        with patch("lazy_bird.services.webhook_service.send_test_webhook") as mock_test:
             mock_test.return_value = {
                 "success": False,
                 "status_code": 500,

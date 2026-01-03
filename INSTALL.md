@@ -38,14 +38,14 @@ uv pip install "lazy-bird[web,dev]"
 ### 🔧 Method 3: Install from GitHub
 
 ```bash
-# Install latest release
-pip install git+https://github.com/yusufkaraaslan/lazy-bird.git@v0.1.0
+# Install latest release (v2.0.0)
+pip install git+https://github.com/yusufkaraaslan/lazy-bird.git@v2.0.0
 
 # Install from main branch (bleeding edge)
 pip install git+https://github.com/yusufkaraaslan/lazy-bird.git
 
 # With UV
-uv pip install git+https://github.com/yusufkaraaslan/lazy-bird.git@v0.1.0
+uv pip install git+https://github.com/yusufkaraaslan/lazy-bird.git@v2.0.0
 ```
 
 ### 💻 Method 4: Install from Source (Development)
@@ -167,21 +167,52 @@ lazy-bird-watcher
 
 ## Dependencies
 
+### v2.0 Production Requirements
+
+For running the full v2.0 microservice architecture in production:
+
+**Required Services:**
+- **PostgreSQL 12+** - Primary database with JSONB support
+- **Redis 6+** - Task queue backend for Celery
+- **Docker** - Recommended for containerized deployment
+- **Docker Compose** - Multi-service orchestration
+
+**Installation:**
+```bash
+# Ubuntu/Debian
+sudo apt install postgresql postgresql-contrib redis-server
+
+# Arch/Manjaro
+sudo pacman -S postgresql redis
+
+# Or use Docker Compose (recommended)
+# See Docs/DEPLOYMENT.md for complete setup
+```
+
 ### Python Dependencies (Auto-installed)
 
-- Flask >= 3.0.0
-- Flask-CORS >= 4.0.0
-- psutil >= 5.9.6
-- PyYAML >= 6.0.1
-- requests >= 2.31.0
-- python-dateutil >= 2.8.2
+Core dependencies installed automatically with `pip install lazy-bird`:
+
+- **FastAPI** >= 0.104.0 - Async REST API framework
+- **SQLAlchemy** >= 2.0.0 - Async ORM
+- **asyncpg** >= 0.29.0 - PostgreSQL async driver
+- **Celery** >= 5.3.0 - Distributed task queue
+- **Redis** (py) >= 5.0.0 - Redis Python client
+- **Alembic** >= 1.12.0 - Database migrations
+- **Pydantic** >= 2.0.0 - Data validation
+- **psutil** >= 5.9.6 - System monitoring
+- **PyYAML** >= 6.0.1 - Configuration parsing
 
 ### System Dependencies (Install Manually)
 
 **Required:**
 - Git 2.30+
 - Claude Code CLI (from Anthropic)
-- Docker (for Phase 1+)
+- PostgreSQL 12+ (v2.0 production)
+- Redis 6+ (v2.0 production)
+
+**Recommended:**
+- Docker & Docker Compose (for production deployment)
 
 **Optional (framework-specific):**
 - Godot 4.2+ (for game development)

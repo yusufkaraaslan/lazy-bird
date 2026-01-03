@@ -22,7 +22,7 @@ from lazy_bird.services.webhook_service import (
     deliver_webhook_with_retry,
     generate_webhook_signature,
     publish_event,
-    test_webhook_delivery,
+    send_test_webhook,
     verify_webhook_signature,
 )
 
@@ -571,7 +571,7 @@ class TestWebhookTestDelivery:
                 "response_time_ms": 100,
             }
 
-            result = await test_webhook_delivery(subscription, mock_db)
+            result = await send_test_webhook(subscription, mock_db)
 
         assert result["success"] is True
         assert result["status_code"] == 200
@@ -598,7 +598,7 @@ class TestWebhookTestDelivery:
                 "error": "Server error",
             }
 
-            result = await test_webhook_delivery(subscription, mock_db)
+            result = await send_test_webhook(subscription, mock_db)
 
         assert result["success"] is False
         assert result["status_code"] == 500
@@ -625,7 +625,7 @@ class TestWebhookTestDelivery:
                 "response_time_ms": 100,
             }
 
-            await test_webhook_delivery(subscription, mock_db)
+            await send_test_webhook(subscription, mock_db)
 
             # Get the payload argument
             call_args = mock_deliver.call_args

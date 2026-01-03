@@ -292,7 +292,13 @@ def generate_secure_random_string(length: int = 32) -> str:
         >>> random_str.isalnum() or '_' in random_str or '-' in random_str
         True
     """
-    return secrets.token_urlsafe(length)
+    # Generate enough bytes to get desired character length after base64 encoding
+    # Base64 encoding produces 4 characters for every 3 bytes
+    # So we need (length * 3 / 4) bytes, rounded up
+    import math
+    num_bytes = math.ceil(length * 3 / 4)
+    # Generate and truncate to exact length
+    return secrets.token_urlsafe(num_bytes)[:length]
 
 
 def constant_time_compare(val1: str, val2: str) -> bool:

@@ -370,7 +370,7 @@ async def publish_event(
     return len(subscriptions)
 
 
-async def test_webhook_delivery(
+async def send_test_webhook(
     subscription: WebhookSubscription,
     db: AsyncSession,
 ) -> Dict[str, Any]:
@@ -389,7 +389,7 @@ async def test_webhook_delivery(
 
     Example:
         >>> subscription = WebhookSubscription(url="https://example.com/webhook", secret="secret")
-        >>> result = await test_webhook_delivery(subscription, db)
+        >>> result = await send_test_webhook(subscription, db)
         >>> result["success"]
         True
     """

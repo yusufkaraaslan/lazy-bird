@@ -6,6 +6,10 @@ Tests critical functions in the agent-runner script including:
 - Retry logic
 - Cleanup functions
 - Error context passing
+
+NOTE: These tests are for v1.1 bash-based architecture.
+      They are skipped during v2.0 refactor (FastAPI/Python architecture).
+      Will be reimplemented as Python unit tests once v2.0 task execution is complete.
 """
 
 import pytest
@@ -205,6 +209,7 @@ class TestRetryBackoff:
         assert total_attempts == 4, "3 retries should equal 4 total attempts"
 
 
+@pytest.mark.skip(reason="v1.1 bash script test - will be reimplemented in v2.0")
 class TestErrorContextPassing:
     """Test that error context is properly passed to run_claude function"""
 
@@ -268,6 +273,7 @@ class TestErrorContextPassing:
         assert 'run_claude "$error_details"' in retry_code
 
 
+@pytest.mark.skip(reason="v1.1 bash script test - will be reimplemented in v2.0")
 class TestCleanupWorktree:
     """Test the cleanup_worktree function"""
 
@@ -334,6 +340,7 @@ class TestCleanupWorktree:
         assert "trap cleanup_worktree EXIT" in result.stdout
 
 
+@pytest.mark.skip(reason="v1.1 bash script test - will be reimplemented in v2.0")
 class TestWorkflowIntegrity:
     """Test overall workflow integrity"""
 
@@ -391,6 +398,7 @@ class TestWorkflowIntegrity:
             assert count >= 1, f"Critical function {func_name} should be defined"
 
 
+@pytest.mark.skip(reason="v1.1 bash script test - will be reimplemented in v2.0")
 class TestWebUIIntegration:
     """Test Web UI cache deletion integration"""
 

@@ -504,7 +504,7 @@ async def test_webhook_delivery(
         )
 
     # Import webhook service for test delivery
-    from lazy_bird.services.webhook_service import test_webhook_delivery as send_test
+    from lazy_bird.services.webhook_service import send_test_webhook as send_test
 
     # Send test event
     delivery_result = await send_test(subscription, db)
