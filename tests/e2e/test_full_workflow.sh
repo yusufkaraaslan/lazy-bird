@@ -295,7 +295,7 @@ async def create_preset():
 
     async with async_session() as session:
         # Check if Godot preset exists
-        stmt = select(FrameworkPreset).where(FrameworkPreset.name == "Godot")
+        stmt = select(FrameworkPreset).where(FrameworkPreset.name == "godot")
         result = await session.execute(stmt)
         godot_preset = result.scalar_one_or_none()
 
@@ -306,9 +306,11 @@ async def create_preset():
         # Create Godot preset
         godot_preset = FrameworkPreset(
             id=uuid.uuid4(),
-            name="Godot",
-            description="Godot game engine with gdUnit4",
-            project_type="godot",
+            name="godot",
+            display_name="Godot Engine",
+            description="Godot game engine with gdUnit4 testing framework",
+            framework_type="game_engine",
+            language="gdscript",
             test_command="godot --headless -s addons/gdUnit4/bin/GdUnitCmdTool.gd",
             build_command="godot --headless --export-release",
             is_builtin=True
