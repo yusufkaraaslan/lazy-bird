@@ -23,22 +23,44 @@ The E2E test suite verifies the complete lazy-bird v2.0 workflow from database o
 
 ## Running the Tests
 
-### Setup PostgreSQL:
+### Method 1: Docker PostgreSQL (Recommended - No Installation Required)
+
+The easiest way to run E2E tests is using Docker:
 
 ```bash
-# Start PostgreSQL (example for Arch Linux)
+# 1. Start PostgreSQL container
+./tests/e2e/start-test-db.sh
+
+# 2. Run E2E test (copy the command from start-test-db.sh output)
+export DATABASE_URL="postgresql+asyncpg://postgres:testpassword123@localhost:5433/lazy_bird_e2e_test"
+./tests/e2e/test_full_workflow.sh
+
+# 3. Clean up when done
+./tests/e2e/stop-test-db.sh
+```
+
+**One-liner:**
+```bash
+./tests/e2e/start-test-db.sh && \
+export DATABASE_URL="postgresql+asyncpg://postgres:testpassword123@localhost:5433/lazy_bird_e2e_test" && \
+./tests/e2e/test_full_workflow.sh
+```
+
+### Method 2: System PostgreSQL (If Already Installed)
+
+If you have PostgreSQL installed system-wide:
+
+```bash
+# Start PostgreSQL (systemd)
 sudo systemctl start postgresql
 
 # Create test database
 sudo -u postgres createdb lazy_bird_e2e_test
 
-# Set DATABASE_URL (example)
+# Set DATABASE_URL
 export DATABASE_URL="postgresql+asyncpg://postgres:password@localhost/lazy_bird_e2e_test"
-```
 
-### Run E2E Test:
-
-```bash
+# Run test
 ./tests/e2e/test_full_workflow.sh
 ```
 
