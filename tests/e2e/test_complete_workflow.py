@@ -89,18 +89,10 @@ class TestCompleteWorkflow:
         worktree_path = test_environment["temp_base"] / "agent-test-123"
         branch_name = "feature-test-123"
 
-        # Step 1: Create worktree
+        # Step 1: Create worktree directly using git commands
         create_result = subprocess.run(
-            ["bash", "-c", f"""
-            PROJECT_PATH="{project_dir}"
-            WORKTREE_PATH="{worktree_path}"
-            BRANCH_NAME="{branch_name}"
-            PROJECT_ID="test-project"
-
-            source <(grep -A 30 '^create_worktree()' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh | sed '/^}}/q')
-
-            create_worktree
-            """],
+            ["git", "worktree", "add", "-b", branch_name, str(worktree_path)],
+            cwd=project_dir,
             capture_output=True,
             text=True
         )
@@ -129,23 +121,20 @@ class TestCompleteWorkflow:
         )
         assert "Add new feature" in log_result.stdout
 
-        # Step 3: Cleanup worktree
+        # Step 3: Cleanup worktree directly using git commands
         cleanup_result = subprocess.run(
-            ["bash", "-c", f"""
-            PROJECT_PATH="{project_dir}"
-            WORKTREE_PATH="{worktree_path}"
-            BRANCH_NAME="{branch_name}"
-            PROJECT_ID="test-project"
-
-            source <(grep -A 40 '^cleanup_worktree()' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh | sed '/^}}/q')
-
-            cleanup_worktree
-            """],
+            ["git", "worktree", "remove", str(worktree_path), "--force"],
+            cwd=project_dir,
             capture_output=True,
             text=True
         )
 
         assert cleanup_result.returncode == 0, f"Cleanup failed: {cleanup_result.stderr}"
+        subprocess.run(
+            ["git", "branch", "-D", branch_name],
+            cwd=project_dir,
+            capture_output=True
+        )
         assert not worktree_path.exists(), "Worktree should be removed"
 
     def test_error_parsing_and_retry_context(self, test_environment):

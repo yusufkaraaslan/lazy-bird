@@ -177,10 +177,10 @@ async def create_claude_account(
         name=account_data.name,
         account_type=account_data.account_type,
         # API mode
-        api_key_encrypted=account_data.api_key,  # Will be encrypted by model
+        api_key=account_data.api_key,  # Will be encrypted by model
         # Subscription mode
         config_directory=account_data.config_directory,
-        session_token_encrypted=account_data.session_token,  # Will be encrypted
+        session_token=account_data.session_token,  # Will be encrypted
         # Claude settings
         model=account_data.model,
         max_tokens=account_data.max_tokens,

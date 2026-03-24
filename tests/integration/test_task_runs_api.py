@@ -42,7 +42,8 @@ class TestListTaskRuns:
         for i in range(5):
             task_run = TaskRun(
                 project_id=test_project.id,
-                issue_number=100 + i,
+                work_item_id=str(100 + i),
+                prompt="Test task",
                 status="queued",
                 created_at=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc),
@@ -72,7 +73,8 @@ class TestListTaskRuns:
         for status in statuses:
             task_run = TaskRun(
                 project_id=test_project.id,
-                issue_number=100,
+                work_item_id="100",
+                prompt="Test task",
                 status=status,
                 created_at=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc),
@@ -100,7 +102,9 @@ class TestListTaskRuns:
             name="Project 1",
             slug="project-1",
             project_type="game_engine",
-            repository_url="https://github.com/user/project1",
+            repo_url="https://github.com/user/project1",
+            max_cost_per_task_usd=Decimal("5.00"),
+            daily_cost_limit_usd=Decimal("50.00"),
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )
@@ -108,7 +112,9 @@ class TestListTaskRuns:
             name="Project 2",
             slug="project-2",
             project_type="backend",
-            repository_url="https://github.com/user/project2",
+            repo_url="https://github.com/user/project2",
+            max_cost_per_task_usd=Decimal("5.00"),
+            daily_cost_limit_usd=Decimal("50.00"),
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )
@@ -120,14 +126,16 @@ class TestListTaskRuns:
         # Create task runs for each project
         task1 = TaskRun(
             project_id=project1.id,
-            issue_number=100,
+            work_item_id="100",
+            prompt="Test task",
             status="queued",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )
         task2 = TaskRun(
             project_id=project2.id,
-            issue_number=200,
+            work_item_id="200",
+            prompt="Test task",
             status="queued",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -144,7 +152,7 @@ class TestListTaskRuns:
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 1
-        assert data["items"][0]["issue_number"] == 100
+        assert data["items"][0]["work_item_id"] == "100"
 
 
 class TestQueueTaskRun:
@@ -156,10 +164,10 @@ class TestQueueTaskRun:
         """Test successful task run queueing."""
         payload = {
             "project_id": str(test_project.id),
-            "issue_number": 42,
-            "issue_title": "Add health system to player",
-            "issue_url": "https://github.com/user/repo/issues/42",
-            "task_description": "Implement health system with take_damage and heal methods",
+            "work_item_id": "42",
+            "work_item_title": "Add health system to player",
+            "work_item_url": "https://github.com/user/repo/issues/42",
+            "prompt": "Implement health system with take_damage and heal methods",
         }
 
         response = test_client.post(
@@ -170,17 +178,17 @@ class TestQueueTaskRun:
 
         assert response.status_code == 201
         data = response.json()
-        assert data["issue_number"] == 42
+        assert data["work_item_id"] == "42"
         assert data["status"] == "queued"
-        assert data["issue_title"] == "Add health system to player"
+        assert data["work_item_title"] == "Add health system to player"
         assert "id" in data
 
     async def test_queue_task_run_project_not_found(self, test_client, test_api_key):
         """Test queueing task run for non-existent project."""
         payload = {
             "project_id": str(uuid4()),
-            "issue_number": 42,
-            "task_description": "Test task",
+            "work_item_id": "42",
+            "prompt": "Test task",
         }
 
         response = test_client.post(
@@ -201,7 +209,9 @@ class TestQueueTaskRun:
             name="Disabled Project",
             slug="disabled-project",
             project_type="backend",
-            repository_url="https://github.com/user/disabled",
+            repo_url="https://github.com/user/disabled",
+            max_cost_per_task_usd=Decimal("5.00"),
+            daily_cost_limit_usd=Decimal("50.00"),
             automation_enabled=False,
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -212,8 +222,8 @@ class TestQueueTaskRun:
 
         payload = {
             "project_id": str(project.id),
-            "issue_number": 42,
-            "task_description": "Test task",
+            "work_item_id": "42",
+            "prompt": "Test task",
         }
 
         response = test_client.post(
@@ -234,7 +244,9 @@ class TestQueueTaskRun:
             name="Limited Project",
             slug="limited-project",
             project_type="backend",
-            repository_url="https://github.com/user/limited",
+            repo_url="https://github.com/user/limited",
+            max_cost_per_task_usd=Decimal("5.00"),
+            daily_cost_limit_usd=Decimal("50.00"),
             max_concurrent_tasks=1,
             automation_enabled=True,
             created_at=datetime.now(timezone.utc),
@@ -247,7 +259,8 @@ class TestQueueTaskRun:
         # Create one running task
         task_run = TaskRun(
             project_id=project.id,
-            issue_number=100,
+            work_item_id="100",
+            prompt="Test task",
             status="running",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -258,8 +271,8 @@ class TestQueueTaskRun:
         # Try to queue another
         payload = {
             "project_id": str(project.id),
-            "issue_number": 42,
-            "task_description": "Test task",
+            "work_item_id": "42",
+            "prompt": "Test task",
         }
 
         response = test_client.post(
@@ -281,9 +294,10 @@ class TestGetTaskRun:
         """Test getting single task run."""
         task_run = TaskRun(
             project_id=test_project.id,
-            issue_number=42,
+            work_item_id="42",
+            prompt="Test task",
             status="running",
-            claude_cost_usd=Decimal("0.15"),
+            cost_usd=Decimal("0.15"),
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )
@@ -299,9 +313,9 @@ class TestGetTaskRun:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == str(task_run.id)
-        assert data["issue_number"] == 42
+        assert data["work_item_id"] == "42"
         assert data["status"] == "running"
-        assert Decimal(data["claude_cost_usd"]) == Decimal("0.15")
+        assert Decimal(data["cost_usd"]) == Decimal("0.15")
 
     async def test_get_task_run_not_found(self, test_client, test_api_key):
         """Test getting non-existent task run."""
@@ -323,7 +337,8 @@ class TestUpdateTaskRun:
         """Test successful task run update."""
         task_run = TaskRun(
             project_id=test_project.id,
-            issue_number=42,
+            work_item_id="42",
+            prompt="Test task",
             status="queued",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -334,7 +349,7 @@ class TestUpdateTaskRun:
 
         payload = {
             "status": "running",
-            "claude_cost_usd": "0.25",
+            "cost_usd": "0.25",
         }
 
         response = test_client.patch(
@@ -346,7 +361,7 @@ class TestUpdateTaskRun:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "running"
-        assert Decimal(data["claude_cost_usd"]) == Decimal("0.25")
+        assert Decimal(data["cost_usd"]) == Decimal("0.25")
 
     async def test_update_task_run_invalid_status_transition(
         self, test_client, test_api_key, test_db, test_project
@@ -354,7 +369,8 @@ class TestUpdateTaskRun:
         """Test invalid status transition (success -> queued not allowed)."""
         task_run = TaskRun(
             project_id=test_project.id,
-            issue_number=42,
+            work_item_id="42",
+            prompt="Test task",
             status="success",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -396,7 +412,8 @@ class TestCancelTaskRun:
         """Test successful task run cancellation."""
         task_run = TaskRun(
             project_id=test_project.id,
-            issue_number=42,
+            work_item_id="42",
+            prompt="Test task",
             status="running",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -420,7 +437,8 @@ class TestCancelTaskRun:
         """Test cancelling already completed task run."""
         task_run = TaskRun(
             project_id=test_project.id,
-            issue_number=42,
+            work_item_id="42",
+            prompt="Test task",
             status="success",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -435,7 +453,7 @@ class TestCancelTaskRun:
         )
 
         assert response.status_code == 409
-        assert "cannot be cancelled" in response.json()["detail"].lower()
+        assert "cannot cancel" in response.json()["detail"].lower()
 
     async def test_cancel_task_run_not_found(self, test_client, test_api_key):
         """Test cancelling non-existent task run."""
@@ -456,7 +474,8 @@ class TestRetryTaskRun:
         """Test successful task run retry."""
         task_run = TaskRun(
             project_id=test_project.id,
-            issue_number=42,
+            work_item_id="42",
+            prompt="Test task",
             status="failed",
             error_message="Test error",
             created_at=datetime.now(timezone.utc),
@@ -483,7 +502,8 @@ class TestRetryTaskRun:
         """Test retrying non-failed task run."""
         task_run = TaskRun(
             project_id=test_project.id,
-            issue_number=42,
+            work_item_id="42",
+            prompt="Test task",
             status="success",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -498,7 +518,7 @@ class TestRetryTaskRun:
         )
 
         assert response.status_code == 409
-        assert "only retry failed" in response.json()["detail"].lower()
+        assert "cannot retry" in response.json()["detail"].lower()
 
     async def test_retry_task_run_not_found(self, test_client, test_api_key):
         """Test retrying non-existent task run."""
@@ -519,7 +539,8 @@ class TestDeleteTaskRun:
         """Test successful task run deletion."""
         task_run = TaskRun(
             project_id=test_project.id,
-            issue_number=42,
+            work_item_id="42",
+            prompt="Test task",
             status="success",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),

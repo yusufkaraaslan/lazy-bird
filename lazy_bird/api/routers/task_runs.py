@@ -316,7 +316,7 @@ async def queue_task_run(
         prompt=task_data.prompt,
         status="queued",
         max_retries=task_data.max_retries,
-        metadata=task_data.metadata or {},
+        task_metadata=task_data.metadata or {},
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc),
     )
@@ -474,6 +474,17 @@ async def update_task_run(
     if not update_fields:
         logger.info(f"No fields to update for task run: {task_run.work_item_id}")
         return TaskRunResponse.model_validate(task_run)
+
+    # Validate status transition
+    if "status" in update_fields:
+        new_status = update_fields["status"]
+        terminal_statuses = {"success", "failed", "cancelled", "timeout"}
+        if task_run.status in terminal_statuses and new_status != task_run.status:
+            raise ResourceConflictError(
+                detail=f"Cannot transition from '{task_run.status}' to '{new_status}'. "
+                f"Task in terminal status.",
+                conflict_field="status",
+            )
 
     # Apply updates to task run
     for field, value in update_fields.items():
@@ -688,6 +699,29 @@ async def retry_task_run(
     )
 
     return TaskRunResponse.model_validate(task_run)
+
+
+@router.delete("/{task_run_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_task_run(
+    task_run_id: UUID,
+    db: AsyncSession = Depends(get_async_database),
+    api_key: ApiKey = Depends(RequireWrite),
+) -> Response:
+    """Delete a task run record."""
+    query = select(TaskRun).where(TaskRun.id == task_run_id)
+    result = await db.execute(query)
+    task_run = result.scalar_one_or_none()
+
+    if not task_run:
+        raise ResourceNotFoundError(
+            resource_type="TaskRun",
+            resource_id=str(task_run_id),
+        )
+
+    await db.delete(task_run)
+    await db.commit()
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/{task_run_id}/logs")

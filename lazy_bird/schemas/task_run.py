@@ -77,7 +77,7 @@ class TaskRunUpdate(BaseModel):
     tokens_used: Optional[int] = Field(default=None, ge=0)
     cost_usd: Optional[Decimal] = Field(default=None, ge=Decimal("0"))
 
-    metadata: Optional[Dict[str, Any]] = Field(default=None)
+    task_metadata: Optional[Dict[str, Any]] = Field(default=None)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -117,7 +117,8 @@ class TaskRunResponse(BaseModel):
     tokens_used: Optional[int] = Field(default=None)
     cost_usd: Optional[Decimal] = Field(default=None)
 
-    metadata: Optional[Dict[str, Any]] = Field(default=None)
+    error_message: Optional[str] = Field(default=None)
+    task_metadata: Optional[Dict[str, Any]] = Field(default=None)
 
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")

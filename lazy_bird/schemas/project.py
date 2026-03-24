@@ -238,6 +238,14 @@ class ProjectUpdate(BaseModel):
     All fields are optional - only provided fields will be updated.
     """
 
+    slug: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=100,
+        pattern=r"^[a-z0-9-]+$",
+        description="URL-safe unique identifier (lowercase, alphanumeric, hyphens)",
+    )
+
     name: Optional[str] = Field(
         default=None,
         min_length=1,

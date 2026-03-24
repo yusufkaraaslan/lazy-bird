@@ -457,6 +457,9 @@ class TestAPIKeySecurityFeatures:
         data = response.json()
         assert data["revoked_at"] is not None
         # Verify timestamp is recent
-        revoked_time = datetime.fromisoformat(data["revoked_at"].replace("Z", "+00:00"))
+        revoked_str = data["revoked_at"].replace("Z", "+00:00")
+        revoked_time = datetime.fromisoformat(revoked_str)
+        if revoked_time.tzinfo is None:
+            revoked_time = revoked_time.replace(tzinfo=timezone.utc)
         now = datetime.now(timezone.utc)
         assert (now - revoked_time).total_seconds() < 5  # Within 5 seconds

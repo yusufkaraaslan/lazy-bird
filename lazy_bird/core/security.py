@@ -11,13 +11,10 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from lazy_bird.core.config import settings
-
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT algorithm
 ALGORITHM = "HS256"
@@ -115,7 +112,9 @@ def hash_password(password: str) -> str:
         >>> hashed.startswith("$2b$")
         True
     """
-    return pwd_context.hash(password)
+    # bcrypt has a 72-byte limit
+    pw_bytes = password[:72].encode("utf-8")
+    return bcrypt.hashpw(pw_bytes, bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -135,7 +134,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         >>> verify_password("wrongpassword", hashed)
         False
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    pw_bytes = plain_password[:72].encode("utf-8")
+    return bcrypt.checkpw(pw_bytes, hashed_password.encode("utf-8"))
 
 
 def create_access_token(

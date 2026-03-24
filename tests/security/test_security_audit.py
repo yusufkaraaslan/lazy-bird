@@ -552,10 +552,13 @@ class TestSecretsHandling:
 
         assert hasattr(security, "hash_password")
         assert hasattr(security, "verify_password")
-        assert hasattr(security, "pwd_context")
 
-        # Verify CryptContext is configured
-        assert security.pwd_context is not None
+        # Verify hashing actually works (uses bcrypt directly)
+        test_password = "test_password_123"
+        hashed = security.hash_password(test_password)
+        assert hashed is not None
+        assert hashed != test_password
+        assert security.verify_password(test_password, hashed)
 
         # Password security requirements (documented):
         # 1. MUST use bcrypt (industry standard) ✓

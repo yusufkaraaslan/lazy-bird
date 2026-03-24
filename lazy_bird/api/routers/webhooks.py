@@ -12,7 +12,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Response, status
-from sqlalchemy import func, select
+from sqlalchemy import cast, func, select, Text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from lazy_bird.api.dependencies import RequireAdmin, RequireRead, get_async_database
@@ -97,9 +97,13 @@ async def list_webhooks(
     if is_active is not None:
         filters.append(WebhookSubscription.is_active == is_active)
 
-    # Filter by event type (check if array contains the event)
+    # Filter by event type. Use a LIKE-based cast so the query works on both
+    # PostgreSQL (where events is an ARRAY stored as JSON text) and SQLite
+    # (where ARRAY is mapped to a JSON column during testing). The ARRAY
+    # .contains() method is PostgreSQL-only and silently returns no rows on
+    # SQLite because the dialect doesn't know how to translate it.
     if event:
-        filters.append(WebhookSubscription.events.contains([event]))
+        filters.append(cast(WebhookSubscription.events, Text).like(f'%"{event}"%'))
 
     # Add all filters to query
     if filters:

@@ -229,10 +229,21 @@ async def create_api_key(
     )
 
     # Return response with FULL KEY (only time it's shown!)
-    response = ApiKeyCreateResponse.model_validate(new_key)
-    response.key = raw_key  # Add full key to response
-
-    return response
+    response_data = {
+        "id": new_key.id,
+        "key_prefix": new_key.key_prefix,
+        "name": new_key.name,
+        "project_id": new_key.project_id,
+        "scopes": new_key.scopes,
+        "is_active": new_key.is_active,
+        "expires_at": new_key.expires_at,
+        "last_used_at": new_key.last_used_at,
+        "created_by": new_key.created_by,
+        "created_at": new_key.created_at,
+        "revoked_at": new_key.revoked_at,
+        "key": raw_key,  # Full key shown only once!
+    }
+    return ApiKeyCreateResponse(**response_data)
 
 
 @router.get("/{key_id}", response_model=ApiKeyResponse)

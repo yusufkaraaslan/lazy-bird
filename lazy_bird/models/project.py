@@ -361,8 +361,8 @@ class Project(Base):
     task_runs: Mapped[List["TaskRun"]] = relationship(
         "TaskRun",
         back_populates="project",
-        cascade="all, delete-orphan",  # Delete tasks when project deleted
-        lazy="dynamic",  # Return query object for filtering
+        cascade="all, delete-orphan",
+        lazy="select",
     )
 
     # Webhook subscriptions (one-to-many)
@@ -429,6 +429,7 @@ class Project(Base):
             f"enabled={self.automation_enabled})>"
         )
 
+    @property
     def is_active(self) -> bool:
         """Check if project is active (not soft-deleted).
 

@@ -217,25 +217,104 @@ def mock_package_root(temp_dir):
 # ============================================================================
 
 
+def _create_sqlite_compatible_tables(connection):
+    """Create tables in SQLite by stripping PostgreSQL-specific features.
+
+    The models use PG-specific types (ARRAY, JSONB, UUID, TSVECTOR, etc.)
+    and PG-specific server_defaults (gen_random_uuid). This function builds
+    a clean MetaData with SQLite-compatible types.
+    """
+    from sqlalchemy import MetaData, Table, Column, String, JSON, Text
+    import sqlalchemy.dialects.postgresql as pg_types
+
+    from lazy_bird.core.database import Base
+    # Import all models so they register with Base.metadata
+    import lazy_bird.models  # noqa: F401
+
+    # Map PG-specific types to SQLite-compatible equivalents
+    PG_TYPE_MAP = {
+        pg_types.ARRAY: lambda _: JSON(),
+        pg_types.JSONB: lambda _: JSON(),
+        pg_types.JSON: lambda _: JSON(),
+        pg_types.UUID: lambda _: String(36),
+        pg_types.TSVECTOR: lambda _: Text(),
+        pg_types.INET: lambda _: String(45),
+        pg_types.CIDR: lambda _: String(45),
+        pg_types.MACADDR: lambda _: String(17),
+        pg_types.ENUM: lambda t: String(255),
+        pg_types.INTERVAL: lambda _: String(50),
+    }
+
+    meta = MetaData()
+    for table in Base.metadata.sorted_tables:
+        columns = []
+        for col in table.columns:
+            col_type = col.type
+
+            # Replace any PG-specific type
+            for pg_cls, factory in PG_TYPE_MAP.items():
+                if isinstance(col_type, pg_cls):
+                    col_type = factory(col_type)
+                    break
+
+            kwargs = {
+                "primary_key": col.primary_key,
+                "nullable": col.nullable,
+            }
+
+            # Skip PG-specific server_defaults (gen_random_uuid, array literals)
+            if col.server_default is not None:
+                sd_text = ""
+                if hasattr(col.server_default, "arg"):
+                    sd_text = str(col.server_default.arg)
+                if not any(s in sd_text for s in ["gen_random_uuid", "'{", "ARRAY"]):
+                    kwargs["server_default"] = col.server_default
+
+            columns.append(Column(col.name, col_type, **kwargs))
+
+        # Create table without PG-specific constraints
+        Table(table.name, meta, *columns)
+
+    meta.create_all(connection)
+
+
 @pytest.fixture
 async def test_db():
     """Create test database session.
 
     Creates an in-memory SQLite database for testing.
+    PostgreSQL-specific types (ARRAY, gen_random_uuid) are replaced with
+    SQLite-compatible equivalents.
     """
     from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
     from sqlalchemy.orm import sessionmaker
-    from lazy_bird.core.database import Base
+
+    import json
+    from sqlalchemy import event as sa_event
 
     # Create in-memory async SQLite database
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         echo=False,
+        json_serializer=json.dumps,
+        json_deserializer=json.loads,
     )
 
-    # Create all tables
+    # Patch ARRAY and JSONB columns in ORM models to use JSON type on SQLite.
+    # This ensures proper serialization/deserialization of list/dict values.
+    from sqlalchemy import JSON as SA_JSON
+    from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+    import lazy_bird.models  # noqa: F401
+    from lazy_bird.core.database import Base
+
+    for table in Base.metadata.sorted_tables:
+        for col in table.columns:
+            if isinstance(col.type, (ARRAY, JSONB)):
+                col.type = SA_JSON()
+
+    # Create tables with SQLite-compatible DDL
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(_create_sqlite_compatible_tables)
 
     # Create session factory
     async_session_factory = sessionmaker(
@@ -272,15 +351,21 @@ def test_client(test_db):
 
 @pytest.fixture
 async def test_api_key(test_db):
-    """Create test API key with admin scope."""
-    from lazy_bird.models.api_key import ApiKey
-    from datetime import datetime, timezone
-    import secrets
+    """Create test API key with admin scope.
 
+    Returns the ApiKey model with an extra `raw_key` attribute
+    containing the unhashed key for use in X-API-Key headers.
+    """
+    from lazy_bird.models.api_key import ApiKey
+    from lazy_bird.core.security import generate_api_key, hash_api_key, get_api_key_prefix
+    from datetime import datetime, timezone
+
+    raw_key = generate_api_key()
     api_key = ApiKey(
         name="Test API Key",
-        key_hash=secrets.token_urlsafe(32),
-        scope="admin",
+        key_hash=hash_api_key(raw_key),
+        key_prefix=get_api_key_prefix(raw_key),
+        scopes=["admin"],
         is_active=True,
         created_at=datetime.now(timezone.utc),
     )
@@ -289,6 +374,13 @@ async def test_api_key(test_db):
     await test_db.commit()
     await test_db.refresh(api_key)
 
+    # Expunge from session so we can modify attributes without dirtying it.
+    # Tests use test_api_key.key_hash as the X-API-Key header value,
+    # so we swap key_hash to the raw key for convenience.
+    from sqlalchemy.orm import make_transient
+    test_db.expunge(api_key)
+    make_transient(api_key)
+    api_key.key_hash = raw_key
     return api_key
 
 

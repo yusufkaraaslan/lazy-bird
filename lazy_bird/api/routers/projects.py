@@ -171,16 +171,14 @@ async def list_projects(
         last_task_result = await db.execute(last_task_query)
         last_task_at = last_task_result.scalar_one_or_none()
 
-        # Create response with stats
-        project_data = project.__dict__.copy()
-        project_data["total_tasks"] = total_tasks
-        project_data["tasks_queued"] = stats.get("queued", 0)
-        project_data["tasks_running"] = stats.get("running", 0)
-        project_data["tasks_success"] = stats.get("success", 0)
-        project_data["tasks_failed"] = stats.get("failed", 0)
-        project_data["last_task_at"] = last_task_at
-
-        project_response = ProjectResponse(**project_data)
+        # Create response with stats using model_validate to handle ORM attrs
+        project_response = ProjectResponse.model_validate(project)
+        project_response.total_tasks = total_tasks
+        project_response.tasks_queued = stats.get("queued", 0)
+        project_response.tasks_running = stats.get("running", 0)
+        project_response.tasks_success = stats.get("success", 0)
+        project_response.tasks_failed = stats.get("failed", 0)
+        project_response.last_task_at = last_task_at
         project_responses.append(project_response)
 
     # Log successful query
@@ -424,14 +422,14 @@ async def get_project(
     last_task_result = await db.execute(last_task_query)
     last_task_at = last_task_result.scalar_one_or_none()
 
-    # Create response with stats
-    project_data = project.__dict__.copy()
-    project_data["total_tasks"] = total_tasks
-    project_data["tasks_queued"] = stats.get("queued", 0)
-    project_data["tasks_running"] = stats.get("running", 0)
-    project_data["tasks_success"] = stats.get("success", 0)
-    project_data["tasks_failed"] = stats.get("failed", 0)
-    project_data["last_task_at"] = last_task_at
+    # Create response with stats using model_validate to handle ORM attrs
+    project_response = ProjectResponse.model_validate(project)
+    project_response.total_tasks = total_tasks
+    project_response.tasks_queued = stats.get("queued", 0)
+    project_response.tasks_running = stats.get("running", 0)
+    project_response.tasks_success = stats.get("success", 0)
+    project_response.tasks_failed = stats.get("failed", 0)
+    project_response.last_task_at = last_task_at
 
     # Log successful query
     logger.info(
@@ -445,7 +443,7 @@ async def get_project(
         },
     )
 
-    return ProjectResponse(**project_data)
+    return project_response
 
 
 @router.patch("/{project_id}", response_model=ProjectResponse)

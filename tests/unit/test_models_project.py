@@ -105,7 +105,7 @@ class TestProjectMethods:
             deleted_at=None,
         )
 
-        assert project.is_active() is True
+        assert project.is_active is True
 
     def test_is_active_when_deleted(self):
         """Test is_active() returns False when deleted_at is set."""
@@ -118,7 +118,7 @@ class TestProjectMethods:
             deleted_at=datetime.now(timezone.utc),
         )
 
-        assert project.is_active() is False
+        assert project.is_active is False
 
     def test_soft_delete(self):
         """Test soft_delete() sets deleted_at timestamp."""
@@ -131,12 +131,12 @@ class TestProjectMethods:
         )
 
         assert project.deleted_at is None
-        assert project.is_active() is True
+        assert project.is_active is True
 
         project.soft_delete()
 
         assert project.deleted_at is not None
-        assert project.is_active() is False
+        assert project.is_active is False
 
     def test_restore(self):
         """Test restore() clears deleted_at timestamp."""
@@ -149,12 +149,12 @@ class TestProjectMethods:
             deleted_at=datetime.now(timezone.utc),
         )
 
-        assert project.is_active() is False
+        assert project.is_active is False
 
         project.restore()
 
         assert project.deleted_at is None
-        assert project.is_active() is True
+        assert project.is_active is True
 
     def test_repr(self):
         """Test __repr__() method."""

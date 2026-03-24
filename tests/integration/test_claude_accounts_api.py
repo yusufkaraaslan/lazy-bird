@@ -38,7 +38,7 @@ class TestListClaudeAccounts:
             account = ClaudeAccount(
                 name=f"Account {i}",
                 account_type="api",
-                api_key_encrypted=f"sk-ant-test-key-{i}",
+                api_key=f"sk-ant-test-key-{i}",
                 model="claude-sonnet-4-5",
                 created_at=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc),
@@ -66,7 +66,7 @@ class TestListClaudeAccounts:
         api_account = ClaudeAccount(
             name="API Account",
             account_type="api",
-            api_key_encrypted="sk-ant-test-key-api",
+            api_key="sk-ant-test-key-api",
             model="claude-sonnet-4-5",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -197,11 +197,10 @@ class TestGetClaudeAccount:
         account = ClaudeAccount(
             name="Test Account",
             account_type="api",
-            api_key_encrypted="sk-ant-test-key",
+            api_key="sk-ant-test-key",
             model="claude-sonnet-4-5",
             max_tokens=8000,
             temperature=Decimal("0.7"),
-            current_cost_usd=Decimal("15.50"),
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )
@@ -219,7 +218,6 @@ class TestGetClaudeAccount:
         assert data["id"] == str(account.id)
         assert data["name"] == "Test Account"
         assert data["account_type"] == "api"
-        assert Decimal(data["current_cost_usd"]) == Decimal("15.50")
 
     async def test_get_claude_account_not_found(self, test_client, test_api_key):
         """Test getting non-existent Claude account."""
@@ -242,7 +240,7 @@ class TestUpdateClaudeAccount:
         account = ClaudeAccount(
             name="Original Name",
             account_type="api",
-            api_key_encrypted="sk-ant-test-key",
+            api_key="sk-ant-test-key",
             model="claude-sonnet-4-5",
             max_tokens=8000,
             created_at=datetime.now(timezone.utc),
@@ -277,7 +275,7 @@ class TestUpdateClaudeAccount:
         account = ClaudeAccount(
             name="Test Account",
             account_type="api",
-            api_key_encrypted="sk-ant-old-key",
+            api_key="sk-ant-old-key",
             model="claude-sonnet-4-5",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -322,7 +320,7 @@ class TestDeleteClaudeAccount:
         account = ClaudeAccount(
             name="To Delete",
             account_type="api",
-            api_key_encrypted="sk-ant-test-key",
+            api_key="sk-ant-test-key",
             model="claude-sonnet-4-5",
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
