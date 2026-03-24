@@ -33,9 +33,7 @@ def print_banner():
 
     Version: {version}
     Automate ANY development project while you sleep 🦜💤
-    """.format(
-        version=__version__
-    )
+    """.format(version=__version__)
     print(banner)
 
 

@@ -455,9 +455,7 @@ class TestPublishEvent:
         mock_db.execute = AsyncMock(return_value=mock_result)
         mock_db.commit = AsyncMock()
 
-        with patch(
-            "lazy_bird.services.webhook_service.deliver_webhook_with_retry"
-        ) as mock_retry:
+        with patch("lazy_bird.services.webhook_service.deliver_webhook_with_retry") as mock_retry:
             mock_retry.return_value = {"success": True, "status_code": 200}
 
             count = await publish_event(
@@ -491,9 +489,7 @@ class TestPublishEvent:
         mock_db.execute = AsyncMock(return_value=mock_result)
         mock_db.commit = AsyncMock()
 
-        with patch(
-            "lazy_bird.services.webhook_service.deliver_webhook_with_retry"
-        ) as mock_retry:
+        with patch("lazy_bird.services.webhook_service.deliver_webhook_with_retry") as mock_retry:
             mock_retry.return_value = {"success": True, "status_code": 200}
 
             count = await publish_event(
@@ -526,9 +522,7 @@ class TestPublishEvent:
         mock_db.execute = AsyncMock(return_value=mock_result)
         mock_db.commit = AsyncMock()
 
-        with patch(
-            "lazy_bird.services.webhook_service.deliver_webhook_with_retry"
-        ) as mock_retry:
+        with patch("lazy_bird.services.webhook_service.deliver_webhook_with_retry") as mock_retry:
             mock_retry.return_value = {"success": True, "status_code": 200}
 
             await publish_event(

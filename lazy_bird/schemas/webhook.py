@@ -48,6 +48,7 @@ class WebhookSubscriptionBase(BaseModel):
 
 class WebhookSubscriptionCreate(WebhookSubscriptionBase):
     """Schema for creating a new webhook subscription."""
+
     pass
 
 

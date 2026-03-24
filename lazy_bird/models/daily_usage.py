@@ -8,7 +8,18 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import BigInteger, Column, Date, DateTime, ForeignKey, Index, Integer, Numeric, UniqueConstraint, func
+from sqlalchemy import (
+    BigInteger,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

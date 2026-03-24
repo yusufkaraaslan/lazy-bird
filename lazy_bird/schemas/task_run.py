@@ -59,9 +59,11 @@ class TaskRunQueue(BaseModel):
 class TaskRunUpdate(BaseModel):
     """Schema for updating task run status/results."""
 
-    status: Optional[Literal["queued", "running", "success", "failed", "cancelled", "timeout"]] = Field(
-        default=None,
-        description="Execution status",
+    status: Optional[Literal["queued", "running", "success", "failed", "cancelled", "timeout"]] = (
+        Field(
+            default=None,
+            description="Execution status",
+        )
     )
 
     branch_name: Optional[str] = Field(default=None, max_length=255)

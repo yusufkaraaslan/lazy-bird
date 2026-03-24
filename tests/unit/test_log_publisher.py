@@ -204,9 +204,7 @@ class TestPublishLogAsync:
         """Test successful async log publishing."""
         publisher = LogPublisher(use_async=True)
 
-        with patch(
-            "lazy_bird.services.log_publisher.get_async_redis"
-        ) as mock_get_redis:
+        with patch("lazy_bird.services.log_publisher.get_async_redis") as mock_get_redis:
             mock_redis = AsyncMock()
             mock_redis.publish.return_value = 1  # 1 subscriber
             mock_get_redis.return_value = mock_redis
@@ -225,9 +223,7 @@ class TestPublishLogAsync:
         """Test async publishing with connection error."""
         publisher = LogPublisher(use_async=True)
 
-        with patch(
-            "lazy_bird.services.log_publisher.get_async_redis"
-        ) as mock_get_redis:
+        with patch("lazy_bird.services.log_publisher.get_async_redis") as mock_get_redis:
             from redis.exceptions import ConnectionError
 
             mock_get_redis.side_effect = ConnectionError("Connection failed")
@@ -298,9 +294,7 @@ class TestGetLogHistoryAsync:
         """Test async log history retrieval."""
         publisher = LogPublisher(use_async=True)
 
-        with patch(
-            "lazy_bird.services.log_publisher.get_async_redis"
-        ) as mock_get_redis:
+        with patch("lazy_bird.services.log_publisher.get_async_redis") as mock_get_redis:
             mock_redis = AsyncMock()
             log_entries = [
                 json.dumps({"message": "Log 1", "level": "INFO"}),

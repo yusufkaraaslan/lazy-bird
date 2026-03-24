@@ -103,9 +103,7 @@ Example:
 # Convert PostgreSQL URL to async version (postgresql+asyncpg://)
 async_database_url = settings.DATABASE_URL.replace(
     "postgresql://", "postgresql+asyncpg://"
-).replace(
-    "postgresql+psycopg2://", "postgresql+asyncpg://"
-)
+).replace("postgresql+psycopg2://", "postgresql+asyncpg://")
 
 async_engine = create_async_engine(
     async_database_url,

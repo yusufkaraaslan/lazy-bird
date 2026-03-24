@@ -66,10 +66,10 @@ FAILED: test_player_velocity
                 source <(grep -A 100 "^parse_test_errors()" {REPO_ROOT}/scripts/agent-runner.sh | sed '/^}}/q')
 
                 parse_test_errors
-                """
+                """,
             ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -108,10 +108,10 @@ FAILED app/tests/test_models.py::test_user_creation - AssertionError
                 source <(grep -A 100 "^parse_test_errors()" {REPO_ROOT}/scripts/agent-runner.sh | sed '/^}}/q')
 
                 parse_test_errors
-                """
+                """,
             ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -144,10 +144,10 @@ thread 'tests::test_addition' panicked at 'assertion failed: `(left == right)`
                 source <(grep -A 100 "^parse_test_errors()" {REPO_ROOT}/scripts/agent-runner.sh | sed '/^}}/q')
 
                 parse_test_errors
-                """
+                """,
             ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -167,10 +167,10 @@ thread 'tests::test_addition' panicked at 'assertion failed: `(left == right)`
                 source <(grep -A 100 "^parse_test_errors()" {REPO_ROOT}/scripts/agent-runner.sh | sed '/^}}/q')
 
                 parse_test_errors
-                """
+                """,
             ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -186,27 +186,25 @@ class TestRetryBackoff:
 
         # Calculate backoff for different attempts
         expected_backoffs = {
-            1: 30,   # attempt 1: 30 * 1 = 30s
-            2: 60,   # attempt 2: 30 * 2 = 60s
-            3: 90,   # attempt 3: 30 * 3 = 90s
+            1: 30,  # attempt 1: 30 * 1 = 30s
+            2: 60,  # attempt 2: 30 * 2 = 60s
+            3: 90,  # attempt 3: 30 * 3 = 90s
         }
 
         for attempt, expected_sleep in expected_backoffs.items():
             result = subprocess.run(
-                ["bash", "-c", f"echo $((30 * {attempt}))"],
-                capture_output=True,
-                text=True
+                ["bash", "-c", f"echo $((30 * {attempt}))"], capture_output=True, text=True
             )
             actual_sleep = int(result.stdout.strip())
-            assert actual_sleep == expected_sleep, f"Attempt {attempt}: expected {expected_sleep}s, got {actual_sleep}s"
+            assert (
+                actual_sleep == expected_sleep
+            ), f"Attempt {attempt}: expected {expected_sleep}s, got {actual_sleep}s"
 
     def test_total_attempts_calculation(self):
         """Test that TOTAL_ATTEMPTS = MAX_RETRY_ATTEMPTS + 1"""
         max_retries = 3
         result = subprocess.run(
-            ["bash", "-c", f"echo $(({max_retries} + 1))"],
-            capture_output=True,
-            text=True
+            ["bash", "-c", f"echo $(({max_retries} + 1))"], capture_output=True, text=True
         )
         total_attempts = int(result.stdout.strip())
         assert total_attempts == 4, "3 retries should equal 4 total attempts"
@@ -220,20 +218,18 @@ class TestErrorContextPassing:
         """Test that run_claude function accepts error context parameter"""
         # Extract the run_claude function signature
         result = subprocess.run(
-            [
-                "bash",
-                "-c",
-                "grep -A 5 '^run_claude()' {REPO_ROOT}/scripts/agent-runner.sh"
-            ],
+            ["bash", "-c", "grep -A 5 '^run_claude()' {REPO_ROOT}/scripts/agent-runner.sh"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
         function_code = result.stdout
 
         # Verify it accepts error_context parameter
-        assert 'local error_context="${1:-}"' in function_code, "run_claude should accept error_context parameter"
+        assert (
+            'local error_context="${1:-}"' in function_code
+        ), "run_claude should accept error_context parameter"
 
     def test_error_context_appended_to_prompt(self):
         """Test that error context is appended to Claude prompt"""
@@ -241,10 +237,10 @@ class TestErrorContextPassing:
             [
                 "bash",
                 "-c",
-                "grep -A 20 'if \\[ -n \"\\$error_context\" \\]' {REPO_ROOT}/scripts/agent-runner.sh"
+                "grep -A 20 'if \\[ -n \"\\$error_context\" \\]' {REPO_ROOT}/scripts/agent-runner.sh",
             ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -262,17 +258,17 @@ class TestErrorContextPassing:
                 "-c",
                 """
                 grep -B 5 -A 5 'run_claude "\\$error_details"' {REPO_ROOT}/scripts/agent-runner.sh
-                """
+                """,
             ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
         retry_code = result.stdout
 
         # Verify error_details are parsed and passed
-        assert 'error_details=$(parse_test_errors)' in retry_code or 'error_details=' in retry_code
+        assert "error_details=$(parse_test_errors)" in retry_code or "error_details=" in retry_code
         assert 'run_claude "$error_details"' in retry_code
 
 
@@ -283,13 +279,9 @@ class TestCleanupWorktree:
     def test_cleanup_worktree_function_exists(self):
         """Test that cleanup_worktree function is defined"""
         result = subprocess.run(
-            [
-                "bash",
-                "-c",
-                "grep -c '^cleanup_worktree()' {REPO_ROOT}/scripts/agent-runner.sh"
-            ],
+            ["bash", "-c", "grep -c '^cleanup_worktree()' {REPO_ROOT}/scripts/agent-runner.sh"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -302,10 +294,10 @@ class TestCleanupWorktree:
             [
                 "bash",
                 "-c",
-                "grep 'git worktree remove' {REPO_ROOT}/scripts/agent-runner.sh | grep cleanup_worktree -A 20"
+                "grep 'git worktree remove' {REPO_ROOT}/scripts/agent-runner.sh | grep cleanup_worktree -A 20",
             ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -315,13 +307,9 @@ class TestCleanupWorktree:
     def test_cleanup_deletes_branch(self):
         """Test that cleanup deletes local branch"""
         result = subprocess.run(
-            [
-                "bash",
-                "-c",
-                "grep -A 30 '^cleanup_worktree()' {REPO_ROOT}/scripts/agent-runner.sh"
-            ],
+            ["bash", "-c", "grep -A 30 '^cleanup_worktree()' {REPO_ROOT}/scripts/agent-runner.sh"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -330,13 +318,9 @@ class TestCleanupWorktree:
     def test_cleanup_registered_as_exit_trap(self):
         """Test that cleanup_worktree is registered as EXIT trap"""
         result = subprocess.run(
-            [
-                "bash",
-                "-c",
-                "grep 'trap cleanup_worktree EXIT' {REPO_ROOT}/scripts/agent-runner.sh"
-            ],
+            ["bash", "-c", "grep 'trap cleanup_worktree EXIT' {REPO_ROOT}/scripts/agent-runner.sh"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -366,10 +350,10 @@ class TestWorkflowIntegrity:
             [
                 "bash",
                 "-c",
-                "grep -B 2 'for attempt in' {REPO_ROOT}/scripts/agent-runner.sh | grep 'trap - ERR'"
+                "grep -B 2 'for attempt in' {REPO_ROOT}/scripts/agent-runner.sh | grep 'trap - ERR'",
             ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         # Should find trap - ERR before the retry loop
@@ -392,10 +376,10 @@ class TestWorkflowIntegrity:
                 [
                     "bash",
                     "-c",
-                    f"grep -c '^{func_name}()' {REPO_ROOT}/scripts/agent-runner.sh || echo 0"
+                    f"grep -c '^{func_name}()' {REPO_ROOT}/scripts/agent-runner.sh || echo 0",
                 ],
                 capture_output=True,
-                text=True
+                text=True,
             )
             count = int(result.stdout.strip())
             assert count >= 1, f"Critical function {func_name} should be defined"
@@ -411,10 +395,10 @@ class TestWebUIIntegration:
             [
                 "bash",
                 "-c",
-                "grep -c 'def _remove_from_processed_cache' {REPO_ROOT}/web/backend/services/queue_service.py"
+                "grep -c 'def _remove_from_processed_cache' {REPO_ROOT}/web/backend/services/queue_service.py",
             ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -427,10 +411,10 @@ class TestWebUIIntegration:
             [
                 "bash",
                 "-c",
-                "grep -A 20 'def delete_task' {REPO_ROOT}/web/backend/services/queue_service.py | grep '_remove_from_processed_cache'"
+                "grep -A 20 'def delete_task' {REPO_ROOT}/web/backend/services/queue_service.py | grep '_remove_from_processed_cache'",
             ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0

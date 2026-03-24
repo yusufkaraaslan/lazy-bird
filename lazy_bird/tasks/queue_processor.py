@@ -95,7 +95,7 @@ async def _process_queue_async() -> dict:
                 .where(TaskRun.status == "queued")
                 .order_by(
                     TaskRun.complexity.asc(),  # simple < medium < complex
-                    TaskRun.created_at.asc()   # FIFO within same complexity
+                    TaskRun.created_at.asc(),  # FIFO within same complexity
                 )
                 .limit(100)  # Process max 100 tasks per run
             )
@@ -192,6 +192,7 @@ async def _process_queue_async() -> dict:
                     if task.project_id not in project_daily_costs:
                         # Query today's cost for this project
                         from sqlalchemy import func
+
                         today_start = datetime.now(timezone.utc).replace(
                             hour=0, minute=0, second=0, microsecond=0
                         )
@@ -356,9 +357,9 @@ async def _requeue_stale_tasks_async() -> dict:
                         extra={
                             "extra_fields": {
                                 "task_run_id": str(task.id),
-                                "started_at": task.started_at.isoformat()
-                                if task.started_at
-                                else None,
+                                "started_at": (
+                                    task.started_at.isoformat() if task.started_at else None
+                                ),
                             }
                         },
                     )

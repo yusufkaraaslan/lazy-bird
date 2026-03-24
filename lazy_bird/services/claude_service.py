@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 def _get_settings():
     """Lazy import settings to avoid circular dependencies."""
     from lazy_bird.core.config import settings
+
     return settings
 
 
@@ -88,7 +89,9 @@ class ClaudeService:
             self.api_key = api_key or settings.CLAUDE_API_KEY
             self.model = model or settings.CLAUDE_MODEL
             self.max_tokens = max_tokens or settings.CLAUDE_MAX_TOKENS
-            self.temperature = temperature if temperature is not None else settings.CLAUDE_TEMPERATURE
+            self.temperature = (
+                temperature if temperature is not None else settings.CLAUDE_TEMPERATURE
+            )
         else:
             self.api_key = api_key
             self.model = model

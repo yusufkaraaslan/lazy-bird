@@ -89,16 +89,14 @@ class ClaudeAccount(Base):
     # -------------------------------------------------------------------------
 
     name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        comment="Human-readable account name"
+        String(255), nullable=False, comment="Human-readable account name"
     )
 
     account_type: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
         index=True,  # idx_claude_accounts_type
-        comment="Account type: api or subscription"
+        comment="Account type: api or subscription",
     )
 
     # -------------------------------------------------------------------------
@@ -106,9 +104,7 @@ class ClaudeAccount(Base):
     # -------------------------------------------------------------------------
 
     api_key: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="Anthropic API key (encrypted at application layer)"
+        String(500), nullable=True, comment="Anthropic API key (encrypted at application layer)"
     )
 
     # -------------------------------------------------------------------------
@@ -116,15 +112,13 @@ class ClaudeAccount(Base):
     # -------------------------------------------------------------------------
 
     config_directory: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="Config directory path for subscription mode"
+        String(500), nullable=True, comment="Config directory path for subscription mode"
     )
 
     session_token: Mapped[Optional[str]] = mapped_column(
         String(500),
         nullable=True,
-        comment="Session token for subscription mode (encrypted at application layer)"
+        comment="Session token for subscription mode (encrypted at application layer)",
     )
 
     # -------------------------------------------------------------------------
@@ -136,7 +130,7 @@ class ClaudeAccount(Base):
         nullable=False,
         server_default="claude-sonnet-4-5",
         default="claude-sonnet-4-5",
-        comment="Claude model identifier"
+        comment="Claude model identifier",
     )
 
     max_tokens: Mapped[int] = mapped_column(
@@ -144,7 +138,7 @@ class ClaudeAccount(Base):
         nullable=False,
         server_default="8000",
         default=8000,
-        comment="Maximum tokens per request"
+        comment="Maximum tokens per request",
     )
 
     temperature: Mapped[Decimal] = mapped_column(
@@ -152,7 +146,7 @@ class ClaudeAccount(Base):
         nullable=False,
         server_default="0.7",
         default=Decimal("0.7"),
-        comment="Model temperature (0.00-1.00)"
+        comment="Model temperature (0.00-1.00)",
     )
 
     # -------------------------------------------------------------------------
@@ -160,9 +154,7 @@ class ClaudeAccount(Base):
     # -------------------------------------------------------------------------
 
     monthly_budget_usd: Mapped[Optional[Decimal]] = mapped_column(
-        Numeric(10, 2),
-        nullable=True,
-        comment="Monthly spending limit in USD"
+        Numeric(10, 2), nullable=True, comment="Monthly spending limit in USD"
     )
 
     is_active: Mapped[bool] = mapped_column(
@@ -171,7 +163,7 @@ class ClaudeAccount(Base):
         server_default="true",
         default=True,
         index=True,  # idx_claude_accounts_active
-        comment="Whether account is active and can be used"
+        comment="Whether account is active and can be used",
     )
 
     # -------------------------------------------------------------------------
@@ -183,7 +175,7 @@ class ClaudeAccount(Base):
         nullable=False,
         server_default=func.current_timestamp(),
         default=func.current_timestamp(),
-        comment="Creation timestamp"
+        comment="Creation timestamp",
     )
 
     updated_at: Mapped[datetime] = mapped_column(
@@ -192,13 +184,11 @@ class ClaudeAccount(Base):
         server_default=func.current_timestamp(),
         default=func.current_timestamp(),
         onupdate=func.current_timestamp(),
-        comment="Last update timestamp"
+        comment="Last update timestamp",
     )
 
     last_used_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Last time this account was used for a task"
+        DateTime(timezone=True), nullable=True, comment="Last time this account was used for a task"
     )
 
     # -------------------------------------------------------------------------
@@ -231,32 +221,27 @@ class ClaudeAccount(Base):
             "account_type IN ('api', 'subscription')",
             name="check_account_type",
         ),
-
         # Check constraint: API mode requires api_key, subscription mode requires config_directory
         CheckConstraint(
             "(account_type = 'api' AND api_key IS NOT NULL) OR "
             "(account_type = 'subscription' AND config_directory IS NOT NULL)",
             name="check_api_key_required",
         ),
-
         # Check constraint: temperature must be between 0.0 and 1.0
         CheckConstraint(
             "temperature >= 0.0 AND temperature <= 1.0",
             name="check_temperature_range",
         ),
-
         # Check constraint: max_tokens must be positive
         CheckConstraint(
             "max_tokens > 0",
             name="check_max_tokens_positive",
         ),
-
         # Check constraint: monthly_budget must be positive if set
         CheckConstraint(
             "monthly_budget_usd IS NULL OR monthly_budget_usd > 0",
             name="check_monthly_budget_positive",
         ),
-
         # Table comment
         {"comment": "Claude API credentials and configuration"},
     )
@@ -418,7 +403,9 @@ class ClaudeAccount(Base):
             "model": self.model,
             "max_tokens": self.max_tokens,
             "temperature": float(self.temperature) if self.temperature is not None else None,
-            "monthly_budget_usd": float(self.monthly_budget_usd) if self.monthly_budget_usd else None,
+            "monthly_budget_usd": (
+                float(self.monthly_budget_usd) if self.monthly_budget_usd else None
+            ),
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

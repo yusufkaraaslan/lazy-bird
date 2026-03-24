@@ -42,7 +42,9 @@ async def check_database() -> Dict[str, Any]:
 
         return {
             "status": "healthy" if is_healthy else "unhealthy",
-            "database_url": settings.DATABASE_URL.split("@")[-1] if "@" in settings.DATABASE_URL else "unknown",
+            "database_url": (
+                settings.DATABASE_URL.split("@")[-1] if "@" in settings.DATABASE_URL else "unknown"
+            ),
             "mode": "async" if settings.USE_ASYNC_DB else "sync",
         }
     except Exception as e:
@@ -67,7 +69,9 @@ async def check_redis_status() -> Dict[str, Any]:
 
         return {
             "status": "healthy" if is_healthy else "unhealthy",
-            "redis_url": settings.REDIS_URL.split("@")[-1] if "@" in settings.REDIS_URL else "unknown",
+            "redis_url": (
+                settings.REDIS_URL.split("@")[-1] if "@" in settings.REDIS_URL else "unknown"
+            ),
         }
     except Exception as e:
         logger.error(f"Redis health check failed: {e}")
@@ -252,9 +256,7 @@ async def readiness_probe() -> JSONResponse:
     db_health = await check_database()
     redis_health = await check_redis_status()
 
-    is_ready = (
-        db_health.get("status") == "healthy" and redis_health.get("status") == "healthy"
-    )
+    is_ready = db_health.get("status") == "healthy" and redis_health.get("status") == "healthy"
 
     response = {
         "status": "ready" if is_ready else "not_ready",

@@ -55,9 +55,7 @@ class TestListAPIKeys:
         assert len(data["items"]) == 2
         assert data["page"] == 1
 
-    async def test_list_api_keys_filter_by_scope(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_list_api_keys_filter_by_scope(self, test_client, test_api_key, test_db):
         """Test filtering API keys by scope."""
         # Create keys with different scopes
         read_key = ApiKey(
@@ -136,9 +134,7 @@ class TestCreateAPIKey:
         data = response.json()
         assert data["project_id"] is None  # Organization-level
 
-    async def test_create_api_key_project_scoped(
-        self, test_client, test_api_key, test_project
-    ):
+    async def test_create_api_key_project_scoped(self, test_client, test_api_key, test_project):
         """Test creating project-scoped API key."""
         payload = {
             "name": "Project-Specific Key",
@@ -292,9 +288,7 @@ class TestUpdateAPIKey:
         assert data["is_active"] is False
         assert data["revoked_at"] is not None  # Should set revoked_at timestamp
 
-    async def test_update_api_key_set_expiration(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_update_api_key_set_expiration(self, test_client, test_api_key, test_db):
         """Test setting expiration on API key."""
         api_key = ApiKey(
             key_hash="test-hash-expire",
@@ -380,9 +374,7 @@ class TestDeleteAPIKey:
 class TestAPIKeySecurityFeatures:
     """Test API key security-specific features."""
 
-    async def test_full_key_only_shown_on_creation(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_full_key_only_shown_on_creation(self, test_client, test_api_key, test_db):
         """Test that full key is only shown once during creation."""
         # Create key
         payload = {"name": "Security Test Key"}
@@ -408,9 +400,7 @@ class TestAPIKeySecurityFeatures:
         assert "key" not in get_data
         assert get_data["key_prefix"] == full_key[:8]
 
-    async def test_key_prefix_for_identification(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_key_prefix_for_identification(self, test_client, test_api_key, test_db):
         """Test that key_prefix is properly generated and displayed."""
         payload = {"name": "Prefix Test Key"}
 
@@ -430,9 +420,7 @@ class TestAPIKeySecurityFeatures:
         assert len(key_prefix) == 8
         assert key_prefix.startswith("lb_")
 
-    async def test_revoked_key_has_timestamp(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_revoked_key_has_timestamp(self, test_client, test_api_key, test_db):
         """Test that revoking a key sets revoked_at timestamp."""
         api_key = ApiKey(
             key_hash="test-hash-timestamp",

@@ -16,10 +16,13 @@ class TestHealthCheck:
 
     def test_health_check_success(self, test_client):
         """Test comprehensive health check when all services are healthy."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis, \
-             patch("lazy_bird.api.routers.health.check_celery_status") as mock_celery, \
-             patch("lazy_bird.api.routers.health.get_system_metrics") as mock_metrics:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis, patch(
+            "lazy_bird.api.routers.health.check_celery_status"
+        ) as mock_celery, patch(
+            "lazy_bird.api.routers.health.get_system_metrics"
+        ) as mock_metrics:
 
             # Mock all services as healthy
             mock_db.return_value = {"status": "healthy", "mode": "async"}
@@ -49,10 +52,13 @@ class TestHealthCheck:
 
     def test_health_check_database_unhealthy(self, test_client):
         """Test health check when database is unhealthy."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis, \
-             patch("lazy_bird.api.routers.health.check_celery_status") as mock_celery, \
-             patch("lazy_bird.api.routers.health.get_system_metrics") as mock_metrics:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis, patch(
+            "lazy_bird.api.routers.health.check_celery_status"
+        ) as mock_celery, patch(
+            "lazy_bird.api.routers.health.get_system_metrics"
+        ) as mock_metrics:
 
             mock_db.return_value = {"status": "unhealthy", "error": "Connection refused"}
             mock_redis.return_value = {"status": "healthy"}
@@ -68,10 +74,13 @@ class TestHealthCheck:
 
     def test_health_check_redis_unhealthy(self, test_client):
         """Test health check when Redis is unhealthy."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis, \
-             patch("lazy_bird.api.routers.health.check_celery_status") as mock_celery, \
-             patch("lazy_bird.api.routers.health.get_system_metrics") as mock_metrics:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis, patch(
+            "lazy_bird.api.routers.health.check_celery_status"
+        ) as mock_celery, patch(
+            "lazy_bird.api.routers.health.get_system_metrics"
+        ) as mock_metrics:
 
             mock_db.return_value = {"status": "healthy"}
             mock_redis.return_value = {"status": "unhealthy", "error": "Connection timeout"}
@@ -87,10 +96,13 @@ class TestHealthCheck:
 
     def test_health_check_celery_degraded(self, test_client):
         """Test health check when Celery is degraded (still returns 200)."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis, \
-             patch("lazy_bird.api.routers.health.check_celery_status") as mock_celery, \
-             patch("lazy_bird.api.routers.health.get_system_metrics") as mock_metrics:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis, patch(
+            "lazy_bird.api.routers.health.check_celery_status"
+        ) as mock_celery, patch(
+            "lazy_bird.api.routers.health.get_system_metrics"
+        ) as mock_metrics:
 
             mock_db.return_value = {"status": "healthy"}
             mock_redis.return_value = {"status": "healthy"}
@@ -110,10 +122,13 @@ class TestHealthCheck:
 
     def test_health_check_with_trailing_slash(self, test_client):
         """Test health check with trailing slash."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis, \
-             patch("lazy_bird.api.routers.health.check_celery_status") as mock_celery, \
-             patch("lazy_bird.api.routers.health.get_system_metrics") as mock_metrics:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis, patch(
+            "lazy_bird.api.routers.health.check_celery_status"
+        ) as mock_celery, patch(
+            "lazy_bird.api.routers.health.get_system_metrics"
+        ) as mock_metrics:
 
             mock_db.return_value = {"status": "healthy"}
             mock_redis.return_value = {"status": "healthy"}
@@ -152,8 +167,9 @@ class TestReadinessProbe:
 
     def test_readiness_probe_ready(self, test_client):
         """Test readiness probe when services are ready."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis:
 
             mock_db.return_value = {"status": "healthy"}
             mock_redis.return_value = {"status": "healthy"}
@@ -168,8 +184,9 @@ class TestReadinessProbe:
 
     def test_readiness_probe_not_ready_database(self, test_client):
         """Test readiness probe when database is not ready."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis:
 
             mock_db.return_value = {"status": "unhealthy"}
             mock_redis.return_value = {"status": "healthy"}
@@ -182,8 +199,9 @@ class TestReadinessProbe:
 
     def test_readiness_probe_not_ready_redis(self, test_client):
         """Test readiness probe when Redis is not ready."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis:
 
             mock_db.return_value = {"status": "healthy"}
             mock_redis.return_value = {"status": "unhealthy"}
@@ -196,9 +214,9 @@ class TestReadinessProbe:
 
     def test_readiness_probe_no_celery_check(self, test_client):
         """Test that readiness probe doesn't check Celery (only critical services)."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis, \
-             patch("lazy_bird.api.routers.health.check_celery_status") as mock_celery:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis, patch("lazy_bird.api.routers.health.check_celery_status") as mock_celery:
 
             mock_db.return_value = {"status": "healthy"}
             mock_redis.return_value = {"status": "healthy"}
@@ -240,8 +258,9 @@ class TestStartupProbe:
 
     def test_startup_probe_only_checks_database(self, test_client):
         """Test that startup probe only checks database (most lenient)."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis:
 
             mock_db.return_value = {"status": "healthy"}
             # Redis check should not be called
@@ -270,8 +289,9 @@ class TestHealthProbeHierarchy:
 
     def test_readiness_checks_db_and_redis(self, test_client):
         """Test that readiness probe needs both DB and Redis."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis:
 
             mock_db.return_value = {"status": "healthy"}
             mock_redis.return_value = {"status": "healthy"}
@@ -285,10 +305,13 @@ class TestHealthProbeHierarchy:
 
     def test_comprehensive_checks_all_services(self, test_client):
         """Test that comprehensive health check verifies all services."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis, \
-             patch("lazy_bird.api.routers.health.check_celery_status") as mock_celery, \
-             patch("lazy_bird.api.routers.health.get_system_metrics") as mock_metrics:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis, patch(
+            "lazy_bird.api.routers.health.check_celery_status"
+        ) as mock_celery, patch(
+            "lazy_bird.api.routers.health.get_system_metrics"
+        ) as mock_metrics:
 
             mock_db.return_value = {"status": "healthy"}
             mock_redis.return_value = {"status": "healthy"}
@@ -310,8 +333,9 @@ class TestKubernetesIntegration:
 
     def test_startup_then_liveness_then_readiness(self, test_client):
         """Test typical Kubernetes probe sequence."""
-        with patch("lazy_bird.api.routers.health.check_database") as mock_db, \
-             patch("lazy_bird.api.routers.health.check_redis_status") as mock_redis:
+        with patch("lazy_bird.api.routers.health.check_database") as mock_db, patch(
+            "lazy_bird.api.routers.health.check_redis_status"
+        ) as mock_redis:
 
             # Step 1: Startup probe (database initializing)
             mock_db.return_value = {"status": "unhealthy"}

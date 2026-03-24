@@ -350,8 +350,7 @@ async def publish_event(
 
     # Deliver to all matching subscriptions in parallel
     delivery_tasks = [
-        deliver_webhook_with_retry(subscription, payload, db)
-        for subscription in subscriptions
+        deliver_webhook_with_retry(subscription, payload, db) for subscription in subscriptions
     ]
 
     await asyncio.gather(*delivery_tasks, return_exceptions=True)

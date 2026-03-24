@@ -40,13 +40,13 @@ def test_environment():
         ["git", "config", "user.email", "test@example.com"],
         cwd=project_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     subprocess.run(
         ["git", "config", "user.name", "Test User"],
         cwd=project_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Create initial project structure
@@ -56,10 +56,7 @@ def test_environment():
 
     subprocess.run(["git", "add", "."], cwd=project_dir, check=True, capture_output=True)
     subprocess.run(
-        ["git", "commit", "-m", "Initial commit"],
-        cwd=project_dir,
-        check=True,
-        capture_output=True
+        ["git", "commit", "-m", "Initial commit"], cwd=project_dir, check=True, capture_output=True
     )
 
     # Create logs directory
@@ -74,7 +71,7 @@ def test_environment():
         "project_dir": project_dir,
         "logs_dir": logs_dir,
         "queue_dir": queue_dir,
-        "temp_base": Path(temp_base)
+        "temp_base": Path(temp_base),
     }
 
     yield env
@@ -97,7 +94,7 @@ class TestCompleteWorkflow:
             ["git", "worktree", "add", "-b", branch_name, str(worktree_path)],
             cwd=project_dir,
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert create_result.returncode == 0, f"Create failed: {create_result.stderr}"
@@ -112,15 +109,12 @@ class TestCompleteWorkflow:
             ["git", "commit", "-m", "Add new feature"],
             cwd=worktree_path,
             check=True,
-            capture_output=True
+            capture_output=True,
         )
 
         # Verify commit exists in branch
         log_result = subprocess.run(
-            ["git", "log", "--oneline", "-1"],
-            cwd=worktree_path,
-            capture_output=True,
-            text=True
+            ["git", "log", "--oneline", "-1"], cwd=worktree_path, capture_output=True, text=True
         )
         assert "Add new feature" in log_result.stdout
 
@@ -129,15 +123,11 @@ class TestCompleteWorkflow:
             ["git", "worktree", "remove", str(worktree_path), "--force"],
             cwd=project_dir,
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert cleanup_result.returncode == 0, f"Cleanup failed: {cleanup_result.stderr}"
-        subprocess.run(
-            ["git", "branch", "-D", branch_name],
-            cwd=project_dir,
-            capture_output=True
-        )
+        subprocess.run(["git", "branch", "-D", branch_name], cwd=project_dir, capture_output=True)
         assert not worktree_path.exists(), "Worktree should be removed"
 
     def test_error_parsing_and_retry_context(self, test_environment):
@@ -166,9 +156,7 @@ FAILED: test_collision_detection
         # Step 1: Parse errors using Python parser
         parser_script = f"{REPO_ROOT}/scripts/parse_test_errors.py"
         parse_result = subprocess.run(
-            ["python3", parser_script, str(test_log), "godot"],
-            capture_output=True,
-            text=True
+            ["python3", parser_script, str(test_log), "godot"], capture_output=True, text=True
         )
 
         assert parse_result.returncode == 0
@@ -184,7 +172,7 @@ FAILED: test_collision_detection
         json_result = subprocess.run(
             ["python3", parser_script, str(test_log), "godot", "--json"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert json_result.returncode == 0
@@ -232,15 +220,13 @@ FAILED: test_collision_detection
             "run_tests",
             "commit_changes",
             "push_branch",
-            "run_claude"
+            "run_claude",
         ]
 
         for func_name in critical_functions:
             # Verify function exists
             result = subprocess.run(
-                ["grep", "-c", f"^{func_name}()", script_path],
-                capture_output=True,
-                text=True
+                ["grep", "-c", f"^{func_name}()", script_path], capture_output=True, text=True
             )
 
             assert result.returncode == 0, f"Function {func_name} should exist"
@@ -253,17 +239,21 @@ FAILED: test_collision_detection
 
         # Extract run_claude function
         result = subprocess.run(
-            ["grep", "-A", "50", "^run_claude()", script_path],
-            capture_output=True,
-            text=True
+            ["grep", "-A", "50", "^run_claude()", script_path], capture_output=True, text=True
         )
 
         assert result.returncode == 0
         function_code = result.stdout
 
         # Verify error context handling
-        assert 'local error_context="${1:-}"' in function_code or 'error_context="${1:-}"' in function_code
-        assert 'if [ -n "$error_context" ]' in function_code or 'if [[ -n "$error_context" ]]' in function_code
+        assert (
+            'local error_context="${1:-}"' in function_code
+            or 'error_context="${1:-}"' in function_code
+        )
+        assert (
+            'if [ -n "$error_context" ]' in function_code
+            or 'if [[ -n "$error_context" ]]' in function_code
+        )
         assert "PREVIOUS ATTEMPT FAILED" in function_code
         assert "$error_context" in function_code
 
@@ -276,9 +266,7 @@ class TestWorkflowFailureHandling:
         script_path = f"{REPO_ROOT}/scripts/agent-runner.sh"
 
         result = subprocess.run(
-            ["grep", "trap cleanup_worktree EXIT", script_path],
-            capture_output=True,
-            text=True
+            ["grep", "trap cleanup_worktree EXIT", script_path], capture_output=True, text=True
         )
 
         assert result.returncode == 0, "EXIT trap should be registered"
@@ -311,17 +299,18 @@ class TestWorkflowMetrics:
         # Key workflow steps that should be present
         workflow_steps = [
             "create_worktree",  # Step 2
-            "run_claude",       # Step 4 & 8
-            "run_tests",        # Step 5 & 9
-            "parse_test_errors", # Step 7
-            "commit_changes",   # Step 10
-            "push_branch",      # Step 11
-            "cleanup_worktree"  # Exit trap
+            "run_claude",  # Step 4 & 8
+            "run_tests",  # Step 5 & 9
+            "parse_test_errors",  # Step 7
+            "commit_changes",  # Step 10
+            "push_branch",  # Step 11
+            "cleanup_worktree",  # Exit trap
         ]
 
         for step in workflow_steps:
-            assert f"{step}()" in content or f"def {step}" in content, \
-                f"Workflow step '{step}' should be present"
+            assert (
+                f"{step}()" in content or f"def {step}" in content
+            ), f"Workflow step '{step}' should be present"
 
 
 class TestFrameworkSupport:
@@ -337,7 +326,7 @@ class TestFrameworkSupport:
         result = subprocess.run(
             ["python3", parser_script, str(test_log), "godot", "--json"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -354,7 +343,7 @@ class TestFrameworkSupport:
         result = subprocess.run(
             ["python3", parser_script, str(test_log), "python", "--json"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -371,7 +360,7 @@ class TestFrameworkSupport:
         result = subprocess.run(
             ["python3", parser_script, str(test_log), "rust", "--json"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0

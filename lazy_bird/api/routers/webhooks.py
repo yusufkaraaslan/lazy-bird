@@ -45,9 +45,7 @@ async def list_webhooks(
         None, description="Filter by project ID (omit for global subscriptions)"
     ),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
-    event: Optional[str] = Query(
-        None, description="Filter by event type (e.g., task.completed)"
-    ),
+    event: Optional[str] = Query(None, description="Filter by event type (e.g., task.completed)"),
     # Dependencies
     db: AsyncSession = Depends(get_async_database),
     api_key: ApiKey = Depends(RequireRead),
@@ -121,20 +119,14 @@ async def list_webhooks(
     pages = (total + page_size - 1) // page_size if total > 0 else 0
 
     # Apply pagination and sorting (most recent first)
-    query = (
-        query.order_by(WebhookSubscription.created_at.desc())
-        .offset(offset)
-        .limit(page_size)
-    )
+    query = query.order_by(WebhookSubscription.created_at.desc()).offset(offset).limit(page_size)
 
     # Execute query
     result = await db.execute(query)
     subscriptions = result.scalars().all()
 
     # Convert to response models
-    subscription_responses = [
-        WebhookSubscriptionResponse.model_validate(s) for s in subscriptions
-    ]
+    subscription_responses = [WebhookSubscriptionResponse.model_validate(s) for s in subscriptions]
 
     # Log successful query
     logger.info(
@@ -213,9 +205,7 @@ async def create_webhook(
     """
     # Validate project exists if project_id provided
     if subscription_data.project_id:
-        project_query = select(Project).where(
-            Project.id == subscription_data.project_id
-        )
+        project_query = select(Project).where(Project.id == subscription_data.project_id)
         project_result = await db.execute(project_query)
         project = project_result.scalar_one_or_none()
 
@@ -250,9 +240,7 @@ async def create_webhook(
                 "subscription_id": str(subscription.id),
                 "url": subscription.url,
                 "events": subscription.events,
-                "project_id": (
-                    str(subscription.project_id) if subscription.project_id else None
-                ),
+                "project_id": (str(subscription.project_id) if subscription.project_id else None),
             }
         },
     )
@@ -281,9 +269,7 @@ async def get_webhook(
     - Requires: API key with 'read', 'write', or 'admin' scope
     """
     # Fetch subscription
-    query = select(WebhookSubscription).where(
-        WebhookSubscription.id == subscription_id
-    )
+    query = select(WebhookSubscription).where(WebhookSubscription.id == subscription_id)
     result = await db.execute(query)
     subscription = result.scalar_one_or_none()
 
@@ -343,9 +329,7 @@ async def update_webhook(
     - Changing secret will require updating webhook endpoint verification
     """
     # Fetch existing subscription
-    query = select(WebhookSubscription).where(
-        WebhookSubscription.id == subscription_id
-    )
+    query = select(WebhookSubscription).where(WebhookSubscription.id == subscription_id)
     result = await db.execute(query)
     subscription = result.scalar_one_or_none()
 
@@ -421,9 +405,7 @@ async def delete_webhook(
     - Consider setting is_active=false instead for temporary disabling
     """
     # Fetch existing subscription
-    query = select(WebhookSubscription).where(
-        WebhookSubscription.id == subscription_id
-    )
+    query = select(WebhookSubscription).where(WebhookSubscription.id == subscription_id)
     result = await db.execute(query)
     subscription = result.scalar_one_or_none()
 
@@ -494,9 +476,7 @@ async def test_webhook_delivery(
     - Does not count as a failure if delivery fails
     """
     # Fetch subscription
-    query = select(WebhookSubscription).where(
-        WebhookSubscription.id == subscription_id
-    )
+    query = select(WebhookSubscription).where(WebhookSubscription.id == subscription_id)
     result = await db.execute(query)
     subscription = result.scalar_one_or_none()
 

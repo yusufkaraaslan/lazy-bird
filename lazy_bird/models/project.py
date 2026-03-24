@@ -102,9 +102,7 @@ class Project(Base):
     # -------------------------------------------------------------------------
 
     name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        comment="Human-readable project name"
+        String(255), nullable=False, comment="Human-readable project name"
     )
 
     slug: Mapped[str] = mapped_column(
@@ -112,7 +110,7 @@ class Project(Base):
         unique=True,
         nullable=False,
         index=True,  # idx_projects_slug
-        comment="URL-safe unique identifier"
+        comment="URL-safe unique identifier",
     )
 
     # -------------------------------------------------------------------------
@@ -120,9 +118,7 @@ class Project(Base):
     # -------------------------------------------------------------------------
 
     repo_url: Mapped[str] = mapped_column(
-        String(500),
-        nullable=False,
-        comment="Git repository URL (GitHub, GitLab, etc.)"
+        String(500), nullable=False, comment="Git repository URL (GitHub, GitLab, etc.)"
     )
 
     default_branch: Mapped[str] = mapped_column(
@@ -130,7 +126,7 @@ class Project(Base):
         nullable=False,
         server_default="main",
         default="main",
-        comment="Default git branch for task execution"
+        comment="Default git branch for task execution",
     )
 
     # -------------------------------------------------------------------------
@@ -141,13 +137,11 @@ class Project(Base):
         UUID(as_uuid=True),
         ForeignKey("framework_presets.id", ondelete="SET NULL"),
         nullable=True,
-        comment="Reference to framework preset (optional)"
+        comment="Reference to framework preset (optional)",
     )
 
     project_type: Mapped[str] = mapped_column(
-        String(50),
-        nullable=False,
-        comment="Project type: python, nodejs, rust, godot, etc."
+        String(50), nullable=False, comment="Project type: python, nodejs, rust, godot, etc."
     )
 
     # -------------------------------------------------------------------------
@@ -155,27 +149,19 @@ class Project(Base):
     # -------------------------------------------------------------------------
 
     test_command: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="Custom test command (overrides preset)"
+        String(500), nullable=True, comment="Custom test command (overrides preset)"
     )
 
     build_command: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="Custom build command (overrides preset)"
+        String(500), nullable=True, comment="Custom build command (overrides preset)"
     )
 
     lint_command: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="Custom lint command (overrides preset)"
+        String(500), nullable=True, comment="Custom lint command (overrides preset)"
     )
 
     format_command: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="Custom format command (overrides preset)"
+        String(500), nullable=True, comment="Custom format command (overrides preset)"
     )
 
     # -------------------------------------------------------------------------
@@ -188,13 +174,11 @@ class Project(Base):
         server_default="false",
         default=False,
         index=True,  # idx_projects_automation_enabled
-        comment="Whether automation is active for this project"
+        comment="Whether automation is active for this project",
     )
 
     ready_state_name: Mapped[Optional[str]] = mapped_column(
-        String(100),
-        nullable=True,
-        comment="State name for ready tasks (e.g., 'Ready', 'To Do')"
+        String(100), nullable=True, comment="State name for ready tasks (e.g., 'Ready', 'To Do')"
     )
 
     in_progress_state_name: Mapped[str] = mapped_column(
@@ -202,7 +186,7 @@ class Project(Base):
         nullable=False,
         server_default="In Progress",
         default="In Progress",
-        comment="State name for running tasks"
+        comment="State name for running tasks",
     )
 
     review_state_name: Mapped[str] = mapped_column(
@@ -210,7 +194,7 @@ class Project(Base):
         nullable=False,
         server_default="In Review",
         default="In Review",
-        comment="State name for tasks in review"
+        comment="State name for tasks in review",
     )
 
     done_state_name: Mapped[str] = mapped_column(
@@ -218,7 +202,7 @@ class Project(Base):
         nullable=False,
         server_default="Done",
         default="Done",
-        comment="State name for completed tasks"
+        comment="State name for completed tasks",
     )
 
     # -------------------------------------------------------------------------
@@ -230,7 +214,7 @@ class Project(Base):
         nullable=False,
         server_default="3",
         default=3,
-        comment="Maximum number of parallel task executions"
+        comment="Maximum number of parallel task executions",
     )
 
     task_timeout_seconds: Mapped[int] = mapped_column(
@@ -238,7 +222,7 @@ class Project(Base):
         nullable=False,
         server_default="1800",
         default=1800,  # 30 minutes
-        comment="Task execution timeout in seconds"
+        comment="Task execution timeout in seconds",
     )
 
     max_cost_per_task_usd: Mapped[Decimal] = mapped_column(
@@ -246,7 +230,7 @@ class Project(Base):
         nullable=False,
         server_default="5.00",
         default=Decimal("5.00"),
-        comment="Maximum cost per task in USD"
+        comment="Maximum cost per task in USD",
     )
 
     daily_cost_limit_usd: Mapped[Decimal] = mapped_column(
@@ -254,7 +238,7 @@ class Project(Base):
         nullable=False,
         server_default="50.00",
         default=Decimal("50.00"),
-        comment="Daily total cost limit in USD"
+        comment="Daily total cost limit in USD",
     )
 
     # -------------------------------------------------------------------------
@@ -262,28 +246,22 @@ class Project(Base):
     # -------------------------------------------------------------------------
 
     github_installation_id: Mapped[Optional[int]] = mapped_column(
-        BigInteger,
-        nullable=True,
-        comment="GitHub App installation ID for this project"
+        BigInteger, nullable=True, comment="GitHub App installation ID for this project"
     )
 
     gitlab_project_id: Mapped[Optional[int]] = mapped_column(
-        BigInteger,
-        nullable=True,
-        comment="GitLab project ID for this project"
+        BigInteger, nullable=True, comment="GitLab project ID for this project"
     )
 
     source_platform: Mapped[Optional[str]] = mapped_column(
         String(50),
         nullable=True,
         index=True,  # idx_projects_source_platform
-        comment="Source platform: github, gitlab, plane, etc."
+        comment="Source platform: github, gitlab, plane, etc.",
     )
 
     source_platform_url: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="Platform URL for web UI integration"
+        String(500), nullable=True, comment="Platform URL for web UI integration"
     )
 
     # -------------------------------------------------------------------------
@@ -294,7 +272,7 @@ class Project(Base):
         UUID(as_uuid=True),
         ForeignKey("claude_accounts.id", ondelete="SET NULL"),
         nullable=True,
-        comment="Reference to Claude API account"
+        comment="Reference to Claude API account",
     )
 
     # -------------------------------------------------------------------------
@@ -306,7 +284,7 @@ class Project(Base):
         nullable=False,
         server_default=func.current_timestamp(),
         default=func.current_timestamp(),
-        comment="Creation timestamp"
+        comment="Creation timestamp",
     )
 
     updated_at: Mapped[datetime] = mapped_column(
@@ -315,13 +293,11 @@ class Project(Base):
         server_default=func.current_timestamp(),
         default=func.current_timestamp(),
         onupdate=func.current_timestamp(),
-        comment="Last update timestamp"
+        comment="Last update timestamp",
     )
 
     deleted_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Soft delete timestamp (NULL if active)"
+        DateTime(timezone=True), nullable=True, comment="Soft delete timestamp (NULL if active)"
     )
 
     # -------------------------------------------------------------------------
@@ -334,7 +310,7 @@ class Project(Base):
         # Note: In PostgreSQL, this is a GENERATED ALWAYS column
         # SQLAlchemy doesn't directly support GENERATED columns in declarative,
         # so we'll create this via Alembic migration with raw SQL
-        comment="Full-text search vector (auto-generated from name + repo_url)"
+        comment="Full-text search vector (auto-generated from name + repo_url)",
     )
 
     # -------------------------------------------------------------------------
@@ -396,23 +372,18 @@ class Project(Base):
     __table_args__ = (
         # Index on slug (already defined via index=True on column)
         # Index("idx_projects_slug", "slug"),  # Auto-created by index=True
-
         # Index on source_platform
         # Index("idx_projects_source_platform", "source_platform"),  # Auto-created
-
         # Index on automation_enabled
         # Index("idx_projects_automation_enabled", "automation_enabled"),  # Auto-created
-
         # GIN index for full-text search (created via Alembic migration)
         Index("idx_projects_search", search_vector, postgresql_using="gin"),
-
         # Partial index for active projects (non-deleted)
         Index(
             "idx_projects_deleted_at",
             deleted_at,
             postgresql_where=(deleted_at.is_(None)),
         ),
-
         # Table comment
         {"comment": "Project configurations and automation settings"},
     )

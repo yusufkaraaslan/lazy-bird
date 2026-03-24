@@ -28,9 +28,7 @@ class PRCreationError(PRServiceError):
         self.command = command
         self.stderr = stderr
         super().__init__(
-            f"{platform} PR/MR creation failed:\n"
-            f"Command: {command}\n"
-            f"Error: {stderr}"
+            f"{platform} PR/MR creation failed:\n" f"Command: {command}\n" f"Error: {stderr}"
         )
 
 
@@ -105,12 +103,18 @@ class PRService:
         if repository:
             command.extend(["--repo", repository])
 
-        command.extend([
-            "--title", title,
-            "--body", body,
-            "--base", base_branch,
-            "--head", head_branch,
-        ])
+        command.extend(
+            [
+                "--title",
+                title,
+                "--body",
+                body,
+                "--base",
+                base_branch,
+                "--head",
+                head_branch,
+            ]
+        )
 
         # Add labels
         if labels:
@@ -242,12 +246,18 @@ class PRService:
         # GitLab uses --title for draft MRs
         mr_title = f"Draft: {title}" if draft else title
 
-        command.extend([
-            "--title", mr_title,
-            "--description", body,
-            "--target-branch", base_branch,
-            "--source-branch", head_branch,
-        ])
+        command.extend(
+            [
+                "--title",
+                mr_title,
+                "--description",
+                body,
+                "--target-branch",
+                base_branch,
+                "--source-branch",
+                head_branch,
+            ]
+        )
 
         # Add labels
         if labels:
@@ -385,7 +395,7 @@ class PRService:
         Returns:
             int: PR number
         """
-        match = re.search(r'/pull/(\d+)', url)
+        match = re.search(r"/pull/(\d+)", url)
         if match:
             return int(match.group(1))
         return 0
@@ -399,7 +409,7 @@ class PRService:
         Returns:
             int: MR IID (internal ID)
         """
-        match = re.search(r'/-/merge_requests/(\d+)', url)
+        match = re.search(r"/-/merge_requests/(\d+)", url)
         if match:
             return int(match.group(1))
         return 0

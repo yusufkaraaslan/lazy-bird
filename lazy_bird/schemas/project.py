@@ -180,11 +180,26 @@ class ProjectBase(BaseModel):
     def validate_project_type(cls, v: str) -> str:
         """Validate project_type is reasonable."""
         valid_types = [
-            "python", "nodejs", "rust", "go", "java", "csharp",
-            "godot", "unity", "bevy", "unreal",
-            "django", "fastapi", "flask", "rails", "express",
-            "react", "vue", "angular", "svelte",
-            "custom"
+            "python",
+            "nodejs",
+            "rust",
+            "go",
+            "java",
+            "csharp",
+            "godot",
+            "unity",
+            "bevy",
+            "unreal",
+            "django",
+            "fastapi",
+            "flask",
+            "rails",
+            "express",
+            "react",
+            "vue",
+            "angular",
+            "svelte",
+            "custom",
         ]
         if v.lower() not in valid_types:
             # Allow any type, just warn in logs
@@ -292,8 +307,12 @@ class ProjectUpdate(BaseModel):
 
     max_concurrent_tasks: Optional[int] = Field(default=None, ge=1, le=10)
     task_timeout_seconds: Optional[int] = Field(default=None, ge=300, le=7200)
-    max_cost_per_task_usd: Optional[Decimal] = Field(default=None, ge=Decimal("0.01"), le=Decimal("100.00"))
-    daily_cost_limit_usd: Optional[Decimal] = Field(default=None, ge=Decimal("1.00"), le=Decimal("1000.00"))
+    max_cost_per_task_usd: Optional[Decimal] = Field(
+        default=None, ge=Decimal("0.01"), le=Decimal("100.00")
+    )
+    daily_cost_limit_usd: Optional[Decimal] = Field(
+        default=None, ge=Decimal("1.00"), le=Decimal("1000.00")
+    )
 
     github_installation_id: Optional[int] = Field(default=None)
     gitlab_project_id: Optional[int] = Field(default=None)

@@ -318,6 +318,7 @@ class TestLogFilteringLogic:
 
         # Parse timestamp
         from dateutil.parser import parse as parse_datetime
+
         log_timestamp = parse_datetime(log_entry["timestamp"])
 
         # Log (5 min ago) > Filter (10 min ago) -> should pass

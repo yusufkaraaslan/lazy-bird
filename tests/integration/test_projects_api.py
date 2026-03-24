@@ -7,7 +7,6 @@ import pytest
 from decimal import Decimal
 from uuid import UUID
 
-
 pytestmark = pytest.mark.asyncio
 
 
@@ -79,9 +78,7 @@ class TestListProjects:
         assert data["page_size"] == 2
         assert data["pages"] == 3
 
-    async def test_list_projects_filter_by_type(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_list_projects_filter_by_type(self, test_client, test_api_key, test_db):
         """Test filtering projects by project_type."""
         from lazy_bird.models.project import Project
         from datetime import datetime, timezone
@@ -155,9 +152,7 @@ class TestListProjects:
         assert data["total"] == 1
         assert data["items"][0]["slug"] == "my-game"
 
-    async def test_list_projects_exclude_deleted(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_list_projects_exclude_deleted(self, test_client, test_api_key, test_db):
         """Test that soft-deleted projects are excluded by default."""
         from lazy_bird.models.project import Project
         from datetime import datetime, timezone
@@ -263,9 +258,7 @@ class TestCreateProject:
         assert data["max_concurrent_tasks"] == 5
         assert data["test_command"] == "pytest tests/"
 
-    async def test_create_project_duplicate_slug(
-        self, test_client, test_api_key, test_project
-    ):
+    async def test_create_project_duplicate_slug(self, test_client, test_api_key, test_project):
         """Test creating project with duplicate slug returns 409 Conflict."""
         project_data = {
             "name": "Duplicate",
@@ -301,9 +294,7 @@ class TestCreateProject:
 
         assert response.status_code == 422
 
-    async def test_create_project_missing_required_fields(
-        self, test_client, test_api_key
-    ):
+    async def test_create_project_missing_required_fields(self, test_client, test_api_key):
         """Test creating project without required fields returns 422."""
         project_data = {
             "name": "Incomplete",
@@ -369,9 +360,7 @@ class TestGetProject:
 class TestUpdateProject:
     """Test PATCH /api/v1/projects/{project_id} - Update project."""
 
-    async def test_update_project_single_field(
-        self, test_client, test_api_key, test_project
-    ):
+    async def test_update_project_single_field(self, test_client, test_api_key, test_project):
         """Test updating single field."""
         update_data = {"name": "Updated Name"}
 
@@ -386,9 +375,7 @@ class TestUpdateProject:
         assert data["name"] == "Updated Name"
         assert data["slug"] == "test-project"  # Unchanged
 
-    async def test_update_project_multiple_fields(
-        self, test_client, test_api_key, test_project
-    ):
+    async def test_update_project_multiple_fields(self, test_client, test_api_key, test_project):
         """Test updating multiple fields."""
         update_data = {
             "automation_enabled": False,
@@ -454,9 +441,7 @@ class TestUpdateProject:
 
         assert response.status_code == 404
 
-    async def test_update_project_empty_body(
-        self, test_client, test_api_key, test_project
-    ):
+    async def test_update_project_empty_body(self, test_client, test_api_key, test_project):
         """Test updating with empty body returns existing project."""
         update_data = {}
 
@@ -484,9 +469,7 @@ class TestDeleteProject:
         assert response.status_code == 204
         assert response.content == b""  # No response body
 
-    async def test_delete_project_verify_soft_delete(
-        self, test_client, test_api_key, test_project
-    ):
+    async def test_delete_project_verify_soft_delete(self, test_client, test_api_key, test_project):
         """Test that deleted project is soft deleted, not hard deleted."""
         # Delete project
         response = test_client.delete(

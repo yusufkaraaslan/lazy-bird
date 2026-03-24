@@ -77,7 +77,7 @@ class TaskRunLog(Base):
         ForeignKey("task_runs.id", ondelete="CASCADE"),
         nullable=False,
         index=True,  # idx_task_run_logs_task_run
-        comment="Reference to task run (cascade delete)"
+        comment="Reference to task run (cascade delete)",
     )
 
     # -------------------------------------------------------------------------
@@ -88,14 +88,10 @@ class TaskRunLog(Base):
         String(20),
         nullable=False,
         index=True,  # idx_task_run_logs_level
-        comment="Log level: debug, info, warning, error, critical"
+        comment="Log level: debug, info, warning, error, critical",
     )
 
-    message: Mapped[str] = mapped_column(
-        Text,
-        nullable=False,
-        comment="Log message text"
-    )
+    message: Mapped[str] = mapped_column(Text, nullable=False, comment="Log message text")
 
     # -------------------------------------------------------------------------
     # CONTEXT
@@ -104,13 +100,11 @@ class TaskRunLog(Base):
     step: Mapped[Optional[str]] = mapped_column(
         String(100),
         nullable=True,
-        comment="Execution step: init, planning, implementation, testing, etc."
+        comment="Execution step: init, planning, implementation, testing, etc.",
     )
 
     tool_name: Mapped[Optional[str]] = mapped_column(
-        String(50),
-        nullable=True,
-        comment="Claude tool name: Read, Write, Edit, Bash, Grep, etc."
+        String(50), nullable=True, comment="Claude tool name: Read, Write, Edit, Bash, Grep, etc."
     )
 
     # -------------------------------------------------------------------------
@@ -122,7 +116,7 @@ class TaskRunLog(Base):
         nullable=True,
         server_default="{}",
         default=dict,
-        comment="Additional log metadata as JSON"
+        comment="Additional log metadata as JSON",
     )
 
     # -------------------------------------------------------------------------
@@ -135,7 +129,7 @@ class TaskRunLog(Base):
         server_default=func.current_timestamp(),
         default=func.current_timestamp(),
         index=True,  # idx_task_run_logs_created_at
-        comment="Log timestamp"
+        comment="Log timestamp",
     )
 
     # -------------------------------------------------------------------------
@@ -159,10 +153,8 @@ class TaskRunLog(Base):
             "level IN ('debug', 'info', 'warning', 'error', 'critical')",
             name="check_level",
         ),
-
         # Composite index for querying logs by task and time
         Index("idx_task_run_logs_task_run_created", task_run_id, created_at),
-
         # Table comment
         {"comment": "Detailed task execution logs"},
     )

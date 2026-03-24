@@ -17,9 +17,7 @@ import pytest
 def _make_scalars_result(items):
     """Return a mock result whose .scalars().all() returns items."""
     result = AsyncMock()
-    result.scalars = MagicMock(
-        return_value=MagicMock(all=MagicMock(return_value=items))
-    )
+    result.scalars = MagicMock(return_value=MagicMock(all=MagicMock(return_value=items)))
     return result
 
 
@@ -68,8 +66,7 @@ class TestPerProjectConcurrency:
 
         # 2 tasks already running globally and per-project
         running_tasks = [
-            MagicMock(id=uuid.uuid4(), project_id=project_id, status="running")
-            for _ in range(2)
+            MagicMock(id=uuid.uuid4(), project_id=project_id, status="running") for _ in range(2)
         ]
 
         # Query sequence:
@@ -102,9 +99,7 @@ class TestPerProjectConcurrency:
             yield mock_db
 
         with patch("lazy_bird.tasks.queue_processor.get_async_db", mock_get_db):
-            with patch(
-                "lazy_bird.tasks.task_executor.execute_task"
-            ) as mock_execute_task:
+            with patch("lazy_bird.tasks.task_executor.execute_task") as mock_execute_task:
                 result = await _process_queue_async()
 
                 # All 3 tasks skipped due to per-project concurrency limit (2/2)
@@ -139,9 +134,7 @@ class TestPerProjectConcurrency:
         ]
 
         # 1 task already running (2 slots still available)
-        running_tasks = [
-            MagicMock(id=uuid.uuid4(), project_id=project_id, status="running")
-        ]
+        running_tasks = [MagicMock(id=uuid.uuid4(), project_id=project_id, status="running")]
 
         # Query sequence for 2 tasks from same project:
         # 1. queued tasks
@@ -180,9 +173,7 @@ class TestPerProjectConcurrency:
             yield mock_db
 
         with patch("lazy_bird.tasks.queue_processor.get_async_db", mock_get_db):
-            with patch(
-                "lazy_bird.tasks.task_executor.execute_task"
-            ) as mock_execute_task:
+            with patch("lazy_bird.tasks.task_executor.execute_task") as mock_execute_task:
                 result = await _process_queue_async()
 
                 # Both tasks triggered (3 slots available, 1 running, 2 queued)
@@ -247,9 +238,7 @@ class TestDailyCostLimits:
             yield mock_db
 
         with patch("lazy_bird.tasks.queue_processor.get_async_db", mock_get_db):
-            with patch(
-                "lazy_bird.tasks.task_executor.execute_task"
-            ) as mock_execute_task:
+            with patch("lazy_bird.tasks.task_executor.execute_task") as mock_execute_task:
                 result = await _process_queue_async()
 
                 # Task skipped due to cost limit
@@ -311,9 +300,7 @@ class TestDailyCostLimits:
             yield mock_db
 
         with patch("lazy_bird.tasks.queue_processor.get_async_db", mock_get_db):
-            with patch(
-                "lazy_bird.tasks.task_executor.execute_task"
-            ) as mock_execute_task:
+            with patch("lazy_bird.tasks.task_executor.execute_task") as mock_execute_task:
                 result = await _process_queue_async()
 
                 # Task triggered (cost below limit)
@@ -395,9 +382,7 @@ class TestComplexityPrioritization:
             triggered_tasks.append(task_id)
 
         with patch("lazy_bird.tasks.queue_processor.get_async_db", mock_get_db):
-            with patch(
-                "lazy_bird.tasks.task_executor.execute_task"
-            ) as mock_execute_task:
+            with patch("lazy_bird.tasks.task_executor.execute_task") as mock_execute_task:
                 mock_execute_task.delay.side_effect = track_task
 
                 result = await _process_queue_async()

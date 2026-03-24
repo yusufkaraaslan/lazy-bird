@@ -53,18 +53,11 @@ class ApiKey(Base):
     )
 
     key_hash: Mapped[str] = mapped_column(
-        String(64),
-        unique=True,
-        nullable=False,
-        index=True,
-        comment="SHA-256 hash of actual key"
+        String(64), unique=True, nullable=False, index=True, comment="SHA-256 hash of actual key"
     )
 
     key_prefix: Mapped[str] = mapped_column(
-        String(10),
-        nullable=False,
-        index=True,
-        comment="First 8 chars for identification"
+        String(10), nullable=False, index=True, comment="First 8 chars for identification"
     )
 
     name: Mapped[str] = mapped_column(
@@ -77,7 +70,7 @@ class ApiKey(Base):
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=True,
         index=True,
-        comment="Project ID (NULL for organization-level)"
+        comment="Project ID (NULL for organization-level)",
     )
 
     scopes: Mapped[List[str]] = mapped_column(

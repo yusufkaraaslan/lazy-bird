@@ -87,7 +87,10 @@ class TestRequireRead:
             await RequireRead(api_key=api_key)
 
         assert exc_info.value.status_code == 403
-        assert "permission" in exc_info.value.detail.lower() or "scope" in exc_info.value.detail.lower()
+        assert (
+            "permission" in exc_info.value.detail.lower()
+            or "scope" in exc_info.value.detail.lower()
+        )
 
 
 class TestRequireWrite:

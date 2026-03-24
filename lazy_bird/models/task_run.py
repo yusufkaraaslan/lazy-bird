@@ -139,14 +139,14 @@ class TaskRun(Base):
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
         index=True,  # idx_task_runs_project
-        comment="Reference to project (cascade delete)"
+        comment="Reference to project (cascade delete)",
     )
 
     claude_account_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("claude_accounts.id", ondelete="SET NULL"),
         nullable=True,
-        comment="Reference to Claude account used for execution"
+        comment="Reference to Claude account used for execution",
     )
 
     # -------------------------------------------------------------------------
@@ -157,25 +157,19 @@ class TaskRun(Base):
         String(255),
         nullable=False,
         index=True,  # idx_task_runs_work_item
-        comment="External work item ID (e.g., 'issue-42', 'JIRA-123')"
+        comment="External work item ID (e.g., 'issue-42', 'JIRA-123')",
     )
 
     work_item_url: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="URL to work item on platform"
+        String(500), nullable=True, comment="URL to work item on platform"
     )
 
     work_item_title: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="Work item title"
+        String(500), nullable=True, comment="Work item title"
     )
 
     work_item_description: Mapped[Optional[str]] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Work item description/body"
+        Text, nullable=True, comment="Work item description/body"
     )
 
     # -------------------------------------------------------------------------
@@ -187,19 +181,15 @@ class TaskRun(Base):
         nullable=False,
         server_default="feature",
         default="feature",
-        comment="Task type: feature, bugfix, refactor, docs, etc."
+        comment="Task type: feature, bugfix, refactor, docs, etc.",
     )
 
     complexity: Mapped[Optional[str]] = mapped_column(
-        String(20),
-        nullable=True,
-        comment="Task complexity: simple, medium, complex"
+        String(20), nullable=True, comment="Task complexity: simple, medium, complex"
     )
 
     prompt: Mapped[str] = mapped_column(
-        Text,
-        nullable=False,
-        comment="Prompt sent to Claude for task execution"
+        Text, nullable=False, comment="Prompt sent to Claude for task execution"
     )
 
     # -------------------------------------------------------------------------
@@ -212,7 +202,7 @@ class TaskRun(Base):
         server_default="queued",
         default="queued",
         index=True,  # idx_task_runs_status
-        comment="Execution status: queued, running, success, failed, cancelled, timeout"
+        comment="Execution status: queued, running, success, failed, cancelled, timeout",
     )
 
     # -------------------------------------------------------------------------
@@ -220,21 +210,15 @@ class TaskRun(Base):
     # -------------------------------------------------------------------------
 
     started_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="When task execution started"
+        DateTime(timezone=True), nullable=True, comment="When task execution started"
     )
 
     completed_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="When task execution completed"
+        DateTime(timezone=True), nullable=True, comment="When task execution completed"
     )
 
     duration_seconds: Mapped[Optional[int]] = mapped_column(
-        Integer,
-        nullable=True,
-        comment="Total execution time in seconds (auto-calculated)"
+        Integer, nullable=True, comment="Total execution time in seconds (auto-calculated)"
     )
 
     retry_count: Mapped[int] = mapped_column(
@@ -242,15 +226,11 @@ class TaskRun(Base):
         nullable=False,
         server_default="0",
         default=0,
-        comment="Number of retries attempted"
+        comment="Number of retries attempted",
     )
 
     max_retries: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        server_default="3",
-        default=3,
-        comment="Maximum retries allowed"
+        Integer, nullable=False, server_default="3", default=3, comment="Maximum retries allowed"
     )
 
     # -------------------------------------------------------------------------
@@ -258,21 +238,15 @@ class TaskRun(Base):
     # -------------------------------------------------------------------------
 
     branch_name: Mapped[Optional[str]] = mapped_column(
-        String(255),
-        nullable=True,
-        comment="Git branch name created for this task"
+        String(255), nullable=True, comment="Git branch name created for this task"
     )
 
     worktree_path: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="Path to git worktree"
+        String(500), nullable=True, comment="Path to git worktree"
     )
 
     commit_sha: Mapped[Optional[str]] = mapped_column(
-        String(40),
-        nullable=True,
-        comment="Git commit SHA"
+        String(40), nullable=True, comment="Git commit SHA"
     )
 
     # -------------------------------------------------------------------------
@@ -280,33 +254,23 @@ class TaskRun(Base):
     # -------------------------------------------------------------------------
 
     pr_url: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="URL to created pull request"
+        String(500), nullable=True, comment="URL to created pull request"
     )
 
     pr_number: Mapped[Optional[int]] = mapped_column(
-        Integer,
-        nullable=True,
-        comment="Pull request number on platform"
+        Integer, nullable=True, comment="Pull request number on platform"
     )
 
     tests_passed: Mapped[Optional[bool]] = mapped_column(
-        Boolean,
-        nullable=True,
-        comment="Whether tests passed (NULL if not run)"
+        Boolean, nullable=True, comment="Whether tests passed (NULL if not run)"
     )
 
     test_output: Mapped[Optional[str]] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Test execution output"
+        Text, nullable=True, comment="Test execution output"
     )
 
     error_message: Mapped[Optional[str]] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Error message if task failed"
+        Text, nullable=True, comment="Error message if task failed"
     )
 
     # -------------------------------------------------------------------------
@@ -314,15 +278,11 @@ class TaskRun(Base):
     # -------------------------------------------------------------------------
 
     tokens_used: Mapped[Optional[int]] = mapped_column(
-        Integer,
-        nullable=True,
-        comment="Total tokens consumed by Claude"
+        Integer, nullable=True, comment="Total tokens consumed by Claude"
     )
 
     cost_usd: Mapped[Optional[Decimal]] = mapped_column(
-        Numeric(10, 4),
-        nullable=True,
-        comment="Total cost in USD"
+        Numeric(10, 4), nullable=True, comment="Total cost in USD"
     )
 
     # -------------------------------------------------------------------------
@@ -334,7 +294,7 @@ class TaskRun(Base):
         nullable=True,
         server_default="{}",
         default=dict,
-        comment="Additional task metadata as JSON"
+        comment="Additional task metadata as JSON",
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -343,7 +303,7 @@ class TaskRun(Base):
         server_default=func.current_timestamp(),
         default=func.current_timestamp(),
         index=True,  # idx_task_runs_created_at (with DESC)
-        comment="Creation timestamp"
+        comment="Creation timestamp",
     )
 
     updated_at: Mapped[datetime] = mapped_column(
@@ -352,7 +312,7 @@ class TaskRun(Base):
         server_default=func.current_timestamp(),
         default=func.current_timestamp(),
         onupdate=func.current_timestamp(),
-        comment="Last update timestamp"
+        comment="Last update timestamp",
     )
 
     # -------------------------------------------------------------------------
@@ -394,19 +354,15 @@ class TaskRun(Base):
             "status IN ('queued', 'running', 'success', 'failed', 'cancelled', 'timeout')",
             name="check_status",
         ),
-
         # Complexity constraint
         CheckConstraint(
             "complexity IS NULL OR complexity IN ('simple', 'medium', 'complex')",
             name="check_complexity",
         ),
-
         # Composite index for common query: project + status
         Index("idx_task_runs_project_status", project_id, status),
-
         # Index on created_at DESC for recent tasks
         Index("idx_task_runs_created_at", created_at.desc()),
-
         # Table comment
         {"comment": "Task execution records and results"},
     )

@@ -93,9 +93,7 @@ class TestListTaskRuns:
         assert data["total"] == 1
         assert data["items"][0]["status"] == "success"
 
-    async def test_list_task_runs_filter_by_project(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_list_task_runs_filter_by_project(self, test_client, test_api_key, test_db):
         """Test filtering task runs by project_id."""
         # Create two projects
         project1 = Project(
@@ -158,9 +156,7 @@ class TestListTaskRuns:
 class TestQueueTaskRun:
     """Test POST /api/v1/task-runs endpoint."""
 
-    async def test_queue_task_run_success(
-        self, test_client, test_api_key, test_db, test_project
-    ):
+    async def test_queue_task_run_success(self, test_client, test_api_key, test_db, test_project):
         """Test successful task run queueing."""
         payload = {
             "project_id": str(test_project.id),
@@ -200,9 +196,7 @@ class TestQueueTaskRun:
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
-    async def test_queue_task_run_automation_disabled(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_queue_task_run_automation_disabled(self, test_client, test_api_key, test_db):
         """Test queueing task run when automation is disabled."""
         # Create project with automation disabled
         project = Project(
@@ -288,9 +282,7 @@ class TestQueueTaskRun:
 class TestGetTaskRun:
     """Test GET /api/v1/task-runs/{task_run_id} endpoint."""
 
-    async def test_get_task_run_success(
-        self, test_client, test_api_key, test_db, test_project
-    ):
+    async def test_get_task_run_success(self, test_client, test_api_key, test_db, test_project):
         """Test getting single task run."""
         task_run = TaskRun(
             project_id=test_project.id,
@@ -331,9 +323,7 @@ class TestGetTaskRun:
 class TestUpdateTaskRun:
     """Test PATCH /api/v1/task-runs/{task_run_id} endpoint."""
 
-    async def test_update_task_run_success(
-        self, test_client, test_api_key, test_db, test_project
-    ):
+    async def test_update_task_run_success(self, test_client, test_api_key, test_db, test_project):
         """Test successful task run update."""
         task_run = TaskRun(
             project_id=test_project.id,
@@ -406,9 +396,7 @@ class TestUpdateTaskRun:
 class TestCancelTaskRun:
     """Test POST /api/v1/task-runs/{task_run_id}/cancel endpoint."""
 
-    async def test_cancel_task_run_success(
-        self, test_client, test_api_key, test_db, test_project
-    ):
+    async def test_cancel_task_run_success(self, test_client, test_api_key, test_db, test_project):
         """Test successful task run cancellation."""
         task_run = TaskRun(
             project_id=test_project.id,
@@ -468,9 +456,7 @@ class TestCancelTaskRun:
 class TestRetryTaskRun:
     """Test POST /api/v1/task-runs/{task_run_id}/retry endpoint."""
 
-    async def test_retry_task_run_success(
-        self, test_client, test_api_key, test_db, test_project
-    ):
+    async def test_retry_task_run_success(self, test_client, test_api_key, test_db, test_project):
         """Test successful task run retry."""
         task_run = TaskRun(
             project_id=test_project.id,
@@ -533,9 +519,7 @@ class TestRetryTaskRun:
 class TestDeleteTaskRun:
     """Test DELETE /api/v1/task-runs/{task_run_id} endpoint."""
 
-    async def test_delete_task_run_success(
-        self, test_client, test_api_key, test_db, test_project
-    ):
+    async def test_delete_task_run_success(self, test_client, test_api_key, test_db, test_project):
         """Test successful task run deletion."""
         task_run = TaskRun(
             project_id=test_project.id,

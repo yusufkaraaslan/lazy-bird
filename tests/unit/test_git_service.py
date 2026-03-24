@@ -165,10 +165,7 @@ class TestCreateWorktree:
         project_path.mkdir()
         worktree_base = tmp_path / "worktrees"
 
-        service = GitService(
-            project_path=str(project_path),
-            worktree_base=str(worktree_base)
-        )
+        service = GitService(project_path=str(project_path), worktree_base=str(worktree_base))
 
         with patch.object(service, "_run_git") as mock_run:
             with patch.object(service, "_get_base_branch", return_value="main"):
@@ -192,13 +189,8 @@ class TestCreateWorktree:
         project_path.mkdir()
         worktree_base = tmp_path / "worktrees"
 
-        service = GitService(
-            project_path=str(project_path),
-            worktree_base=str(worktree_base)
-        )
-        existing_worktree = (
-            service.worktree_base / "lazy-bird-agent-test-proj-42"
-        )
+        service = GitService(project_path=str(project_path), worktree_base=str(worktree_base))
+        existing_worktree = service.worktree_base / "lazy-bird-agent-test-proj-42"
         existing_worktree.mkdir(parents=True)
 
         with pytest.raises(WorktreeExistsError):
@@ -210,13 +202,8 @@ class TestCreateWorktree:
         project_path.mkdir()
         worktree_base = tmp_path / "worktrees"
 
-        service = GitService(
-            project_path=str(project_path),
-            worktree_base=str(worktree_base)
-        )
-        existing_worktree = (
-            service.worktree_base / "lazy-bird-agent-test-proj-42"
-        )
+        service = GitService(project_path=str(project_path), worktree_base=str(worktree_base))
+        existing_worktree = service.worktree_base / "lazy-bird-agent-test-proj-42"
         existing_worktree.mkdir(parents=True)
 
         with patch.object(service, "_run_git") as mock_run:
@@ -314,9 +301,7 @@ class TestPushBranch:
                 subprocess.CompletedProcess(
                     args=[], returncode=0, stdout="feature-test-42\n", stderr=""
                 ),
-                subprocess.CompletedProcess(
-                    args=[], returncode=0, stdout="", stderr=""
-                ),
+                subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
             ]
 
             service.push_branch(worktree_path)
@@ -334,9 +319,7 @@ class TestPushBranch:
                 subprocess.CompletedProcess(
                     args=[], returncode=0, stdout="feature-test-42\n", stderr=""
                 ),
-                subprocess.CompletedProcess(
-                    args=[], returncode=0, stdout="", stderr=""
-                ),
+                subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
             ]
 
             service.push_branch(worktree_path, force=True)
@@ -379,9 +362,7 @@ class TestCleanupWorktree:
             def side_effect_fn(args, **kwargs):
                 if "worktree" in args and "remove" in args:
                     raise GitCommandError(
-                        command="git worktree remove",
-                        return_code=1,
-                        stderr="error"
+                        command="git worktree remove", return_code=1, stderr="error"
                     )
                 return subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
 

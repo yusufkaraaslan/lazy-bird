@@ -73,8 +73,9 @@ class TestPerformanceMetrics:
         # Allow 10% regression tolerance
         regression_threshold = baseline_p95 * 1.1
 
-        assert current_p95 <= regression_threshold, \
-            f"Performance regression: {current_p95}ms vs {baseline_p95}ms baseline"
+        assert (
+            current_p95 <= regression_threshold
+        ), f"Performance regression: {current_p95}ms vs {baseline_p95}ms baseline"
 
     def test_percentile_edge_cases(self):
         """Test percentile calculation with edge cases."""

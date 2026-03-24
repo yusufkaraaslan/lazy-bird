@@ -43,9 +43,7 @@ class TestTaskExecutorLogPublishing:
         # Mock LogPublisher
         mock_log_publisher = AsyncMock()
 
-        with patch(
-            "lazy_bird.tasks.task_executor.get_async_db", return_value=mock_db_generator()
-        ):
+        with patch("lazy_bird.tasks.task_executor.get_async_db", return_value=mock_db_generator()):
             with patch(
                 "lazy_bird.tasks.task_executor.LogPublisher",
                 return_value=mock_log_publisher,
@@ -97,9 +95,7 @@ class TestTaskExecutorLogPublishing:
         # Mock LogPublisher
         mock_log_publisher = AsyncMock()
 
-        with patch(
-            "lazy_bird.tasks.task_executor.get_async_db", return_value=mock_db_generator()
-        ):
+        with patch("lazy_bird.tasks.task_executor.get_async_db", return_value=mock_db_generator()):
             with patch(
                 "lazy_bird.tasks.task_executor.LogPublisher",
                 return_value=mock_log_publisher,
@@ -130,9 +126,7 @@ class TestTaskExecutorLogPublishing:
 
         # Mock database that raises error during query execution
         mock_db = AsyncMock()
-        mock_db.execute = AsyncMock(
-            side_effect=RuntimeError("Database query failed")
-        )
+        mock_db.execute = AsyncMock(side_effect=RuntimeError("Database query failed"))
 
         async def mock_db_generator():
             yield mock_db
@@ -194,9 +188,7 @@ class TestTaskExecutorLogPublishing:
         # Mock LogPublisher
         mock_log_publisher = AsyncMock()
 
-        with patch(
-            "lazy_bird.tasks.task_executor.get_async_db", return_value=mock_db_generator()
-        ):
+        with patch("lazy_bird.tasks.task_executor.get_async_db", return_value=mock_db_generator()):
             with patch(
                 "lazy_bird.tasks.task_executor.LogPublisher",
                 return_value=mock_log_publisher,
@@ -250,9 +242,7 @@ class TestTaskExecutorLogPublishing:
         # Mock LogPublisher
         mock_log_publisher = AsyncMock()
 
-        with patch(
-            "lazy_bird.tasks.task_executor.get_async_db", return_value=mock_db_generator()
-        ):
+        with patch("lazy_bird.tasks.task_executor.get_async_db", return_value=mock_db_generator()):
             with patch(
                 "lazy_bird.tasks.task_executor.LogPublisher",
                 return_value=mock_log_publisher,
@@ -293,9 +283,7 @@ class TestTaskExecutorLogPublishing:
         # Mock LogPublisher
         mock_log_publisher = AsyncMock()
 
-        with patch(
-            "lazy_bird.tasks.task_executor.get_async_db", return_value=mock_db_generator()
-        ):
+        with patch("lazy_bird.tasks.task_executor.get_async_db", return_value=mock_db_generator()):
             with patch(
                 "lazy_bird.tasks.task_executor.LogPublisher",
                 return_value=mock_log_publisher,

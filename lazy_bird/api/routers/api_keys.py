@@ -47,9 +47,7 @@ async def list_api_keys(
         None, description="Filter by project ID (omit for organization-level keys)"
     ),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
-    scope: Optional[str] = Query(
-        None, description="Filter by scope (read, write, admin)"
-    ),
+    scope: Optional[str] = Query(None, description="Filter by scope (read, write, admin)"),
     # Dependencies
     db: AsyncSession = Depends(get_async_database),
     api_key: ApiKey = Depends(RequireRead),

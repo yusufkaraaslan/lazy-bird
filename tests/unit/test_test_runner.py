@@ -443,9 +443,7 @@ class TestFormatErrorSummary:
         runner = TestRunner()
 
         # Create 10 errors
-        errors = [
-            {"test_name": f"test_{i}", "error": f"Error {i}"} for i in range(10)
-        ]
+        errors = [{"test_name": f"test_{i}", "error": f"Error {i}"} for i in range(10)]
 
         test_result = {
             "success": False,

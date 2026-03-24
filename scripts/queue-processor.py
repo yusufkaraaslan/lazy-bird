@@ -28,7 +28,14 @@ logger = logging.getLogger("queue-processor")
 class AgentProcess:
     """Represents a running agent process"""
 
-    def __init__(self, task_id: str, project_id: str, issue_number: int, process: subprocess.Popen, task_file: Path):
+    def __init__(
+        self,
+        task_id: str,
+        project_id: str,
+        issue_number: int,
+        process: subprocess.Popen,
+        task_file: Path,
+    ):
         self.task_id = task_id
         self.project_id = project_id
         self.issue_number = issue_number
@@ -155,7 +162,9 @@ class QueueProcessor:
             # Prepare log file
             log_file = self.log_dir / f"{task_id}.log"
 
-            logger.info(f"Spawning agent for task {task_id} (Issue #{issue_number}, Project: {project_id})")
+            logger.info(
+                f"Spawning agent for task {task_id} (Issue #{issue_number}, Project: {project_id})"
+            )
 
             # Spawn agent-runner.sh as subprocess
             with open(log_file, "w") as log:
@@ -189,10 +198,14 @@ class QueueProcessor:
                 exit_code = agent.get_exit_code()
 
                 if exit_code == 0:
-                    logger.info(f"Agent completed successfully: {task_id} (PID {agent.process.pid})")
+                    logger.info(
+                        f"Agent completed successfully: {task_id} (PID {agent.process.pid})"
+                    )
                     self.update_task_status(agent.task_file, "completed")
                 else:
-                    logger.error(f"Agent failed: {task_id} (PID {agent.process.pid}, Exit code: {exit_code})")
+                    logger.error(
+                        f"Agent failed: {task_id} (PID {agent.process.pid}, Exit code: {exit_code})"
+                    )
                     self.update_task_status(agent.task_file, "failed")
 
                 finished_task_ids.append(task_id)
@@ -221,7 +234,9 @@ class QueueProcessor:
         if not queued_tasks:
             return
 
-        logger.info(f"Found {len(queued_tasks)} queued task(s), {available_slots} agent slot(s) available")
+        logger.info(
+            f"Found {len(queued_tasks)} queued task(s), {available_slots} agent slot(s) available"
+        )
 
         # Spawn agents for queued tasks
         spawned = 0

@@ -57,9 +57,7 @@ class TestListWebhooks:
         assert len(data["items"]) == 2
         assert data["pages"] == 3
 
-    async def test_list_webhooks_filter_by_event(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_list_webhooks_filter_by_event(self, test_client, test_api_key, test_db):
         """Test filtering webhooks by event type."""
         # Create webhooks with different events
         webhook1 = WebhookSubscription(
@@ -122,9 +120,7 @@ class TestCreateWebhook:
         assert data["failure_count"] == 0
         assert "id" in data
 
-    async def test_create_webhook_project_scoped(
-        self, test_client, test_api_key, test_project
-    ):
+    async def test_create_webhook_project_scoped(self, test_client, test_api_key, test_project):
         """Test creating project-scoped webhook."""
         payload = {
             "url": "https://example.com/webhook",
@@ -376,9 +372,7 @@ class TestDeleteWebhook:
 class TestWebhookTestDelivery:
     """Test POST /api/v1/webhooks/{subscription_id}/test endpoint."""
 
-    async def test_test_webhook_delivery_success(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_test_webhook_delivery_success(self, test_client, test_api_key, test_db):
         """Test successful test webhook delivery."""
         webhook = WebhookSubscription(
             url="https://example.com/webhook",
@@ -413,9 +407,7 @@ class TestWebhookTestDelivery:
         assert data["status_code"] == 200
         assert "message" in data
 
-    async def test_test_webhook_delivery_failure(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_test_webhook_delivery_failure(self, test_client, test_api_key, test_db):
         """Test failed test webhook delivery."""
         webhook = WebhookSubscription(
             url="https://example.com/webhook",
@@ -462,9 +454,7 @@ class TestWebhookTestDelivery:
 class TestWebhookDeliveryStatistics:
     """Test webhook delivery statistics tracking."""
 
-    async def test_webhook_tracks_last_triggered_at(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_webhook_tracks_last_triggered_at(self, test_client, test_api_key, test_db):
         """Test that webhook tracks last successful delivery time."""
         webhook = WebhookSubscription(
             url="https://example.com/webhook",
@@ -491,9 +481,7 @@ class TestWebhookDeliveryStatistics:
         assert data["last_triggered_at"] is None
         assert data["failure_count"] == 0
 
-    async def test_webhook_tracks_failure_count(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_webhook_tracks_failure_count(self, test_client, test_api_key, test_db):
         """Test that webhook tracks consecutive failures."""
         webhook = WebhookSubscription(
             url="https://example.com/webhook",

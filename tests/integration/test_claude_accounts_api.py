@@ -29,9 +29,7 @@ class TestListClaudeAccounts:
         assert data["total"] == 0
         assert data["items"] == []
 
-    async def test_list_claude_accounts_pagination(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_list_claude_accounts_pagination(self, test_client, test_api_key, test_db):
         """Test Claude accounts pagination."""
         # Create 5 accounts
         for i in range(5):
@@ -58,9 +56,7 @@ class TestListClaudeAccounts:
         assert len(data["items"]) == 2
         assert data["pages"] == 3
 
-    async def test_list_claude_accounts_filter_by_type(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_list_claude_accounts_filter_by_type(self, test_client, test_api_key, test_db):
         """Test filtering Claude accounts by account_type."""
         # Create API and subscription accounts
         api_account = ClaudeAccount(
@@ -150,9 +146,7 @@ class TestCreateClaudeAccount:
         # Session token should not be returned
         assert "session_token" not in data
 
-    async def test_create_account_missing_api_key_for_api_type(
-        self, test_client, test_api_key
-    ):
+    async def test_create_account_missing_api_key_for_api_type(self, test_client, test_api_key):
         """Test creating API account without api_key."""
         payload = {
             "name": "Incomplete API Account",
@@ -233,9 +227,7 @@ class TestGetClaudeAccount:
 class TestUpdateClaudeAccount:
     """Test PATCH /api/v1/claude-accounts/{account_id} endpoint."""
 
-    async def test_update_claude_account_success(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_update_claude_account_success(self, test_client, test_api_key, test_db):
         """Test successful Claude account update."""
         account = ClaudeAccount(
             name="Original Name",
@@ -268,9 +260,7 @@ class TestUpdateClaudeAccount:
         assert data["max_tokens"] == 16000
         assert Decimal(data["temperature"]) == Decimal("0.8")
 
-    async def test_update_claude_account_api_key(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_update_claude_account_api_key(self, test_client, test_api_key, test_db):
         """Test updating API key (encryption should work)."""
         account = ClaudeAccount(
             name="Test Account",
@@ -313,9 +303,7 @@ class TestUpdateClaudeAccount:
 class TestDeleteClaudeAccount:
     """Test DELETE /api/v1/claude-accounts/{account_id} endpoint."""
 
-    async def test_delete_claude_account_success(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_delete_claude_account_success(self, test_client, test_api_key, test_db):
         """Test successful Claude account deletion."""
         account = ClaudeAccount(
             name="To Delete",

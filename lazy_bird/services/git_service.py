@@ -41,9 +41,7 @@ class GitCommandError(GitServiceError):
         self.command = command
         self.return_code = return_code
         self.stderr = stderr
-        super().__init__(
-            f"Git command failed (exit {return_code}): {command}\n{stderr}"
-        )
+        super().__init__(f"Git command failed (exit {return_code}): {command}\n{stderr}")
 
 
 class GitService:
@@ -194,9 +192,7 @@ class GitService:
         if result.returncode == 0:
             return "master"
 
-        raise GitServiceError(
-            "Could not determine base branch - neither main nor master found"
-        )
+        raise GitServiceError("Could not determine base branch - neither main nor master found")
 
     def create_worktree(
         self,
@@ -249,9 +245,7 @@ class GitService:
         # Check if worktree already exists
         if worktree_path.exists():
             if force:
-                logger.warning(
-                    f"[{project_id}] Worktree exists, forcing removal: {worktree_path}"
-                )
+                logger.warning(f"[{project_id}] Worktree exists, forcing removal: {worktree_path}")
                 self.cleanup_worktree(worktree_path, branch_name)
             else:
                 raise WorktreeExistsError(
@@ -264,9 +258,7 @@ class GitService:
             check=False,
         )
         if result.returncode == 0:
-            logger.warning(
-                f"[{project_id}] Branch exists, deleting: {branch_name}"
-            )
+            logger.warning(f"[{project_id}] Branch exists, deleting: {branch_name}")
             self._run_git(["branch", "-D", branch_name], check=False)
 
         # Fetch latest from remote
@@ -275,9 +267,7 @@ class GitService:
             self._run_git(["fetch", "origin"])
             logger.debug(f"[{project_id}] Fetched latest from origin")
         except GitCommandError as e:
-            logger.warning(
-                f"[{project_id}] Failed to fetch from origin: {e.stderr}"
-            )
+            logger.warning(f"[{project_id}] Failed to fetch from origin: {e.stderr}")
 
         # Determine base branch
         if not base_branch:
@@ -285,9 +275,7 @@ class GitService:
             logger.debug(f"[{project_id}] Using base branch: {base_branch}")
 
         # Create worktree with new branch
-        logger.debug(
-            f"[{project_id}] Creating worktree from origin/{base_branch}"
-        )
+        logger.debug(f"[{project_id}] Creating worktree from origin/{base_branch}")
         self._run_git(
             [
                 "worktree",
@@ -432,9 +420,7 @@ class GitService:
         )
 
         # Get current branch name
-        result = self._run_git(
-            ["rev-parse", "--abbrev-ref", "HEAD"], cwd=worktree_path
-        )
+        result = self._run_git(["rev-parse", "--abbrev-ref", "HEAD"], cwd=worktree_path)
         branch_name = result.stdout.strip()
 
         # Build push command
@@ -495,9 +481,7 @@ class GitService:
                 )
                 logger.debug(f"{prefix}Removed worktree via git")
             except Exception as e:
-                logger.warning(
-                    f"{prefix}git worktree remove failed, using rm -rf: {e}"
-                )
+                logger.warning(f"{prefix}git worktree remove failed, using rm -rf: {e}")
                 shutil.rmtree(worktree_path, ignore_errors=True)
 
         # Prune worktree list
@@ -537,9 +521,7 @@ class GitService:
             {"files_changed": 5, "insertions": 120, "deletions": 30}
         """
         # Get diff statistics
-        result = self._run_git(
-            ["diff", "--stat", "--cached"], cwd=worktree_path
-        )
+        result = self._run_git(["diff", "--stat", "--cached"], cwd=worktree_path)
 
         # Parse statistics (last line usually contains summary)
         lines = result.stdout.strip().split("\n")

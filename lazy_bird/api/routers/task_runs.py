@@ -50,16 +50,12 @@ async def list_task_runs(
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     # Filtering
-    project_id: Optional[UUID] = Query(
-        None, description="Filter by project ID"
-    ),
+    project_id: Optional[UUID] = Query(None, description="Filter by project ID"),
     status: Optional[str] = Query(
         None,
         description="Filter by status (queued, running, success, failed, cancelled, timeout)",
     ),
-    work_item_id: Optional[str] = Query(
-        None, description="Filter by work item ID"
-    ),
+    work_item_id: Optional[str] = Query(None, description="Filter by work item ID"),
     task_type: Optional[str] = Query(
         None, description="Filter by task type (feature, bugfix, refactor, etc.)"
     ),
@@ -269,9 +265,7 @@ async def queue_task_run(
     if task_data.claude_account_id:
         from lazy_bird.models.claude_account import ClaudeAccount
 
-        account_query = select(ClaudeAccount).where(
-            ClaudeAccount.id == task_data.claude_account_id
-        )
+        account_query = select(ClaudeAccount).where(ClaudeAccount.id == task_data.claude_account_id)
         account_result = await db.execute(account_query)
         account = account_result.scalar_one_or_none()
 
@@ -921,6 +915,7 @@ async def stream_task_run_logs(
             if timestamp_str:
                 try:
                     from dateutil.parser import parse as parse_datetime
+
                     log_timestamp = parse_datetime(timestamp_str)
                     # Make both timezone-aware for comparison
                     if log_timestamp.tzinfo is None:
@@ -954,7 +949,7 @@ async def stream_task_run_logs(
                     yield f"event: log\ndata: {json.dumps(log_entry)}\n\n"
 
             # Send status event
-            yield f"event: status\ndata: {{\"status\": \"{task_run.status}\"}}\n\n"
+            yield f'event: status\ndata: {{"status": "{task_run.status}"}}\n\n'
 
             # Subscribe to Redis Pub/Sub for real-time logs
             pubsub = redis_client.pubsub()
@@ -993,7 +988,7 @@ async def stream_task_run_logs(
 
                         # Check if task is complete
                         if log_entry.get("metadata", {}).get("task_complete"):
-                            yield f"event: end\ndata: {{\"message\": \"Task completed\"}}\n\n"
+                            yield f'event: end\ndata: {{"message": "Task completed"}}\n\n'
                             break
 
                     # Send keepalive ping if needed
@@ -1018,7 +1013,7 @@ async def stream_task_run_logs(
                             }
                         },
                     )
-                    yield f"event: error\ndata: {{\"error\": \"{str(e)}\"}}\n\n"
+                    yield f'event: error\ndata: {{"error": "{str(e)}"}}\n\n'
                     break
 
         except Exception as e:
@@ -1032,7 +1027,7 @@ async def stream_task_run_logs(
                 },
                 exc_info=True,
             )
-            yield f"event: error\ndata: {{\"error\": \"Stream terminated: {str(e)}\"}}\n\n"
+            yield f'event: error\ndata: {{"error": "Stream terminated: {str(e)}"}}\n\n'
 
         finally:
             # Cleanup

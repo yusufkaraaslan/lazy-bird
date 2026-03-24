@@ -64,22 +64,15 @@ class FrameworkPreset(Base):
     # -------------------------------------------------------------------------
 
     name: Mapped[str] = mapped_column(
-        String(100),
-        unique=True,
-        nullable=False,
-        comment="Internal preset name (lowercase, unique)"
+        String(100), unique=True, nullable=False, comment="Internal preset name (lowercase, unique)"
     )
 
     display_name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        comment="Human-readable display name"
+        String(255), nullable=False, comment="Human-readable display name"
     )
 
     description: Mapped[Optional[str]] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Preset description"
+        Text, nullable=True, comment="Preset description"
     )
 
     # -------------------------------------------------------------------------
@@ -90,13 +83,13 @@ class FrameworkPreset(Base):
         String(50),
         nullable=False,
         index=True,  # idx_framework_presets_type
-        comment="Framework category: game_engine, backend, frontend, language"
+        comment="Framework category: game_engine, backend, frontend, language",
     )
 
     language: Mapped[Optional[str]] = mapped_column(
         String(50),
         nullable=True,
-        comment="Programming language: gdscript, python, javascript, rust, etc."
+        comment="Programming language: gdscript, python, javascript, rust, etc.",
     )
 
     # -------------------------------------------------------------------------
@@ -104,27 +97,19 @@ class FrameworkPreset(Base):
     # -------------------------------------------------------------------------
 
     test_command: Mapped[str] = mapped_column(
-        String(500),
-        nullable=False,
-        comment="Command to run tests (required)"
+        String(500), nullable=False, comment="Command to run tests (required)"
     )
 
     build_command: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="Command to build project (optional)"
+        String(500), nullable=True, comment="Command to build project (optional)"
     )
 
     lint_command: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="Command to lint code (optional)"
+        String(500), nullable=True, comment="Command to lint code (optional)"
     )
 
     format_command: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="Command to format code (optional)"
+        String(500), nullable=True, comment="Command to format code (optional)"
     )
 
     # -------------------------------------------------------------------------
@@ -132,9 +117,7 @@ class FrameworkPreset(Base):
     # -------------------------------------------------------------------------
 
     config_files: Mapped[Optional[Dict[str, Any]]] = mapped_column(
-        JSONB,
-        nullable=True,
-        comment="JSON object with framework-specific config file paths"
+        JSONB, nullable=True, comment="JSON object with framework-specific config file paths"
     )
 
     # -------------------------------------------------------------------------
@@ -147,7 +130,7 @@ class FrameworkPreset(Base):
         server_default="false",
         default=False,
         index=True,  # idx_framework_presets_builtin
-        comment="Built-in preset (cannot be deleted)"
+        comment="Built-in preset (cannot be deleted)",
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -155,7 +138,7 @@ class FrameworkPreset(Base):
         nullable=False,
         server_default=func.current_timestamp(),
         default=func.current_timestamp(),
-        comment="Creation timestamp"
+        comment="Creation timestamp",
     )
 
     updated_at: Mapped[datetime] = mapped_column(
@@ -164,7 +147,7 @@ class FrameworkPreset(Base):
         server_default=func.current_timestamp(),
         default=func.current_timestamp(),
         onupdate=func.current_timestamp(),
-        comment="Last update timestamp"
+        comment="Last update timestamp",
     )
 
     # -------------------------------------------------------------------------
@@ -186,7 +169,6 @@ class FrameworkPreset(Base):
     __table_args__ = (
         # Index on framework_type (auto-created by index=True)
         # Index on is_builtin (auto-created by index=True)
-
         # Table comment
         {"comment": "Framework-specific command presets and configurations"},
     )

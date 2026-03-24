@@ -54,16 +54,10 @@ class WebhookSubscription(Base):
         nullable=False,
     )
 
-    url: Mapped[str] = mapped_column(
-        String(500),
-        nullable=False,
-        comment="Webhook endpoint URL"
-    )
+    url: Mapped[str] = mapped_column(String(500), nullable=False, comment="Webhook endpoint URL")
 
     secret: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        comment="Secret for HMAC signature verification"
+        String(255), nullable=False, comment="Secret for HMAC signature verification"
     )
 
     project_id: Mapped[Optional[uuid.UUID]] = mapped_column(
@@ -71,13 +65,11 @@ class WebhookSubscription(Base):
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=True,
         index=True,
-        comment="Project ID (NULL for global subscriptions)"
+        comment="Project ID (NULL for global subscriptions)",
     )
 
     events: Mapped[List[str]] = mapped_column(
-        ARRAY(Text),
-        nullable=False,
-        comment="Array of event types"
+        ARRAY(Text), nullable=False, comment="Array of event types"
     )
 
     is_active: Mapped[bool] = mapped_column(
@@ -86,13 +78,11 @@ class WebhookSubscription(Base):
         server_default="true",
         default=True,
         index=True,
-        comment="Whether subscription is active"
+        comment="Whether subscription is active",
     )
 
     last_triggered_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Last webhook delivery time"
+        DateTime(timezone=True), nullable=True, comment="Last webhook delivery time"
     )
 
     failure_count: Mapped[int] = mapped_column(
@@ -100,19 +90,15 @@ class WebhookSubscription(Base):
         nullable=False,
         server_default="0",
         default=0,
-        comment="Number of consecutive failures"
+        comment="Number of consecutive failures",
     )
 
     last_failure_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Last failure timestamp"
+        DateTime(timezone=True), nullable=True, comment="Last failure timestamp"
     )
 
     description: Mapped[Optional[str]] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Subscription description"
+        Text, nullable=True, comment="Subscription description"
     )
 
     created_at: Mapped[datetime] = mapped_column(

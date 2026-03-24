@@ -32,23 +32,20 @@ def test_project():
         ["git", "config", "user.email", "test@example.com"],
         cwd=project_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     subprocess.run(
         ["git", "config", "user.name", "Test User"],
         cwd=project_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Create initial commit
     (project_dir / "README.md").write_text("# Test Project")
     subprocess.run(["git", "add", "."], cwd=project_dir, check=True, capture_output=True)
     subprocess.run(
-        ["git", "commit", "-m", "Initial commit"],
-        cwd=project_dir,
-        check=True,
-        capture_output=True
+        ["git", "commit", "-m", "Initial commit"], cwd=project_dir, check=True, capture_output=True
     )
 
     yield project_dir
@@ -78,7 +75,7 @@ class TestWorktreeWorkflow:
             ["git", "worktree", "add", "-b", branch_name, str(worktree_path)],
             cwd=test_project,
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0, f"Worktree creation failed: {result.stderr}"
@@ -89,7 +86,7 @@ class TestWorktreeWorkflow:
             ["git", "branch", "--list", branch_name],
             cwd=test_project,
             capture_output=True,
-            text=True
+            text=True,
         )
         assert branch_name in branch_check.stdout
 
@@ -98,15 +95,11 @@ class TestWorktreeWorkflow:
             ["git", "worktree", "remove", str(worktree_path), "--force"],
             cwd=test_project,
             capture_output=True,
-            text=True
+            text=True,
         )
         assert cleanup_result.returncode == 0, f"Cleanup failed: {cleanup_result.stderr}"
 
-        subprocess.run(
-            ["git", "branch", "-D", branch_name],
-            cwd=test_project,
-            capture_output=True
-        )
+        subprocess.run(["git", "branch", "-D", branch_name], cwd=test_project, capture_output=True)
 
         assert not worktree_path.exists(), "Worktree should be removed"
 
@@ -115,7 +108,7 @@ class TestWorktreeWorkflow:
             ["git", "branch", "--list", branch_name],
             cwd=test_project,
             capture_output=True,
-            text=True
+            text=True,
         )
         assert branch_name not in branch_check_after.stdout, "Branch should be deleted"
 
@@ -144,9 +137,7 @@ FAILED: test_enemy_spawn
         # Test Python parser
         parser_script = f"{REPO_ROOT}/scripts/parse_test_errors.py"
         result = subprocess.run(
-            ["python3", parser_script, str(test_log), "godot"],
-            capture_output=True,
-            text=True
+            ["python3", parser_script, str(test_log), "godot"], capture_output=True, text=True
         )
 
         assert result.returncode == 0
@@ -162,7 +153,7 @@ FAILED: test_enemy_spawn
         json_result = subprocess.run(
             ["python3", parser_script, str(test_log), "godot", "--json"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert json_result.returncode == 0
@@ -202,9 +193,7 @@ FAILED app/tests/test_models.py::test_user_creation - AssertionError
 
         parser_script = f"{REPO_ROOT}/scripts/parse_test_errors.py"
         result = subprocess.run(
-            ["python3", parser_script, str(test_log), "python"],
-            capture_output=True,
-            text=True
+            ["python3", parser_script, str(test_log), "python"], capture_output=True, text=True
         )
 
         assert result.returncode == 0
@@ -228,7 +217,7 @@ class TestMultiProjectIsolation:
             ["git", "worktree", "add", "-b", "feature-project1-42", str(worktree1_path)],
             cwd=test_project,
             capture_output=True,
-            text=True
+            text=True,
         )
         assert result1.returncode == 0, f"Worktree 1 creation failed: {result1.stderr}"
         assert worktree1_path.exists()
@@ -238,7 +227,7 @@ class TestMultiProjectIsolation:
             ["git", "worktree", "add", "-b", "feature-project2-42", str(worktree2_path)],
             cwd=test_project,
             capture_output=True,
-            text=True
+            text=True,
         )
         assert result2.returncode == 0, f"Worktree 2 creation failed: {result2.stderr}"
         assert worktree2_path.exists()
@@ -248,17 +237,16 @@ class TestMultiProjectIsolation:
         assert worktree2_path.exists()
 
         # Cleanup
-        for worktree, branch in [(worktree1_path, "feature-project1-42"), (worktree2_path, "feature-project2-42")]:
+        for worktree, branch in [
+            (worktree1_path, "feature-project1-42"),
+            (worktree2_path, "feature-project2-42"),
+        ]:
             subprocess.run(
                 ["git", "worktree", "remove", str(worktree), "--force"],
                 cwd=test_project,
-                capture_output=True
+                capture_output=True,
             )
-            subprocess.run(
-                ["git", "branch", "-D", branch],
-                cwd=test_project,
-                capture_output=True
-            )
+            subprocess.run(["git", "branch", "-D", branch], cwd=test_project, capture_output=True)
 
 
 class TestRetryWorkflow:
@@ -286,9 +274,7 @@ FAILED: test_combat_system
 
         parser_script = f"{REPO_ROOT}/scripts/parse_test_errors.py"
         result = subprocess.run(
-            ["python3", parser_script, str(test_log), "godot"],
-            capture_output=True,
-            text=True
+            ["python3", parser_script, str(test_log), "godot"], capture_output=True, text=True
         )
 
         assert result.returncode == 0
@@ -311,10 +297,15 @@ class TestWebUIIntegration:
         """Test that deleting a task also removes it from processed issues cache"""
         # This verifies the fix from P0-2 bug
         result = subprocess.run(
-            ["grep", "-A", "40", "def delete_task",
-             f"{REPO_ROOT}/web/backend/services/queue_service.py"],
+            [
+                "grep",
+                "-A",
+                "40",
+                "def delete_task",
+                f"{REPO_ROOT}/web/backend/services/queue_service.py",
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0
@@ -325,10 +316,14 @@ class TestWebUIIntegration:
 
         # Verify the function exists
         verify_result = subprocess.run(
-            ["grep", "-c", "def _remove_from_processed_cache",
-             f"{REPO_ROOT}/web/backend/services/queue_service.py"],
+            [
+                "grep",
+                "-c",
+                "def _remove_from_processed_cache",
+                f"{REPO_ROOT}/web/backend/services/queue_service.py",
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert verify_result.returncode == 0

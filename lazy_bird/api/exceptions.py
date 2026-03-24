@@ -367,9 +367,7 @@ class ExternalServiceError(LazyBirdException):
 # -------------------------------------------------------------------------
 
 
-async def lazy_bird_exception_handler(
-    request: Request, exc: LazyBirdException
-) -> JSONResponse:
+async def lazy_bird_exception_handler(request: Request, exc: LazyBirdException) -> JSONResponse:
     """Handle custom Lazy-Bird exceptions with RFC 7807 format.
 
     Args:
@@ -444,9 +442,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
         503: ("https://lazy-bird.dev/errors/service-unavailable", "Service Unavailable"),
     }
 
-    error_type, title = error_types.get(
-        exc.status_code, ("about:blank", "Error")
-    )
+    error_type, title = error_types.get(exc.status_code, ("about:blank", "Error"))
 
     # Create problem details
     problem = ProblemDetails(

@@ -28,9 +28,7 @@ class TestListFrameworkPresets:
         assert data["total"] == 0
         assert data["items"] == []
 
-    async def test_list_framework_presets_pagination(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_list_framework_presets_pagination(self, test_client, test_api_key, test_db):
         """Test framework presets pagination."""
         # Create 5 presets
         for i in range(5):
@@ -58,9 +56,7 @@ class TestListFrameworkPresets:
         assert len(data["items"]) == 2
         assert data["pages"] == 3
 
-    async def test_list_framework_presets_filter_by_type(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_list_framework_presets_filter_by_type(self, test_client, test_api_key, test_db):
         """Test filtering framework presets by framework_type."""
         # Create presets with different types
         backend = FrameworkPreset(
@@ -167,9 +163,7 @@ class TestCreateFrameworkPreset:
         assert data["is_builtin"] is False  # Custom presets are never built-in
         assert "id" in data
 
-    async def test_create_framework_preset_duplicate_name(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_create_framework_preset_duplicate_name(self, test_client, test_api_key, test_db):
         """Test creating preset with duplicate name."""
         # Create existing preset
         existing = FrameworkPreset(
@@ -225,9 +219,7 @@ class TestCreateFrameworkPreset:
 class TestGetFrameworkPreset:
     """Test GET /api/v1/framework-presets/{preset_id} endpoint."""
 
-    async def test_get_framework_preset_success(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_get_framework_preset_success(self, test_client, test_api_key, test_db):
         """Test getting single framework preset."""
         preset = FrameworkPreset(
             name="godot",
@@ -272,9 +264,7 @@ class TestGetFrameworkPreset:
 class TestUpdateFrameworkPreset:
     """Test PATCH /api/v1/framework-presets/{preset_id} endpoint."""
 
-    async def test_update_custom_preset_success(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_update_custom_preset_success(self, test_client, test_api_key, test_db):
         """Test successful update of custom framework preset."""
         preset = FrameworkPreset(
             name="custom-preset",
@@ -307,9 +297,7 @@ class TestUpdateFrameworkPreset:
         assert data["test_command"] == "pytest -v"
         assert data["build_command"] == "python -m build"
 
-    async def test_update_builtin_preset_forbidden(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_update_builtin_preset_forbidden(self, test_client, test_api_key, test_db):
         """Test that built-in presets cannot be updated."""
         preset = FrameworkPreset(
             name="godot",
@@ -351,9 +339,7 @@ class TestUpdateFrameworkPreset:
 class TestDeleteFrameworkPreset:
     """Test DELETE /api/v1/framework-presets/{preset_id} endpoint."""
 
-    async def test_delete_custom_preset_success(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_delete_custom_preset_success(self, test_client, test_api_key, test_db):
         """Test successful deletion of custom framework preset."""
         preset = FrameworkPreset(
             name="custom-to-delete",
@@ -383,9 +369,7 @@ class TestDeleteFrameworkPreset:
         )
         assert get_response.status_code == 404
 
-    async def test_delete_builtin_preset_forbidden(
-        self, test_client, test_api_key, test_db
-    ):
+    async def test_delete_builtin_preset_forbidden(self, test_client, test_api_key, test_db):
         """Test that built-in presets cannot be deleted."""
         preset = FrameworkPreset(
             name="django",

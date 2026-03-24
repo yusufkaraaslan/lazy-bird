@@ -240,9 +240,7 @@ class LogPublisher:
 
         return entry
 
-    def _get_channel(
-        self, task_id: Optional[str] = None, project_id: Optional[str] = None
-    ) -> str:
+    def _get_channel(self, task_id: Optional[str] = None, project_id: Optional[str] = None) -> str:
         """Get Redis channel name based on context.
 
         Args:
@@ -264,9 +262,7 @@ class LogPublisher:
         else:
             return f"{self.CHANNEL_PREFIX}:system"
 
-    def _store_log_history(
-        self, client, channel: str, log_json: str
-    ) -> None:
+    def _store_log_history(self, client, channel: str, log_json: str) -> None:
         """Store log in history list with TTL (synchronous).
 
         Args:
@@ -288,9 +284,7 @@ class LogPublisher:
         except RedisError as e:
             logger.warning(f"Failed to store log history: {e}")
 
-    async def _store_log_history_async(
-        self, client, channel: str, log_json: str
-    ) -> None:
+    async def _store_log_history_async(self, client, channel: str, log_json: str) -> None:
         """Store log in history list with TTL (asynchronous).
 
         Args:

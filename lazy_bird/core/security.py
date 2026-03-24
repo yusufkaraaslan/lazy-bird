@@ -164,9 +164,7 @@ def create_access_token(
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
-            minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
-        )
+        expire = datetime.utcnow() + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire})
 
@@ -234,9 +232,7 @@ def create_refresh_token(
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
-            minutes=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES
-        )
+        expire = datetime.utcnow() + timedelta(minutes=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire, "type": "refresh"})
 
@@ -296,6 +292,7 @@ def generate_secure_random_string(length: int = 32) -> str:
     # Base64 encoding produces 4 characters for every 3 bytes
     # So we need (length * 3 / 4) bytes, rounded up
     import math
+
     num_bytes = math.ceil(length * 3 / 4)
     # Generate and truncate to exact length
     return secrets.token_urlsafe(num_bytes)[:length]

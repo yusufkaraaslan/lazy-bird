@@ -43,9 +43,7 @@ async def list_framework_presets(
     framework_type: Optional[str] = Query(
         None, description="Filter by framework type (game_engine, backend, frontend, language)"
     ),
-    language: Optional[str] = Query(
-        None, description="Filter by programming language"
-    ),
+    language: Optional[str] = Query(None, description="Filter by programming language"),
     is_builtin: Optional[bool] = Query(
         None, description="Filter by built-in status (true for built-in, false for custom)"
     ),

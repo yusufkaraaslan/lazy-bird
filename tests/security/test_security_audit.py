@@ -361,10 +361,7 @@ class TestXSSProtection:
         # FastAPI's JSONResponse with application/json Content-Type
         from fastapi.responses import JSONResponse
 
-        response = JSONResponse(
-            status_code=400,
-            content={"error": malicious_input}
-        )
+        response = JSONResponse(status_code=400, content={"error": malicious_input})
 
         # Verify Content-Type is application/json (prevents XSS interpretation)
         assert response.media_type == "application/json"
@@ -629,10 +626,13 @@ class TestSecretsHandling:
 
             # Mock call_next that raises exception
             async def mock_call_next(req):
-                raise ValueError("Internal database connection string: postgresql://user:pass@localhost/db")
+                raise ValueError(
+                    "Internal database connection string: postgresql://user:pass@localhost/db"
+                )
 
             # Process through middleware
             import asyncio
+
             response = asyncio.run(middleware.dispatch(request, mock_call_next))
 
             # Get response body

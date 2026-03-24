@@ -53,7 +53,9 @@ class GodotTestParser(TestParser):
         stats = {"total": 0, "passed": 0, "failed": 0, "errors": 0}
 
         # Extract test statistics
-        stats_pattern = r'Tests:\s*(\d+)\s*\|\s*Passed:\s*(\d+)\s*\|\s*Failed:\s*(\d+)\s*\|\s*Errors:\s*(\d+)'
+        stats_pattern = (
+            r"Tests:\s*(\d+)\s*\|\s*Passed:\s*(\d+)\s*\|\s*Failed:\s*(\d+)\s*\|\s*Errors:\s*(\d+)"
+        )
         stats_match = re.search(stats_pattern, log_content)
         if stats_match:
             stats = {
@@ -64,35 +66,39 @@ class GodotTestParser(TestParser):
             }
 
         # Extract failed tests with details
-        failed_pattern = r'FAILED:\s+(\S+)\s+(.*?)\s+at\s+(res://[^:]+):(\d+)'
+        failed_pattern = r"FAILED:\s+(\S+)\s+(.*?)\s+at\s+(res://[^:]+):(\d+)"
         for match in re.finditer(failed_pattern, log_content, re.DOTALL):
             test_name = match.group(1)
             error_msg = match.group(2).strip()
             file_path = match.group(3)
             line_number = int(match.group(4))
 
-            errors.append({
-                "test_name": test_name,
-                "file": file_path,
-                "line": line_number,
-                "error": error_msg,
-                "type": "test_failure",
-            })
+            errors.append(
+                {
+                    "test_name": test_name,
+                    "file": file_path,
+                    "line": line_number,
+                    "error": error_msg,
+                    "type": "test_failure",
+                }
+            )
 
         # Capture assertion failures
-        assert_pattern = r'Assertion\s+failed:?\s+(.*?)\s+at\s+(res://[^:]+):(\d+)'
+        assert_pattern = r"Assertion\s+failed:?\s+(.*?)\s+at\s+(res://[^:]+):(\d+)"
         for match in re.finditer(assert_pattern, log_content):
             error_msg = match.group(1).strip()
             file_path = match.group(2)
             line_number = int(match.group(3))
 
-            errors.append({
-                "test_name": "assertion",
-                "file": file_path,
-                "line": line_number,
-                "error": error_msg,
-                "type": "assertion_failure",
-            })
+            errors.append(
+                {
+                    "test_name": "assertion",
+                    "file": file_path,
+                    "line": line_number,
+                    "error": error_msg,
+                    "type": "assertion_failure",
+                }
+            )
 
         return {
             "framework": "godot",
@@ -112,7 +118,7 @@ class PythonTestParser(TestParser):
         stats = {"total": 0, "passed": 0, "failed": 0, "errors": 0}
 
         # Extract test statistics
-        stats_pattern = r'(\d+)\s+failed.*?(\d+)\s+passed'
+        stats_pattern = r"(\d+)\s+failed.*?(\d+)\s+passed"
         stats_match = re.search(stats_pattern, log_content)
         if stats_match:
             stats["failed"] = int(stats_match.group(1))
@@ -120,7 +126,7 @@ class PythonTestParser(TestParser):
             stats["total"] = stats["failed"] + stats["passed"]
 
         # Extract failed tests
-        failed_pattern = r'FAILED\s+([^:]+)::(\S+)\s+-\s+(.*?)$'
+        failed_pattern = r"FAILED\s+([^:]+)::(\S+)\s+-\s+(.*?)$"
         for match in re.finditer(failed_pattern, log_content, re.MULTILINE):
             file_path = match.group(1)
             test_name = match.group(2)
@@ -128,18 +134,20 @@ class PythonTestParser(TestParser):
 
             # Try to extract line number from stack trace
             line_number = None
-            stack_pattern = rf'{re.escape(file_path)}:(\d+):'
+            stack_pattern = rf"{re.escape(file_path)}:(\d+):"
             stack_match = re.search(stack_pattern, log_content)
             if stack_match:
                 line_number = int(stack_match.group(1))
 
-            errors.append({
-                "test_name": test_name,
-                "file": file_path,
-                "line": line_number,
-                "error": error_msg,
-                "type": "test_failure",
-            })
+            errors.append(
+                {
+                    "test_name": test_name,
+                    "file": file_path,
+                    "line": line_number,
+                    "error": error_msg,
+                    "type": "test_failure",
+                }
+            )
 
         return {
             "framework": "python",
@@ -159,7 +167,7 @@ class RustTestParser(TestParser):
         stats = {"total": 0, "passed": 0, "failed": 0, "errors": 0}
 
         # Extract test statistics
-        stats_pattern = r'test\s+result:.*?(\d+)\s+passed;\s+(\d+)\s+failed'
+        stats_pattern = r"test\s+result:.*?(\d+)\s+passed;\s+(\d+)\s+failed"
         stats_match = re.search(stats_pattern, log_content)
         if stats_match:
             stats["passed"] = int(stats_match.group(1))
@@ -167,7 +175,7 @@ class RustTestParser(TestParser):
             stats["total"] = stats["passed"] + stats["failed"]
 
         # Extract failed tests with panic info
-        test_pattern = r'----\s+([\w:]+)\s+stdout\s+----\s+(.*?)(?=\n\n|$)'
+        test_pattern = r"----\s+([\w:]+)\s+stdout\s+----\s+(.*?)(?=\n\n|$)"
         for match in re.finditer(test_pattern, log_content, re.DOTALL):
             test_name = match.group(1)
             output = match.group(2)
@@ -181,13 +189,15 @@ class RustTestParser(TestParser):
                 file_path = panic_match.group(2)
                 line_number = int(panic_match.group(3))
 
-                errors.append({
-                    "test_name": test_name,
-                    "file": file_path,
-                    "line": line_number,
-                    "error": error_msg,
-                    "type": "panic",
-                })
+                errors.append(
+                    {
+                        "test_name": test_name,
+                        "file": file_path,
+                        "line": line_number,
+                        "error": error_msg,
+                        "type": "panic",
+                    }
+                )
 
         return {
             "framework": "rust",
@@ -204,11 +214,13 @@ class GenericTestParser(TestParser):
     def parse(self, log_content: str) -> Dict[str, Any]:
         """Basic parsing - just check for common failure patterns."""
         # Look for common failure indicators
-        has_failures = any([
-            re.search(r'\bFAILED\b', log_content, re.IGNORECASE),
-            re.search(r'\bERROR\b', log_content, re.IGNORECASE),
-            re.search(r'\bFAIL\b', log_content),
-        ])
+        has_failures = any(
+            [
+                re.search(r"\bFAILED\b", log_content, re.IGNORECASE),
+                re.search(r"\bERROR\b", log_content, re.IGNORECASE),
+                re.search(r"\bFAIL\b", log_content),
+            ]
+        )
 
         return {
             "framework": "generic",

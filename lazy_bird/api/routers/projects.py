@@ -42,9 +42,7 @@ async def list_projects(
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     # Filtering
-    automation_enabled: Optional[bool] = Query(
-        None, description="Filter by automation status"
-    ),
+    automation_enabled: Optional[bool] = Query(None, description="Filter by automation status"),
     project_type: Optional[str] = Query(
         None, description="Filter by project type (e.g., 'python', 'godot')"
     ),
@@ -481,11 +479,7 @@ async def update_project(
     - Requires: API key with 'write' or 'admin' scope
     """
     # Fetch existing project
-    query = (
-        select(Project)
-        .where(Project.id == project_id)
-        .where(Project.deleted_at.is_(None))
-    )
+    query = select(Project).where(Project.id == project_id).where(Project.deleted_at.is_(None))
     result = await db.execute(query)
     project = result.scalar_one_or_none()
 

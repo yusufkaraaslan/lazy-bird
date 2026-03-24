@@ -47,7 +47,9 @@ def setup_cors(app: ASGIApp) -> None:
         allow_headers=["*"],  # Allow all headers
         expose_headers=["X-Request-ID", "X-Correlation-ID"],
     )
-    logger.info("CORS middleware configured", extra={"extra_fields": {"origins": settings.CORS_ORIGINS}})
+    logger.info(
+        "CORS middleware configured", extra={"extra_fields": {"origins": settings.CORS_ORIGINS}}
+    )
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):

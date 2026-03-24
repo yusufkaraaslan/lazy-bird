@@ -228,6 +228,7 @@ def _create_sqlite_compatible_tables(connection):
     import sqlalchemy.dialects.postgresql as pg_types
 
     from lazy_bird.core.database import Base
+
     # Import all models so they register with Base.metadata
     import lazy_bird.models  # noqa: F401
 
@@ -317,9 +318,7 @@ async def test_db():
         await conn.run_sync(_create_sqlite_compatible_tables)
 
     # Create session factory
-    async_session_factory = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session_factory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     # Create session
     async with async_session_factory() as session:
@@ -378,6 +377,7 @@ async def test_api_key(test_db):
     # Tests use test_api_key.key_hash as the X-API-Key header value,
     # so we swap key_hash to the raw key for convenience.
     from sqlalchemy.orm import make_transient
+
     test_db.expunge(api_key)
     make_transient(api_key)
     api_key.key_hash = raw_key

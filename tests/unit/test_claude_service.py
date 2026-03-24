@@ -89,7 +89,9 @@ class TestBuildPrompt:
 
     def test_build_prompt_with_error_context(self):
         """Test building prompt with error context for retry."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         error_context = "TypeError: 'NoneType' object is not callable"
         prompt = service._build_prompt("Add health system", error_context)
@@ -132,7 +134,9 @@ class TestConstructTaskPrompt:
 
     def test_construct_task_prompt(self, tmp_path):
         """Test constructing detailed task prompt."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         prompt = service.construct_task_prompt(
             project_name="My Game",
@@ -158,7 +162,9 @@ class TestExtractTokens:
 
     def test_extract_tokens_pattern_1(self):
         """Test extracting tokens from 'total tokens: 1234' pattern."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         text = "Execution completed. Total tokens: 1234"
         tokens = service._extract_tokens_from_text(text)
@@ -167,7 +173,9 @@ class TestExtractTokens:
 
     def test_extract_tokens_pattern_2(self):
         """Test extracting tokens from 'tokens used: 5678' pattern."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         text = "Usage: Tokens used: 5678"
         tokens = service._extract_tokens_from_text(text)
@@ -176,7 +184,9 @@ class TestExtractTokens:
 
     def test_extract_tokens_pattern_3(self):
         """Test extracting tokens from '9012 tokens' pattern."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         text = "Processed 9012 tokens successfully"
         tokens = service._extract_tokens_from_text(text)
@@ -185,7 +195,9 @@ class TestExtractTokens:
 
     def test_extract_tokens_not_found(self):
         """Test extracting tokens when pattern not found."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         text = "No token information here"
         tokens = service._extract_tokens_from_text(text)
@@ -198,7 +210,9 @@ class TestCalculateCost:
 
     def test_calculate_cost_zero_tokens(self):
         """Test cost calculation with zero tokens."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         cost = service._calculate_cost(0)
 
@@ -206,7 +220,9 @@ class TestCalculateCost:
 
     def test_calculate_cost_1000_tokens(self):
         """Test cost calculation with 1000 tokens."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         cost = service._calculate_cost(1000)
 
@@ -215,7 +231,9 @@ class TestCalculateCost:
 
     def test_calculate_cost_5000_tokens(self):
         """Test cost calculation with 5000 tokens."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         cost = service._calculate_cost(5000)
 
@@ -228,19 +246,24 @@ class TestParseOutput:
 
     def test_parse_output_json_format(self):
         """Test parsing JSON output from Claude."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         result = subprocess.CompletedProcess(
             args=["claude"],
             returncode=0,
-            stdout=json.dumps({
-                "output": "Task completed successfully",
-                "usage": {"total_tokens": 1234},
-            }),
+            stdout=json.dumps(
+                {
+                    "output": "Task completed successfully",
+                    "usage": {"total_tokens": 1234},
+                }
+            ),
             stderr="",
         )
 
         from datetime import datetime, timezone
+
         start_time = datetime.now(timezone.utc)
 
         parsed = service._parse_output(result, start_time, "/tmp/test.log")
@@ -254,7 +277,9 @@ class TestParseOutput:
 
     def test_parse_output_plain_text(self):
         """Test parsing plain text output."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         result = subprocess.CompletedProcess(
             args=["claude"],
@@ -264,6 +289,7 @@ class TestParseOutput:
         )
 
         from datetime import datetime, timezone
+
         start_time = datetime.now(timezone.utc)
 
         parsed = service._parse_output(result, start_time, "/tmp/test.log")
@@ -275,7 +301,9 @@ class TestParseOutput:
 
     def test_parse_output_failure(self):
         """Test parsing output from failed execution."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         result = subprocess.CompletedProcess(
             args=["claude"],
@@ -285,6 +313,7 @@ class TestParseOutput:
         )
 
         from datetime import datetime, timezone
+
         start_time = datetime.now(timezone.utc)
 
         parsed = service._parse_output(result, start_time, "/tmp/test.log")
@@ -299,7 +328,9 @@ class TestWriteLog:
 
     def test_write_log(self, tmp_path):
         """Test writing execution log to file."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         log_file = tmp_path / "test.log"
         command = ["claude", "-p", "Test prompt"]
@@ -311,6 +342,7 @@ class TestWriteLog:
         )
 
         from datetime import datetime, timezone
+
         start_time = datetime.now(timezone.utc)
 
         service._write_log(log_file, command, result, start_time)
@@ -340,10 +372,12 @@ class TestExecuteClaude:
             mock_run.return_value = subprocess.CompletedProcess(
                 args=["claude"],
                 returncode=0,
-                stdout=json.dumps({
-                    "output": "Implementation complete",
-                    "usage": {"total_tokens": 1500},
-                }),
+                stdout=json.dumps(
+                    {
+                        "output": "Implementation complete",
+                        "usage": {"total_tokens": 1500},
+                    }
+                ),
                 stderr="",
             )
 
@@ -363,7 +397,9 @@ class TestExecuteClaude:
 
     def test_execute_claude_with_error_context(self, tmp_path):
         """Test Claude execution with error context (retry)."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = subprocess.CompletedProcess(
@@ -410,7 +446,9 @@ class TestExecuteClaude:
 
     def test_execute_claude_failure(self, tmp_path):
         """Test Claude execution returning non-zero exit code."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = subprocess.CompletedProcess(
@@ -431,7 +469,9 @@ class TestExecuteClaude:
 
     def test_execute_claude_creates_log_directory(self, tmp_path):
         """Test that execute_claude creates log directory if needed."""
-        service = ClaudeService(api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7)
+        service = ClaudeService(
+            api_key="test-key", model="claude-sonnet-4", max_tokens=4096, temperature=0.7
+        )
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = subprocess.CompletedProcess(

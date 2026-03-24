@@ -308,9 +308,7 @@ class TestSecureRandomString:
         random_str = generate_secure_random_string()
 
         # Should only contain URL-safe characters
-        allowed_chars = set(
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
-        )
+        allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_")
         assert all(c in allowed_chars for c in random_str)
 
 

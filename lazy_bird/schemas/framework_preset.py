@@ -82,6 +82,7 @@ class FrameworkPresetBase(BaseModel):
 
 class FrameworkPresetCreate(FrameworkPresetBase):
     """Schema for creating a new framework preset."""
+
     pass
 
 

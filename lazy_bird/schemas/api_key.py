@@ -38,6 +38,7 @@ class ApiKeyBase(BaseModel):
 
 class ApiKeyCreate(ApiKeyBase):
     """Schema for creating a new API key."""
+
     pass
 
 

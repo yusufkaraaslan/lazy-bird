@@ -36,54 +36,55 @@ class GodotErrorParser(TestErrorParser):
         stats = {"total": 0, "passed": 0, "failed": 0, "errors": 0}
 
         # Extract test statistics
-        stats_pattern = r'Tests:\s*(\d+)\s*\|\s*Passed:\s*(\d+)\s*\|\s*Failed:\s*(\d+)\s*\|\s*Errors:\s*(\d+)'
+        stats_pattern = (
+            r"Tests:\s*(\d+)\s*\|\s*Passed:\s*(\d+)\s*\|\s*Failed:\s*(\d+)\s*\|\s*Errors:\s*(\d+)"
+        )
         stats_match = re.search(stats_pattern, log_content)
         if stats_match:
             stats = {
                 "total": int(stats_match.group(1)),
                 "passed": int(stats_match.group(2)),
                 "failed": int(stats_match.group(3)),
-                "errors": int(stats_match.group(4))
+                "errors": int(stats_match.group(4)),
             }
 
         # Extract failed tests with details
         # Pattern: FAILED: test_name ... at res://path/file.gd:42
-        failed_pattern = r'FAILED:\s+(\S+)\s+(.*?)\s+at\s+(res://[^:]+):(\d+)'
+        failed_pattern = r"FAILED:\s+(\S+)\s+(.*?)\s+at\s+(res://[^:]+):(\d+)"
         for match in re.finditer(failed_pattern, log_content, re.DOTALL):
             test_name = match.group(1)
             error_msg = match.group(2).strip()
             file_path = match.group(3)
             line_number = int(match.group(4))
 
-            errors.append({
-                "test_name": test_name,
-                "file": file_path,
-                "line": line_number,
-                "error": error_msg,
-                "type": "test_failure"
-            })
+            errors.append(
+                {
+                    "test_name": test_name,
+                    "file": file_path,
+                    "line": line_number,
+                    "error": error_msg,
+                    "type": "test_failure",
+                }
+            )
 
         # Also capture assertion failures
-        assert_pattern = r'Assertion\s+failed:?\s+(.*?)\s+at\s+(res://[^:]+):(\d+)'
+        assert_pattern = r"Assertion\s+failed:?\s+(.*?)\s+at\s+(res://[^:]+):(\d+)"
         for match in re.finditer(assert_pattern, log_content):
             error_msg = match.group(1).strip()
             file_path = match.group(2)
             line_number = int(match.group(3))
 
-            errors.append({
-                "test_name": "assertion",
-                "file": file_path,
-                "line": line_number,
-                "error": error_msg,
-                "type": "assertion_failure"
-            })
+            errors.append(
+                {
+                    "test_name": "assertion",
+                    "file": file_path,
+                    "line": line_number,
+                    "error": error_msg,
+                    "type": "assertion_failure",
+                }
+            )
 
-        return {
-            "framework": "godot",
-            "stats": stats,
-            "errors": errors,
-            "error_count": len(errors)
-        }
+        return {"framework": "godot", "stats": stats, "errors": errors, "error_count": len(errors)}
 
 
 class PythonErrorParser(TestErrorParser):
@@ -96,7 +97,7 @@ class PythonErrorParser(TestErrorParser):
 
         # Extract test statistics from summary line
         # Example: "3 failed, 10 passed in 2.5s"
-        stats_pattern = r'(\d+)\s+failed.*?(\d+)\s+passed'
+        stats_pattern = r"(\d+)\s+failed.*?(\d+)\s+passed"
         stats_match = re.search(stats_pattern, log_content)
         if stats_match:
             stats["failed"] = int(stats_match.group(1))
@@ -105,7 +106,7 @@ class PythonErrorParser(TestErrorParser):
 
         # Extract failed tests with file/line info
         # Pattern: FAILED path/file.py::test_name - AssertionError: message
-        failed_pattern = r'FAILED\s+([^:]+)::(\S+)\s+-\s+(.*?)$'
+        failed_pattern = r"FAILED\s+([^:]+)::(\S+)\s+-\s+(.*?)$"
         for match in re.finditer(failed_pattern, log_content, re.MULTILINE):
             file_path = match.group(1)
             test_name = match.group(2)
@@ -113,40 +114,39 @@ class PythonErrorParser(TestErrorParser):
 
             # Try to extract line number from stack trace
             line_number = None
-            stack_pattern = rf'{re.escape(file_path)}:(\d+):'
+            stack_pattern = rf"{re.escape(file_path)}:(\d+):"
             stack_match = re.search(stack_pattern, log_content)
             if stack_match:
                 line_number = int(stack_match.group(1))
 
-            errors.append({
-                "test_name": test_name,
-                "file": file_path,
-                "line": line_number,
-                "error": error_msg,
-                "type": "test_failure"
-            })
+            errors.append(
+                {
+                    "test_name": test_name,
+                    "file": file_path,
+                    "line": line_number,
+                    "error": error_msg,
+                    "type": "test_failure",
+                }
+            )
 
         # Extract AssertionError details with line numbers
-        assert_pattern = r'([^:\s]+):(\d+):\s+in\s+\S+\s+.*?AssertionError:\s+(.*?)(?:\n|$)'
+        assert_pattern = r"([^:\s]+):(\d+):\s+in\s+\S+\s+.*?AssertionError:\s+(.*?)(?:\n|$)"
         for match in re.finditer(assert_pattern, log_content):
             file_path = match.group(1)
             line_number = int(match.group(2))
             error_msg = match.group(3).strip()
 
-            errors.append({
-                "test_name": "assertion",
-                "file": file_path,
-                "line": line_number,
-                "error": error_msg,
-                "type": "assertion_error"
-            })
+            errors.append(
+                {
+                    "test_name": "assertion",
+                    "file": file_path,
+                    "line": line_number,
+                    "error": error_msg,
+                    "type": "assertion_error",
+                }
+            )
 
-        return {
-            "framework": "python",
-            "stats": stats,
-            "errors": errors,
-            "error_count": len(errors)
-        }
+        return {"framework": "python", "stats": stats, "errors": errors, "error_count": len(errors)}
 
 
 class RustErrorParser(TestErrorParser):
@@ -159,7 +159,7 @@ class RustErrorParser(TestErrorParser):
 
         # Extract test statistics
         # Example: "test result: FAILED. 10 passed; 3 failed; 0 ignored"
-        stats_pattern = r'test\s+result:.*?(\d+)\s+passed;\s+(\d+)\s+failed'
+        stats_pattern = r"test\s+result:.*?(\d+)\s+passed;\s+(\d+)\s+failed"
         stats_match = re.search(stats_pattern, log_content)
         if stats_match:
             stats["passed"] = int(stats_match.group(1))
@@ -169,7 +169,7 @@ class RustErrorParser(TestErrorParser):
         # Extract failed tests with panic info
         # Pattern: ---- tests::test_name stdout ----
         # followed by panic message and file:line
-        test_pattern = r'----\s+([\w:]+)\s+stdout\s+----\s+(.*?)(?=\n\n|$)'
+        test_pattern = r"----\s+([\w:]+)\s+stdout\s+----\s+(.*?)(?=\n\n|$)"
         for match in re.finditer(test_pattern, log_content, re.DOTALL):
             test_name = match.group(1)
             output = match.group(2)
@@ -183,20 +183,17 @@ class RustErrorParser(TestErrorParser):
                 file_path = panic_match.group(2)
                 line_number = int(panic_match.group(3))
 
-                errors.append({
-                    "test_name": test_name,
-                    "file": file_path,
-                    "line": line_number,
-                    "error": error_msg,
-                    "type": "panic"
-                })
+                errors.append(
+                    {
+                        "test_name": test_name,
+                        "file": file_path,
+                        "line": line_number,
+                        "error": error_msg,
+                        "type": "panic",
+                    }
+                )
 
-        return {
-            "framework": "rust",
-            "stats": stats,
-            "errors": errors,
-            "error_count": len(errors)
-        }
+        return {"framework": "rust", "stats": stats, "errors": errors, "error_count": len(errors)}
 
 
 def parse_test_errors(log_path: str, project_type: str) -> Dict[str, Any]:
@@ -212,7 +209,7 @@ def parse_test_errors(log_path: str, project_type: str) -> Dict[str, Any]:
     """
     # Read log file
     try:
-        with open(log_path, 'r') as f:
+        with open(log_path, "r") as f:
             log_content = f.read()
     except FileNotFoundError:
         return {
@@ -220,14 +217,14 @@ def parse_test_errors(log_path: str, project_type: str) -> Dict[str, Any]:
             "error": "Log file not found",
             "stats": {},
             "errors": [],
-            "error_count": 0
+            "error_count": 0,
         }
 
     # Select appropriate parser
     parsers = {
         "godot": GodotErrorParser(),
         "python": PythonErrorParser(),
-        "rust": RustErrorParser()
+        "rust": RustErrorParser(),
     }
 
     parser = parsers.get(project_type)
@@ -238,7 +235,7 @@ def parse_test_errors(log_path: str, project_type: str) -> Dict[str, Any]:
             "raw_output": log_content[-1000:],  # Last 1000 chars
             "stats": {},
             "errors": [],
-            "error_count": 0
+            "error_count": 0,
         }
 
     return parser.parse(log_content)
@@ -260,10 +257,12 @@ def format_error_summary(error_data: Dict[str, Any]) -> str:
     # Add statistics
     stats = error_data.get("stats", {})
     if stats:
-        lines.append(f"Tests: {stats.get('total', 0)} | "
-                    f"Passed: {stats.get('passed', 0)} | "
-                    f"Failed: {stats.get('failed', 0)} | "
-                    f"Errors: {stats.get('errors', 0)}\n")
+        lines.append(
+            f"Tests: {stats.get('total', 0)} | "
+            f"Passed: {stats.get('passed', 0)} | "
+            f"Failed: {stats.get('failed', 0)} | "
+            f"Errors: {stats.get('errors', 0)}\n"
+        )
 
     # Add individual errors
     errors = error_data.get("errors", [])
@@ -271,9 +270,9 @@ def format_error_summary(error_data: Dict[str, Any]) -> str:
         lines.append(f"\n**{len(errors)} Error(s) Found:**\n")
         for i, error in enumerate(errors, 1):
             lines.append(f"\n{i}. **{error.get('test_name', 'unknown')}**")
-            if error.get('file'):
+            if error.get("file"):
                 file_line = f"   File: `{error['file']}"
-                if error.get('line'):
+                if error.get("line"):
                     file_line += f":{error['line']}`"
                 else:
                     file_line += "`"
