@@ -22,6 +22,9 @@ from pathlib import Path
 import shutil
 import os
 
+# Compute repo root relative to this test file
+REPO_ROOT = str(Path(__file__).resolve().parent.parent.parent)
+
 
 @pytest.fixture(scope="module")
 def test_environment():
@@ -161,7 +164,7 @@ FAILED: test_collision_detection
 """)
 
         # Step 1: Parse errors using Python parser
-        parser_script = "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/parse_test_errors.py"
+        parser_script = f"{REPO_ROOT}/scripts/parse_test_errors.py"
         parse_result = subprocess.run(
             ["python3", parser_script, str(test_log), "godot"],
             capture_output=True,
@@ -220,7 +223,7 @@ FAILED: test_collision_detection
 
     def test_bash_function_integration(self, test_environment):
         """Test that all critical bash functions exist and can be called"""
-        script_path = "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh"
+        script_path = f"{REPO_ROOT}/scripts/agent-runner.sh"
 
         critical_functions = [
             "create_worktree",
@@ -246,7 +249,7 @@ FAILED: test_collision_detection
 
     def test_error_context_appended_to_claude_prompt(self):
         """Test that error context is properly appended to Claude prompt in run_claude"""
-        script_path = "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh"
+        script_path = f"{REPO_ROOT}/scripts/agent-runner.sh"
 
         # Extract run_claude function
         result = subprocess.run(
@@ -270,7 +273,7 @@ class TestWorkflowFailureHandling:
 
     def test_cleanup_on_exit_trap(self):
         """Test that cleanup_worktree is registered as EXIT trap"""
-        script_path = "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh"
+        script_path = f"{REPO_ROOT}/scripts/agent-runner.sh"
 
         result = subprocess.run(
             ["grep", "trap cleanup_worktree EXIT", script_path],
@@ -283,7 +286,7 @@ class TestWorkflowFailureHandling:
 
     def test_error_handling_set_in_script(self):
         """Test that script has proper error handling enabled"""
-        script_path = "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh"
+        script_path = f"{REPO_ROOT}/scripts/agent-runner.sh"
 
         with open(script_path) as f:
             content = f.read()
@@ -300,7 +303,7 @@ class TestWorkflowMetrics:
 
     def test_all_workflow_steps_present(self):
         """Test that agent-runner.sh contains all 11 workflow steps"""
-        script_path = "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh"
+        script_path = f"{REPO_ROOT}/scripts/agent-runner.sh"
 
         with open(script_path) as f:
             content = f.read()
@@ -330,7 +333,7 @@ class TestFrameworkSupport:
         test_log = logs_dir / "godot-test.log"
         test_log.write_text("Tests: 10 | Passed: 9 | Failed: 1 | Errors: 0")
 
-        parser_script = "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/parse_test_errors.py"
+        parser_script = f"{REPO_ROOT}/scripts/parse_test_errors.py"
         result = subprocess.run(
             ["python3", parser_script, str(test_log), "godot", "--json"],
             capture_output=True,
@@ -347,7 +350,7 @@ class TestFrameworkSupport:
         test_log = logs_dir / "pytest.log"
         test_log.write_text("FAILED test_example.py::test_one - AssertionError")
 
-        parser_script = "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/parse_test_errors.py"
+        parser_script = f"{REPO_ROOT}/scripts/parse_test_errors.py"
         result = subprocess.run(
             ["python3", parser_script, str(test_log), "python", "--json"],
             capture_output=True,
@@ -364,7 +367,7 @@ class TestFrameworkSupport:
         test_log = logs_dir / "cargo-test.log"
         test_log.write_text("test result: FAILED. 5 passed; 1 failed; 0 ignored")
 
-        parser_script = "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/parse_test_errors.py"
+        parser_script = f"{REPO_ROOT}/scripts/parse_test_errors.py"
         result = subprocess.run(
             ["python3", parser_script, str(test_log), "rust", "--json"],
             capture_output=True,

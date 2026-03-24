@@ -16,6 +16,9 @@ import time
 from pathlib import Path
 import shutil
 
+# Compute repo root relative to this test file
+REPO_ROOT = str(Path(__file__).resolve().parent.parent.parent)
+
 
 @pytest.fixture
 def test_project():
@@ -139,7 +142,7 @@ FAILED: test_enemy_spawn
         test_log.write_text(test_output)
 
         # Test Python parser
-        parser_script = "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/parse_test_errors.py"
+        parser_script = f"{REPO_ROOT}/scripts/parse_test_errors.py"
         result = subprocess.run(
             ["python3", parser_script, str(test_log), "godot"],
             capture_output=True,
@@ -197,7 +200,7 @@ FAILED app/tests/test_models.py::test_user_creation - AssertionError
         test_log = test_logs_dir / "test-output.log"
         test_log.write_text(test_output)
 
-        parser_script = "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/parse_test_errors.py"
+        parser_script = f"{REPO_ROOT}/scripts/parse_test_errors.py"
         result = subprocess.run(
             ["python3", parser_script, str(test_log), "python"],
             capture_output=True,
@@ -281,7 +284,7 @@ FAILED: test_combat_system
         test_log = test_logs_dir / "test-output.log"
         test_log.write_text(test_output)
 
-        parser_script = "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/parse_test_errors.py"
+        parser_script = f"{REPO_ROOT}/scripts/parse_test_errors.py"
         result = subprocess.run(
             ["python3", parser_script, str(test_log), "godot"],
             capture_output=True,
@@ -309,7 +312,7 @@ class TestWebUIIntegration:
         # This verifies the fix from P0-2 bug
         result = subprocess.run(
             ["grep", "-A", "40", "def delete_task",
-             "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/web/backend/services/queue_service.py"],
+             f"{REPO_ROOT}/web/backend/services/queue_service.py"],
             capture_output=True,
             text=True
         )
@@ -323,7 +326,7 @@ class TestWebUIIntegration:
         # Verify the function exists
         verify_result = subprocess.run(
             ["grep", "-c", "def _remove_from_processed_cache",
-             "/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/web/backend/services/queue_service.py"],
+             f"{REPO_ROOT}/web/backend/services/queue_service.py"],
             capture_output=True,
             text=True
         )

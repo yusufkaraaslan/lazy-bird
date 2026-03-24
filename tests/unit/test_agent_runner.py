@@ -19,6 +19,9 @@ import json
 from pathlib import Path
 import shutil
 
+# Compute repo root relative to this test file
+REPO_ROOT = str(Path(__file__).resolve().parent.parent.parent)
+
 
 class TestParseTestErrors:
     """Test the parse_test_errors function for different project types"""
@@ -346,14 +349,14 @@ class TestWorkflowIntegrity:
 
     def test_script_has_shebang(self):
         """Test that agent-runner.sh has proper shebang"""
-        with open("/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh", "r") as f:
+        with open(f"{REPO_ROOT}/scripts/agent-runner.sh", "r") as f:
             first_line = f.readline()
         assert first_line.startswith("#!"), "Script should have shebang"
         assert "bash" in first_line, "Script should use bash"
 
     def test_script_has_error_handling(self):
         """Test that script has proper error handling (set -e)"""
-        with open("/mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh", "r") as f:
+        with open(f"{REPO_ROOT}/scripts/agent-runner.sh", "r") as f:
             content = f.read()
         assert "set -" in content, "Script should have error handling"
 
