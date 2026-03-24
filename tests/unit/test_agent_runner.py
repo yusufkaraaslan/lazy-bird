@@ -63,7 +63,7 @@ FAILED: test_player_velocity
                 PROJECT_TYPE="godot"
 
                 # Source parse_test_errors function
-                source <(grep -A 100 "^parse_test_errors()" /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh | sed '/^}}/q')
+                source <(grep -A 100 "^parse_test_errors()" {REPO_ROOT}/scripts/agent-runner.sh | sed '/^}}/q')
 
                 parse_test_errors
                 """
@@ -105,7 +105,7 @@ FAILED app/tests/test_models.py::test_user_creation - AssertionError
                 PROJECT_TYPE="python"
 
                 # Source function
-                source <(grep -A 100 "^parse_test_errors()" /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh | sed '/^}}/q')
+                source <(grep -A 100 "^parse_test_errors()" {REPO_ROOT}/scripts/agent-runner.sh | sed '/^}}/q')
 
                 parse_test_errors
                 """
@@ -141,7 +141,7 @@ thread 'tests::test_addition' panicked at 'assertion failed: `(left == right)`
                 LOG_DIR="{self.log_dir}"
                 PROJECT_TYPE="rust"
 
-                source <(grep -A 100 "^parse_test_errors()" /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh | sed '/^}}/q')
+                source <(grep -A 100 "^parse_test_errors()" {REPO_ROOT}/scripts/agent-runner.sh | sed '/^}}/q')
 
                 parse_test_errors
                 """
@@ -164,7 +164,7 @@ thread 'tests::test_addition' panicked at 'assertion failed: `(left == right)`
                 LOG_DIR="{self.log_dir}"
                 PROJECT_TYPE="godot"
 
-                source <(grep -A 100 "^parse_test_errors()" /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh | sed '/^}}/q')
+                source <(grep -A 100 "^parse_test_errors()" {REPO_ROOT}/scripts/agent-runner.sh | sed '/^}}/q')
 
                 parse_test_errors
                 """
@@ -223,7 +223,7 @@ class TestErrorContextPassing:
             [
                 "bash",
                 "-c",
-                "grep -A 5 '^run_claude()' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh"
+                "grep -A 5 '^run_claude()' {REPO_ROOT}/scripts/agent-runner.sh"
             ],
             capture_output=True,
             text=True
@@ -241,7 +241,7 @@ class TestErrorContextPassing:
             [
                 "bash",
                 "-c",
-                "grep -A 20 'if \\[ -n \"\\$error_context\" \\]' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh"
+                "grep -A 20 'if \\[ -n \"\\$error_context\" \\]' {REPO_ROOT}/scripts/agent-runner.sh"
             ],
             capture_output=True,
             text=True
@@ -261,7 +261,7 @@ class TestErrorContextPassing:
                 "bash",
                 "-c",
                 """
-                grep -B 5 -A 5 'run_claude "\\$error_details"' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh
+                grep -B 5 -A 5 'run_claude "\\$error_details"' {REPO_ROOT}/scripts/agent-runner.sh
                 """
             ],
             capture_output=True,
@@ -286,7 +286,7 @@ class TestCleanupWorktree:
             [
                 "bash",
                 "-c",
-                "grep -c '^cleanup_worktree()' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh"
+                "grep -c '^cleanup_worktree()' {REPO_ROOT}/scripts/agent-runner.sh"
             ],
             capture_output=True,
             text=True
@@ -302,7 +302,7 @@ class TestCleanupWorktree:
             [
                 "bash",
                 "-c",
-                "grep 'git worktree remove' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh | grep cleanup_worktree -A 20"
+                "grep 'git worktree remove' {REPO_ROOT}/scripts/agent-runner.sh | grep cleanup_worktree -A 20"
             ],
             capture_output=True,
             text=True
@@ -318,7 +318,7 @@ class TestCleanupWorktree:
             [
                 "bash",
                 "-c",
-                "grep -A 30 '^cleanup_worktree()' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh"
+                "grep -A 30 '^cleanup_worktree()' {REPO_ROOT}/scripts/agent-runner.sh"
             ],
             capture_output=True,
             text=True
@@ -333,7 +333,7 @@ class TestCleanupWorktree:
             [
                 "bash",
                 "-c",
-                "grep 'trap cleanup_worktree EXIT' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh"
+                "grep 'trap cleanup_worktree EXIT' {REPO_ROOT}/scripts/agent-runner.sh"
             ],
             capture_output=True,
             text=True
@@ -366,7 +366,7 @@ class TestWorkflowIntegrity:
             [
                 "bash",
                 "-c",
-                "grep -B 2 'for attempt in' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh | grep 'trap - ERR'"
+                "grep -B 2 'for attempt in' {REPO_ROOT}/scripts/agent-runner.sh | grep 'trap - ERR'"
             ],
             capture_output=True,
             text=True
@@ -392,7 +392,7 @@ class TestWorkflowIntegrity:
                 [
                     "bash",
                     "-c",
-                    f"grep -c '^{func_name}()' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/scripts/agent-runner.sh || echo 0"
+                    f"grep -c '^{func_name}()' {REPO_ROOT}/scripts/agent-runner.sh || echo 0"
                 ],
                 capture_output=True,
                 text=True
@@ -411,7 +411,7 @@ class TestWebUIIntegration:
             [
                 "bash",
                 "-c",
-                "grep -c 'def _remove_from_processed_cache' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/web/backend/services/queue_service.py"
+                "grep -c 'def _remove_from_processed_cache' {REPO_ROOT}/web/backend/services/queue_service.py"
             ],
             capture_output=True,
             text=True
@@ -427,7 +427,7 @@ class TestWebUIIntegration:
             [
                 "bash",
                 "-c",
-                "grep -A 20 'def delete_task' /mnt/1ece809a-2821-4f10-aecb-fcdf34760c0b/Git/lazy-bird/web/backend/services/queue_service.py | grep '_remove_from_processed_cache'"
+                "grep -A 20 'def delete_task' {REPO_ROOT}/web/backend/services/queue_service.py | grep '_remove_from_processed_cache'"
             ],
             capture_output=True,
             text=True
