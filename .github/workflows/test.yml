@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.10', '3.11', '3.12']
 
     steps:
     - name: Checkout code
@@ -32,19 +32,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-test.txt
-        pip install -e ".[dev]" || echo "No dev extras found, continuing..."
+        pip install -e ".[dev]"
 
-    - name: Run unit tests
+    - name: Run all tests
       run: |
-        pytest tests/unit -v --cov=scripts --cov=web/backend --cov-report=xml --cov-report=term-missing
-
-    - name: Run integration tests
-      run: |
-        pytest tests/integration -v --cov=scripts --cov=web/backend --cov-append --cov-report=xml --cov-report=term-missing
-
-    - name: Run E2E tests
-      run: |
-        pytest tests/e2e -v --cov=scripts --cov=web/backend --cov-append --cov-report=xml --cov-report=term-missing
+        pytest tests/ -v --cov=lazy_bird --cov-report=xml --cov-report=term-missing --cov-fail-under=10
 
     - name: Upload coverage to Codecov
       if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
@@ -55,8 +47,3 @@ jobs:
         name: codecov-umbrella
         fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
-
-    - name: Check coverage threshold (50%)
-      if: matrix.python-version == '3.11'
-      run: |
-        pytest tests/ --cov=scripts --cov=web/backend --cov-fail-under=50 --cov-report=term

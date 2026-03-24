@@ -1,25 +1,27 @@
-# Test dependencies for Lazy_Bird
+# Test dependencies for Lazy-Bird v2.0
+# Install alongside: pip install -e ".[dev]"
 
-# Core testing framework
+# Core testing
 pytest>=7.4.0
 pytest-cov>=4.1.0
-pytest-xdist>=3.3.1  # Parallel test execution
+pytest-asyncio>=1.0.0
+pytest-mock>=3.11.1
 
-# Coverage reporting
-coverage[toml]>=7.3.0
-
-# Test utilities
-pytest-timeout>=2.1.0  # Timeout for long-running tests
-pytest-mock>=3.11.1    # Mocking utilities
-responses>=0.23.3      # HTTP mocking
+# Async database drivers (needed for test SQLite + import of PG models)
+aiosqlite>=0.19.0
+asyncpg>=0.29.0
 
 # Code quality
-flake8>=6.1.0          # Linting
-pylint>=2.17.0         # Static analysis
-black>=23.7.0          # Code formatting
-isort>=5.12.0          # Import sorting
+flake8>=6.1.0
+black>=23.7.0
+isort>=5.12.0
+mypy>=1.5.0
+bandit>=1.7.5
 
-# Type checking
-mypy>=1.5.0            # Type checking
-types-requests         # Type stubs for requests
-types-setuptools       # Type stubs for setuptools
+# Type stubs
+types-requests
+types-setuptools
+types-PyYAML
+types-python-dateutil
+types-passlib
+types-redis
