@@ -30,9 +30,54 @@ from lazy_bird.services.git_service import GitService
 from lazy_bird.services.log_publisher import LogPublisher
 from lazy_bird.services.pr_service import PRService
 from lazy_bird.services.test_runner import TestRunner
+from lazy_bird.services.webhook_service import publish_event
 from lazy_bird.tasks import app
 
 logger = get_logger(__name__)
+
+
+async def _fire_webhook(
+    db,
+    task_run,
+    event_type: str,
+) -> None:
+    """Fire webhook for a task state change (fire-and-forget).
+
+    Queries active WebhookSubscription records matching the event_type,
+    builds a payload from the task run, and delivers via WebhookService.
+    Wrapped in try/except so failures never block task execution.
+
+    Args:
+        db: AsyncSession database session
+        task_run: TaskRun model instance
+        event_type: Event type string (e.g. "task.running", "task.completed")
+    """
+    try:
+        data = {
+            "task_run_id": str(task_run.id),
+            "project_id": str(task_run.project_id),
+            "status": task_run.status,
+            "work_item_id": task_run.work_item_id,
+            "work_item_title": task_run.work_item_title,
+            "pr_url": getattr(task_run, "pr_url", None),
+            "error_message": getattr(task_run, "error_message", None),
+            "cost_usd": float(task_run.cost_usd) if task_run.cost_usd else None,
+            "tokens_used": task_run.tokens_used,
+            "branch_name": getattr(task_run, "branch_name", None),
+            "duration_seconds": getattr(task_run, "duration_seconds", None),
+            "retry_count": getattr(task_run, "retry_count", None),
+        }
+        await publish_event(
+            event_type=event_type,
+            data=data,
+            db=db,
+            project_id=task_run.project_id,
+        )
+    except Exception:
+        logger.debug(
+            f"Webhook delivery failed for event {event_type} on task {task_run.id}",
+            exc_info=True,
+        )
 
 
 @app.task(
@@ -161,6 +206,9 @@ async def _execute_task_async(task_run_id: str) -> Dict[str, Any]:
             task_run.status = "running"
             task_run.started_at = datetime.now(timezone.utc)
             await db.commit()
+
+            # Fire webhook for running state
+            await _fire_webhook(db, task_run, "task.running")
 
             await log_publisher.publish_log_async(
                 message="Task status updated to 'running'",
@@ -341,6 +389,9 @@ async def _execute_task_async(task_run_id: str) -> Dict[str, Any]:
                             task_run.duration_seconds = int(duration.total_seconds())
                         await db.commit()
 
+                        # Fire webhook for failed state
+                        await _fire_webhook(db, task_run, "task.failed")
+
                         result["status"] = "failed"
                         result["error"] = task_run.error_message
 
@@ -466,6 +517,9 @@ async def _execute_task_async(task_run_id: str) -> Dict[str, Any]:
                 task_run.duration_seconds = int(duration.total_seconds())
             await db.commit()
 
+            # Fire webhook for completed state
+            await _fire_webhook(db, task_run, "task.completed")
+
             result["success"] = True
             result["status"] = "completed"
 
@@ -520,6 +574,9 @@ async def _execute_task_async(task_run_id: str) -> Dict[str, Any]:
                 task_run.error_message = str(e)
                 task_run.completed_at = datetime.now(timezone.utc)
                 await db.commit()
+
+                # Fire webhook for failed state
+                await _fire_webhook(db, task_run, "task.failed")
 
                 await log_publisher.publish_log_async(
                     message="Task marked as failed",

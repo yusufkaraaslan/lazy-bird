@@ -99,6 +99,10 @@ task_routes = {
         "routing_key": "high.webhook",
     },
     # Default priority: Regular tasks
+    "lazy_bird.tasks.issue_watcher.watch_issues": {
+        "queue": "default",
+        "routing_key": "task.watch",
+    },
     "lazy_bird.tasks.queue_processor.process_queue": {
         "queue": "default",
         "routing_key": "task.queue",
@@ -143,6 +147,14 @@ task_send_sent_event = True
 
 # Schedule for periodic tasks (cron-like)
 beat_schedule = {
+    "watch-issues-every-60s": {
+        "task": "lazy_bird.tasks.issue_watcher.watch_issues",
+        "schedule": 60.0,  # Run every 60 seconds
+        "options": {
+            "queue": "default",
+            "priority": 5,
+        },
+    },
     "process-queue-every-60-seconds": {
         "task": "lazy_bird.tasks.queue_processor.process_queue",
         "schedule": 60.0,  # Run every 60 seconds

@@ -37,6 +37,7 @@ from lazy_bird.schemas.task_run import (
     TaskRunUpdate,
 )
 from lazy_bird.services.log_publisher import LogPublisher
+from lazy_bird.tasks.task_executor import _fire_webhook
 
 logger = get_logger(__name__)
 
@@ -597,6 +598,9 @@ async def cancel_task_run(
     await db.commit()
     await db.refresh(task_run)
 
+    # Fire webhook for cancelled state
+    await _fire_webhook(db, task_run, "task.cancelled")
+
     # Log cancellation
     logger.info(
         f"Cancelled task run: {task_run.work_item_id}",
@@ -703,6 +707,9 @@ async def retry_task_run(
     # Commit changes
     await db.commit()
     await db.refresh(task_run)
+
+    # Fire webhook for queued state (retry)
+    await _fire_webhook(db, task_run, "task.queued")
 
     # Log retry
     logger.info(

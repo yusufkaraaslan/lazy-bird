@@ -30,6 +30,7 @@ from lazy_bird.core.redis import (
     close_async_redis,
     close_redis,
 )
+from lazy_bird.services.preset_seeder import seed_framework_presets
 
 logger = get_logger(__name__)
 
@@ -74,6 +75,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 logger.error("✗ Database connection failed")
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
+
+    # Seed framework presets from YAML
+    try:
+        if settings.USE_ASYNC_DB:
+            from lazy_bird.core.database import AsyncSessionLocal
+
+            async with AsyncSessionLocal() as session:
+                created, updated = await seed_framework_presets(session)
+                logger.info(f"Framework presets seeded: {created} created, {updated} updated")
+        else:
+            logger.info(
+                "Skipping async preset seeding (sync DB mode); " "presets can be seeded manually"
+            )
+    except Exception as e:
+        logger.warning(f"Framework preset seeding failed (non-fatal): {e}")
 
     # Check Redis connection
     try:
