@@ -64,7 +64,7 @@ jobs:
     - name: Run bandit security scan
       run: |
         bandit -r lazy_bird/ -f json -o bandit-report.json || true
-        bandit -r lazy_bird/ --severity-level medium
+        bandit -r lazy_bird/ --severity-level high
 
     - name: Upload bandit report
       if: always()

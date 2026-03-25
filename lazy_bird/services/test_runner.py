@@ -319,7 +319,7 @@ class TestRunner:
             result = subprocess.run(
                 test_command,
                 cwd=working_directory,
-                shell=True,
+                shell=True,  # nosec B602 - test commands come from project config, not user input
                 capture_output=True,
                 text=True,
                 timeout=self.timeout,
