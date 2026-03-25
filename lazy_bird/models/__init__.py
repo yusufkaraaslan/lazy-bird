@@ -21,6 +21,7 @@ from lazy_bird.models.framework_preset import FrameworkPreset
 from lazy_bird.models.project import Project
 from lazy_bird.models.task_run import TaskRun
 from lazy_bird.models.task_run_log import TaskRunLog
+from lazy_bird.models.user import User
 from lazy_bird.models.webhook_subscription import WebhookSubscription
 
 __all__ = [
@@ -32,4 +33,5 @@ __all__ = [
     "WebhookSubscription",
     "DailyUsage",
     "ApiKey",
+    "User",
 ]

@@ -231,6 +231,7 @@ register_exception_handlers(app)
 # Import routers
 from lazy_bird.api.routers import (
     api_keys_router,
+    auth_router,
     claude_accounts_router,
     framework_presets_router,
     health_router,
@@ -247,9 +248,7 @@ app.include_router(claude_accounts_router, prefix="/api/v1")
 app.include_router(framework_presets_router, prefix="/api/v1")
 app.include_router(api_keys_router, prefix="/api/v1")
 app.include_router(webhooks_router, prefix="/api/v1")
-
-# TODO: Add remaining routers when implemented
-# app.include_router(auth_router, prefix="/api/v1")
+app.include_router(auth_router, prefix="/api/v1")
 
 
 # Root endpoint

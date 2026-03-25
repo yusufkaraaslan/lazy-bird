@@ -29,6 +29,7 @@ from lazy_bird.core.logging import get_logger
 from lazy_bird.core.redis import get_async_redis
 from lazy_bird.models.api_key import ApiKey
 from lazy_bird.models.task_run import TaskRun
+from lazy_bird.models.task_run_log import TaskRunLog
 from lazy_bird.schemas.task_run import (
     TaskRunListResponse,
     TaskRunQueue,
@@ -319,8 +320,16 @@ async def queue_task_run(
     await db.commit()
     await db.refresh(task_run)
 
-    # TODO: Trigger Celery task for execution
-    # celery_app.send_task('lazy_bird.tasks.execute_task_run', args=[str(task_run.id)])
+    # Trigger Celery task for execution
+    try:
+        from lazy_bird.tasks.task_executor import execute_task
+
+        execute_task.delay(str(task_run.id))
+        logger.info(f"Triggered Celery task for {task_run.id}")
+    except Exception as e:
+        logger.warning(
+            f"Failed to trigger Celery task: {e}. " "Task will be picked up by queue processor."
+        )
 
     # Log successful creation
     logger.info(
@@ -575,8 +584,14 @@ async def cancel_task_run(
         duration = task_run.completed_at - task_run.started_at
         task_run.duration_seconds = int(duration.total_seconds())
 
-    # TODO: Signal Celery to stop task
-    # celery_app.control.revoke(str(task_run.id), terminate=True)
+    # Signal Celery to stop task
+    try:
+        from lazy_bird.tasks import app as celery_app
+
+        celery_app.control.revoke(str(task_run.id), terminate=True)
+        logger.info(f"Sent revoke signal for task {task_run.id}")
+    except Exception as e:
+        logger.warning(f"Failed to revoke Celery task: {e}")
 
     # Commit changes
     await db.commit()
@@ -673,8 +688,17 @@ async def retry_task_run(
     task_run.error_message = None
     task_run.updated_at = datetime.now(timezone.utc)
 
-    # TODO: Trigger Celery task for re-execution
-    # celery_app.send_task('lazy_bird.tasks.execute_task_run', args=[str(task_run.id)])
+    # Trigger Celery task for re-execution
+    try:
+        from lazy_bird.tasks.task_executor import execute_task
+
+        execute_task.delay(str(task_run.id))
+        logger.info(f"Triggered retry Celery task for {task_run.id}")
+    except Exception as e:
+        logger.warning(
+            f"Failed to trigger retry Celery task: {e}. "
+            "Task will be picked up by queue processor."
+        )
 
     # Commit changes
     await db.commit()
@@ -772,38 +796,39 @@ async def get_task_run_logs(
             f"cannot access logs for project {task_run.project_id}"
         )
 
-    # TODO: Implement TaskRunLog model and query
-    # For now, return placeholder response
-    # from lazy_bird.models.task_run_log import TaskRunLog
-    #
-    # Build query
-    # query = select(TaskRunLog).where(TaskRunLog.task_run_id == task_run_id)
-    #
-    # Apply filters
-    # if level:
-    #     query = query.where(TaskRunLog.level == level.upper())
-    #
-    # Get total count
-    # count_query = select(func.count()).select_from(TaskRunLog).where(...)
-    # total_result = await db.execute(count_query)
-    # total = total_result.scalar() or 0
-    #
-    # Apply pagination and sorting
-    # offset = (page - 1) * page_size
-    # query = query.order_by(TaskRunLog.created_at.asc()).offset(offset).limit(page_size)
-    #
-    # Execute query
-    # result = await db.execute(query)
-    # logs = result.scalars().all()
+    # Build base filter condition
+    conditions = [TaskRunLog.task_run_id == task_run_id]
 
-    # Placeholder response
+    # Apply optional level filter (case-insensitive)
+    if level:
+        conditions.append(func.lower(TaskRunLog.level) == level.lower())
+
+    # Get total count
+    count_query = select(func.count()).select_from(TaskRunLog).where(*conditions)
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    # Calculate pagination
+    offset = (page - 1) * page_size
+    total_pages = (total + page_size - 1) // page_size if total > 0 else 0
+
+    # Query logs with pagination, sorted oldest first
+    query = (
+        select(TaskRunLog)
+        .where(*conditions)
+        .order_by(TaskRunLog.created_at.asc())
+        .offset(offset)
+        .limit(page_size)
+    )
+    result = await db.execute(query)
+    logs = result.scalars().all()
+
     return {
-        "items": [],
-        "total": 0,
+        "items": [log.to_dict() for log in logs],
+        "total": total,
         "page": page,
         "page_size": page_size,
-        "pages": 0,
-        "note": "Task run logs feature not yet implemented. Use test_output field for now.",
+        "pages": total_pages,
     }
 
 
