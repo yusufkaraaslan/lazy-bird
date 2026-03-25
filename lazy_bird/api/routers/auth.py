@@ -4,17 +4,19 @@ This module provides endpoints for:
 - User registration
 - User login (credential verification, token issuance)
 - Token refresh
-- Logout (placeholder for token blacklisting)
+- Logout (token blacklisting via Redis)
 """
 
 from datetime import datetime, timezone
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from lazy_bird.api.dependencies import get_async_database
+from lazy_bird.api.dependencies import get_async_database, get_token_from_header
+from lazy_bird.core.config import settings
 from lazy_bird.api.exceptions import AuthenticationError, ResourceConflictError
 from lazy_bird.core.logging import get_logger
 from lazy_bird.core.security import (
@@ -217,17 +219,39 @@ async def refresh(
 
 
 @router.post("/logout", status_code=status.HTTP_200_OK)
-async def logout() -> dict:
-    """Logout (placeholder for token blacklisting).
+async def logout(
+    token: Optional[str] = Depends(get_token_from_header),
+) -> dict:
+    """Logout by blacklisting the current access token in Redis.
 
-    **Note:** Token blacklisting is not yet implemented.
-    Client should discard tokens on logout.
+    **Behavior:**
+    - Adds the token's JTI (or hash) to a Redis blacklist
+    - Token becomes invalid for future requests
+    - Blacklist entry expires when the token would have expired
 
     **Returns:**
     - 200 OK: Logout successful
 
     **Authentication:**
-    - None required (client-side token disposal)
+    - Optional: If token provided, it's blacklisted
     """
-    # TODO: Implement token blacklisting with Redis
-    return {"message": "Logged out successfully. Please discard your tokens."}
+    if token:
+        try:
+            from lazy_bird.core.security import verify_token
+            from lazy_bird.core.redis import get_async_redis
+
+            payload = verify_token(token)
+            if payload:
+                redis_client = await get_async_redis()
+                if redis_client:
+                    import hashlib
+
+                    token_hash = hashlib.sha256(token.encode()).hexdigest()
+                    # Blacklist for remaining token lifetime (default 15 min)
+                    ttl = settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
+                    await redis_client.setex(f"blacklist:{token_hash}", ttl, "1")
+                    logger.info("Token blacklisted on logout")
+        except Exception as e:
+            logger.warning(f"Token blacklisting failed (non-critical): {e}")
+
+    return {"message": "Logged out successfully."}

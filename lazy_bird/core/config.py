@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     # REDIS CONFIGURATION
     # -------------------------------------------------------------------------
+    REDIS_MAX_CONNECTIONS: int = Field(
+        default=10, ge=1, le=100, description="Maximum Redis connection pool size"
+    )
+    REDIS_SOCKET_TIMEOUT: int = Field(
+        default=5, ge=1, le=30, description="Redis socket timeout in seconds"
+    )
     REDIS_URL: str = Field(
         default="redis://localhost:6379/0",
         description="Redis connection string for caching and Celery",
