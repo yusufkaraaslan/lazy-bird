@@ -735,6 +735,13 @@ Contributions welcome! Please:
 5. Ensure tests pass: `pytest --cov=lazy_bird --cov-fail-under=70`
 6. Submit PRs with tests and documentation
 
+## Related Repositories
+
+| Repository | Description |
+|------------|-------------|
+| [lazy-bird-ui](https://github.com/yusufkaraaslan/lazy-bird-ui) | React + TypeScript web dashboard for Lazy-Bird |
+| [plane-lazy-bird-integration](https://github.com/yusufkaraaslan/plane-lazy-bird-integration) | Plane project management integration for Lazy-Bird |
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file.

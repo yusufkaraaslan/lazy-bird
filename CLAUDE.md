@@ -9,6 +9,7 @@ Lazy-Bird is a development automation system that lets Claude Code instances wor
 **Version:** 2.0.0-alpha (FastAPI microservice rewrite of the original Flask/bash v1.x)
 **Python:** >= 3.10
 **Package:** `pip install lazy-bird` (entry point: `lazy-bird` CLI)
+**Install dev deps:** `pip install -e ".[dev]"`
 
 ## Commands
 
@@ -55,7 +56,7 @@ lazy_bird/
     exceptions.py        # Exception handlers registered on the app
     routers/             # One router per resource, all mounted at /api/v1
       health.py, projects.py, task_runs.py, claude_accounts.py,
-      framework_presets.py, api_keys.py, webhooks.py
+      framework_presets.py, api_keys.py, webhooks.py, auth.py
   core/
     config.py            # Pydantic Settings (loads from .env), cached via get_settings()
     database.py          # SQLAlchemy engines (sync + async), session factories, Base
@@ -64,10 +65,10 @@ lazy_bird/
     logging.py           # Structured logging setup
   models/                # SQLAlchemy ORM models (all inherit from Base)
     project.py, task_run.py, task_run_log.py, claude_account.py,
-    framework_preset.py, webhook_subscription.py, daily_usage.py, api_key.py
+    framework_preset.py, webhook_subscription.py, daily_usage.py, api_key.py, user.py
   schemas/               # Pydantic request/response schemas
     project.py, task_run.py, framework_preset.py, claude_account.py,
-    api_key.py, webhook.py
+    api_key.py, webhook.py, user.py
   services/              # Business logic layer
     claude_service.py    # Executes Claude Code CLI, parses output, tracks tokens
     git_service.py       # Git worktree creation/cleanup, branch management
@@ -75,11 +76,13 @@ lazy_bird/
     pr_service.py        # GitHub/GitLab PR creation
     webhook_service.py   # Webhook delivery with retries
     log_publisher.py     # Real-time log streaming via Redis Pub/Sub
+    preset_seeder.py     # Seeds framework presets from YAML on startup
   tasks/
     __init__.py          # Celery app instance
     celeryconfig.py      # Celery configuration
     task_executor.py     # Main Celery task: execute_task(task_run_id)
     queue_processor.py   # Polls for queued TaskRuns
+    issue_watcher.py     # Watches GitHub/GitLab for 'ready' issues
   cli.py                 # CLI entry point (argparse, delegates to scripts/)
 ```
 
@@ -87,9 +90,10 @@ lazy_bird/
 
 - **Config:** `lazy_bird.core.config.settings` is a cached `pydantic_settings.BaseSettings` singleton loaded from `.env`. Import it directly or use `get_settings()`.
 - **Database:** Dual engine setup - async (asyncpg) for FastAPI endpoints, sync for Celery/migrations. All models inherit from `lazy_bird.core.database.Base`. Tests use in-memory SQLite via `aiosqlite`.
-- **Dependencies:** FastAPI DI via `dependencies.py`. Auth is `X-API-Key` header or `Authorization: Bearer <jwt>`. Scope-based permissions via `RequireScopes(["write", "admin"])`.
-- **Task execution flow:** API creates TaskRun (status=queued) -> Celery picks it up -> creates git worktree -> runs Claude Code CLI (`claude -p "prompt"`) -> runs tests -> creates PR -> updates status.
+- **Dependencies:** FastAPI DI via `dependencies.py`. Auth is `X-API-Key` header or `Authorization: Bearer <jwt>`. Scope-based permissions via `RequireScopes(["write", "admin"])`. Convenience aliases: `RequireRead`, `RequireWrite`, `RequireAdmin`.
+- **Task execution flow:** API creates TaskRun (status=queued) -> Celery picks it up -> creates git worktree -> runs Claude Code CLI (`claude -p "prompt"`) -> runs tests -> creates PR -> updates status. Webhooks fire on state changes.
 - **Migrations:** Alembic is configured (`alembic/`) but no migrations exist yet. Schema is created via `Base.metadata.create_all()` in dev/test.
+- **Preset seeding:** On startup, `preset_seeder.py` reads `config/framework-presets.yml` and upserts into the `framework_presets` table. Presets map framework keys to `(framework_type, language)` pairs (e.g., `"godot" -> ("game_engine", "gdscript")`).
 
 ### Legacy v1.x Components (still present)
 
@@ -119,11 +123,14 @@ Tests are in `tests/` organized by type:
 - `tests/security/` - Security audit tests
 
 **Test fixtures** are in `tests/conftest.py`. Key fixtures:
-- `test_db` - Async in-memory SQLite session
-- `test_client` - FastAPI TestClient with DB dependency override
-- `test_project`, `test_api_key` - Pre-created DB records
+- `test_db` - Async in-memory SQLite session (with PG type compatibility layer)
+- `test_client` - FastAPI TestClient with `get_async_database` dependency override
+- `test_project`, `test_api_key` - Pre-created DB records (`test_api_key.key_hash` contains the raw key for `X-API-Key` header)
+- `mock_subprocess`, `mock_requests` - Monkeypatched subprocess/requests
 
-**Config:** `pyproject.toml` configures pytest with `--strict-markers`, `--strict-config`, and `--cov=lazy_bird` by default.
+**SQLite compatibility:** Tests replace PostgreSQL-specific types (ARRAY, JSONB, UUID, TSVECTOR, INET, ENUM) with SQLite equivalents via `_create_sqlite_compatible_tables()` in conftest. PG-specific `server_default` values like `gen_random_uuid()` are also stripped. When adding new models with PG-specific features, ensure the type mapping in conftest handles them.
+
+**Config:** `pyproject.toml` configures pytest with `--strict-markers`, `--strict-config`, and `--cov=lazy_bird` by default. Tests use `pytest-asyncio` for async fixtures.
 
 ## Infrastructure Dependencies
 
@@ -156,3 +163,12 @@ All routes are prefixed with `/api/v1`. OpenAPI docs at `/docs`, ReDoc at `/redo
 | framework_presets | `/framework-presets` | Built-in framework configs |
 | api_keys | `/api-keys` | API key management |
 | webhooks | `/webhooks` | Event subscription management |
+| auth | `/auth` | Authentication (login, register, token refresh, logout) |
+
+## Code Style
+
+- **Black:** line-length=100
+- **Flake8** for linting
+- **mypy:** strict mode (see `pyproject.toml` `[tool.mypy]`), but tests have relaxed `disallow_untyped_defs`
+- Models use PostgreSQL-specific types (ARRAY, JSONB, UUID with `gen_random_uuid()`) — keep this in mind when adding columns
+- Logging: use `from lazy_bird.core.logging import get_logger; logger = get_logger(__name__)` — supports structured JSON logging with `extra_fields`
