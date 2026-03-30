@@ -13,15 +13,16 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Copy requirements and install dependencies first (cached layer)
 COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy source and install package
 COPY pyproject.toml .
 COPY README.md .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir .
+COPY lazy_bird/ ./lazy_bird/
+RUN pip install --no-cache-dir --no-deps .
 
 # Production stage
 FROM python:3.10-slim
